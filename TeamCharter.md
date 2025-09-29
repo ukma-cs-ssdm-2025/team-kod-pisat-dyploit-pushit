@@ -72,6 +72,6 @@
 ## 8. Підписи
 
 * [x] **Олександр** (GitHub: `@FeadenGlow`)
-* [ ] **Остап** (GitHub: `@OstapGladun`)
-* [ ] **Катерина** (GitHub: `@Kate-Samsonenko`)
+* [x] **Остап** (GitHub: `@OstapGladun`)
+* [x] **Катерина** (GitHub: `@Kate-Samsonenko`)
 * [ ] **Тетяна** (GitHub: `@tetianashapoval `)
