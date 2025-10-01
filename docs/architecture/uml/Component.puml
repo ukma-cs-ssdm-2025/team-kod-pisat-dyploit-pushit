@@ -1,0 +1,19 @@
+@startuml
+package "Movie Review System" {
+
+  [Web UI] <<component>> 
+  [Backend API] <<component>> 
+  [Database] <<component>> 
+
+  [Authentication Service] <<component>> 
+  [Review Management] <<component>> 
+  [Movie Catalog] <<component>> 
+
+  [Web UI] --> [Backend API] : REST/HTTPS
+  [Backend API] --> [Database] : SQL/JDBC
+
+  [Backend API] --> [Authentication Service] : Auth requests
+  [Backend API] --> [Review Management] : CRUD reviews
+  [Backend API] --> [Movie Catalog] : Get movie data
+}
+@enduml
