@@ -1,0 +1,27 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+title Deployment Diagram – Сайт рецензій на фільми
+
+node "Client" as client {
+  artifact "Browser(React)" as frontend
+}
+
+node "Application Server" as app {
+  artifact "Web App (Django/Express/Spring)" as backend
+}
+
+node "Database Server" as db {
+  database "PostgreSQL" as postgres
+}
+
+node "Storage Service" as storage {
+  artifact "Object Storage (S3/MinIO)" as objstore
+}
+
+client -[#blue]-> app : HTTP/HTTPS запити
+app -[#green]-> postgres : SQL запити
+app -[#brown]-> objstore : API для збереження/отримання фото
+
+@enduml

@@ -1,0 +1,20 @@
+@startuml
+actor User as U
+participant "Web UI" as UI
+participant "Backend API" as BE
+database "Database" as DB
+
+U -> UI : Відкрити сторінку фільму
+UI -> BE : Запит деталей фільму
+BE -> DB : SELECT * FROM Movies WHERE id=...
+DB --> BE : Дані про фільм
+BE --> UI : Повертає дані
+UI --> U : Показує сторінку фільму
+
+U -> UI : Додати рецензію
+UI -> BE : POST /reviews (текст рецензії)
+BE -> DB : INSERT INTO Reviews(...)
+DB --> BE : OK (review_id)
+BE --> UI : Підтвердження збереження
+UI --> U : Повідомлення "Рецензію додано"
+@enduml
