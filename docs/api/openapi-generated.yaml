@@ -1,0 +1,92 @@
+openapi: 3.0.0
+info:
+  title: Movies & Users API
+  version: 1.0.0
+  description: REST API для керування користувачами та фільмами
+  contact:
+    name: API Support
+    email: team@example.com
+servers:
+  - url: http://localhost:3000
+    description: Development server
+paths:
+  /api/v1/movies:
+    get:
+      summary: Отримати список фільмів
+      responses:
+        '200':
+          description: Список фільмів
+    post:
+      summary: Додати новий фільм
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - year
+              properties:
+                title:
+                  type: string
+                year:
+                  type: integer
+      responses:
+        '201':
+          description: Фільм додано
+  /api/v1/movies/{id}:
+    get:
+      summary: Отримати фільм за ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Дані про фільм
+        '404':
+          description: Фільм не знайдено
+  /api/v1/users:
+    get:
+      summary: Отримати список користувачів
+      responses:
+        '200':
+          description: Список користувачів
+    post:
+      summary: Створити нового користувача
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '201':
+          description: Користувач створений
+  /api/v1/users/{id}:
+    get:
+      summary: Отримати користувача за ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Інформація про користувача
+        '404':
+          description: Користувача не знайдено
+components: {}
+tags: []
