@@ -24,9 +24,8 @@ jobs:
         working-directory: src/api
       
       - name: Generate OpenAPI spec from code
-        run: |
-          npm run generate-docs
-          working-directory: src/api
+        run: npm run generate-docs
+        working-directory: src/api
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
