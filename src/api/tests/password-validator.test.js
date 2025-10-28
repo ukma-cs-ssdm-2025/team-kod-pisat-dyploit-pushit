@@ -15,3 +15,7 @@ test('should return false for password with no digits', () => {
 test('should return false for password with no special chars', () => {
   expect(isValidPassword('abcdefg1')).toBe(false);
 });
+
+test('should return true for a valid password', () => {
+  expect(isValidPassword('ValidPass1!')).toBe(true);
+});
