@@ -1,0 +1,34 @@
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: moviereview_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+      POSTGRES_DB: ${PGDATABASE}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moviereview_api
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${PGUSER}
+      DB_PASSWORD: ${PGPASSWORD}
+      DB_NAME: ${PGDATABASE}
+    ports:
+      - "3000:3000"
+    command: ["npm", "run", "start"]
