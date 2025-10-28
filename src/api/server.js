@@ -1,9 +1,9 @@
 // src/api/server.js
 const express = require('express');
-const { Pool } = require('pg');
 const dotenv = require('dotenv');
 const { swaggerSpec, swaggerUi, saveGeneratedSpec } = require('./swagger-config');
 const yaml = require('js-yaml');
+const db = require('./db');
 
 const usersRouter = require('./routes/users');
 const moviesRouter = require('./routes/movies');
@@ -13,22 +13,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-const pool = new Pool({
-  host: process.env.PGHOST,
-  port: process.env.PGPORT,
-  database: process.env.PGDATABASE,
-  user: process.env.PGUSER,
-  password: process.env.PGPASSWORD,
-});
-
-pool.connect()
-  .then(client => {
-    console.log('Connected to PostgreSQL database');
-    client.release();
-  })
-  .catch(err => console.error('PostgreSQL connection error:', err.stack));
-
-app.locals.db = pool;
+app.locals.db = db;
 
 app.use('/api/v1', usersRouter);
 app.use('/api/v1', moviesRouter);
