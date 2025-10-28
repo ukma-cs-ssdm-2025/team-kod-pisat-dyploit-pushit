@@ -7,3 +7,7 @@ test('should return false for password shorter than 8 chars', () => {
 test('should return true for password equal to 8 chars', () => {
   expect(isValidPassword('12345678')).toBe(true);
 });
+
+test('should return false for password with no digits', () => {
+  expect(isValidPassword('abcdefgh')).toBe(false);
+});
