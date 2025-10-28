@@ -51,7 +51,7 @@ paths:
           description: Фільм не знайдено
   /api/v1/users:
     get:
-      summary: Отримати список користувачів
+      summary: Отримати список усіх користувачів
       responses:
         '200':
           description: Список користувачів
@@ -64,28 +64,83 @@ paths:
             schema:
               type: object
               required:
-                - name
+                - username
+                - role
+                - nickname
+                - password
                 - email
               properties:
-                name:
+                username:
+                  type: string
+                role:
+                  type: string
+                nickname:
+                  type: string
+                password:
                   type: string
                 email:
                   type: string
       responses:
         '201':
-          description: Користувач створений
-  /api/v1/users/{id}:
+          description: Користувача створено
+  /api/v1/users/{param}:
     get:
-      summary: Отримати користувача за ID
+      summary: Отримати користувача за ID або username
       parameters:
-        - name: id
+        - name: param
           in: path
           required: true
           schema:
-            type: integer
+            type: string
+          description: ID (число) або username (рядок)
       responses:
         '200':
           description: Інформація про користувача
+        '404':
+          description: Користувача не знайдено
+    put:
+      summary: Оновити дані користувача за ID або username
+      parameters:
+        - name: param
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID (число) або username (рядок)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                role:
+                  type: string
+                nickname:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Користувача оновлено
+        '404':
+          description: Користувача не знайдено
+    delete:
+      summary: Видалити користувача за ID або username
+      parameters:
+        - name: param
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID (число) або username (рядок)
+      responses:
+        '200':
+          description: Користувача видалено
         '404':
           description: Користувача не знайдено
 components: {}
