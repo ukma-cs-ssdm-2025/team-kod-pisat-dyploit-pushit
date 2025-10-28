@@ -1,1 +1,6 @@
 /src/api/node_modules
+/src/api/data
+
+/src/api/coverage/clover.xml
+/src/api/coverage/coverage-final.json
+/src/api/coverage/lcov.info
