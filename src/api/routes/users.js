@@ -1,6 +1,12 @@
 const express = require('express');
 const router = express.Router();
 
+const bcrypt = require('bcrypt');
+const { validateEmail } = require('../utils/validateEmail');
+const { isValidPassword } = require('../utils/password-validator');
+
+const SALT_ROUNDS = 10;
+
 /**
  * @openapi
  * /api/v1/users:
@@ -92,6 +98,8 @@ router.get('/users/:param', async (req, res) => {
  *     responses:
  *       201:
  *         description: Користувача створено
+ *       400:
+ *         description: Некоректні вхідні дані
  */
 router.post('/users', async (req, res) => {
   const db = req.app.locals.db;
@@ -99,6 +107,16 @@ router.post('/users', async (req, res) => {
 
   if (!username || !role || !nickname || !password || !email) {
     return res.status(400).json({ message: 'Вкажіть усі необхідні поля' });
+  }
+
+  if (!validateEmail(email)) {
+    return res.status(400).json({ message: 'Некоректний формат email' });
+  }
+
+  if (!isValidPassword(password)) {
+    return res.status(400).json({ 
+      message: 'Пароль не відповідає вимогам безпеки (мінімум 8 символів, 1 цифра, 1 спецсимвол: !@#$%^&*)' 
+    });
   }
 
   const formattedUsername = username.startsWith('@') ? username : `@${username}`;
@@ -152,6 +170,8 @@ router.post('/users', async (req, res) => {
  *     responses:
  *       200:
  *         description: Користувача оновлено
+ *       400:
+ *         description: Некоректні вхідні дані
  *       404:
  *         description: Користувача не знайдено
  */
@@ -159,6 +179,16 @@ router.put('/users/:param', async (req, res) => {
   const db = req.app.locals.db;
   const { param } = req.params;
   let { username, role, nickname, password, email } = req.body;
+
+  if (email && !validateEmail(email)) {
+    return res.status(400).json({ message: 'Некоректний формат email' });
+  }
+
+  if (password && !isValidPassword(password)) {
+    return res.status(400).json({ 
+      message: 'Пароль не відповідає вимогам безпеки (мінімум 8 символів, 1 цифра, 1 спецсимвол: !@#$%^&*)' 
+    });
+  }
 
   let target;
   if (/^\d+$/.test(param)) {
