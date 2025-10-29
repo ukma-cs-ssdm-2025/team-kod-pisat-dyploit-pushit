@@ -5,8 +5,11 @@ const { swaggerSpec, swaggerUi, saveGeneratedSpec } = require('./swagger-config'
 const yaml = require('js-yaml');
 const db = require('./db');
 
+const authRouter = require('./routes/auth');
 const usersRouter = require('./routes/users');
 const moviesRouter = require('./routes/movies');
+
+const authenticateToken = require('./middleware/authMiddleware');
 
 dotenv.config();
 
@@ -15,8 +18,10 @@ app.use(express.json());
 
 app.locals.db = db;
 
-app.use('/api/v1', usersRouter);
-app.use('/api/v1', moviesRouter);
+app.use('/api/v1/auth', authRouter);
+
+app.use('/api/v1', authenticateToken, usersRouter);
+app.use('/api/v1', authenticateToken, moviesRouter);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
