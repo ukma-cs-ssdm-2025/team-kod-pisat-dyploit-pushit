@@ -198,6 +198,13 @@ router.put('/users/:param', async (req, res) => {
     target = { column: 'username', value: uname };
   }
 
+  if (req.user.role === 'user') {
+    if ((target.column === 'id' && parseInt(target.value) !== req.user.id) ||
+        (target.column === 'username' && target.value !== req.user.username)) {
+      return res.status(403).json({ message: 'Недостатньо прав для редагування іншого користувача' });
+    }
+  }
+
   if (username && !username.startsWith('@')) {
     username = `@${username}`;
   }
@@ -254,21 +261,33 @@ router.delete('/users/:param', async (req, res) => {
   const db = req.app.locals.db;
   const { param } = req.params;
 
-  let query, values;
+  let target;
   if (/^\d+$/.test(param)) {
-    query = 'DELETE FROM users WHERE id = $1 RETURNING *';
-    values = [param];
+    target = { column: 'id', value: param };
   } else {
     const uname = param.startsWith('@') ? param : `@${param}`;
-    query = 'DELETE FROM users WHERE username = $1 RETURNING *';
-    values = [uname];
+    target = { column: 'username', value: uname };
+  }
+
+  if (req.user.role === 'user') {
+    if ((target.column === 'id' && parseInt(target.value) !== req.user.id) ||
+        (target.column === 'username' && target.value !== req.user.username)) {
+      return res.status(403).json({ message: 'Недостатньо прав для видалення іншого користувача' });
+    }
   }
 
   try {
+    const query = target.column === 'id'
+      ? 'DELETE FROM users WHERE id = $1 RETURNING *'
+      : 'DELETE FROM users WHERE username = $1 RETURNING *';
+    const values = [target.value];
+
     const result = await db.query(query, values);
+
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Користувача не знайдено' });
     }
+
     res.json({ message: 'Користувача видалено', user: result.rows[0] });
   } catch (err) {
     console.error('DB error (DELETE /users/:param):', err);
