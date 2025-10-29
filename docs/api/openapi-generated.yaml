@@ -9,7 +9,68 @@ info:
 servers:
   - url: http://localhost:3000
     description: Development server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
 paths:
+  /api/v1/auth/register:
+    post:
+      summary: Реєстрація нового користувача
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+                - email
+                - nickname
+                - role
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+                nickname:
+                  type: string
+                role:
+                  type: string
+      responses:
+        '201':
+          description: Користувача зареєстровано
+  /api/v1/auth/login:
+    post:
+      summary: Авторизація користувача (отримання JWT токена)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Авторизація успішна
+        '401':
+          description: Невірний логін або пароль
   /api/v1/movies:
     get:
       summary: Отримати список фільмів
@@ -143,5 +204,4 @@ paths:
           description: Користувача видалено
         '404':
           description: Користувача не знайдено
-components: {}
 tags: []

@@ -1,4 +1,3 @@
-// src/api/swagger-config.js
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const fs = require('fs');
@@ -22,6 +21,20 @@ const options = {
         description: 'Development server'
       }
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {            
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [                 
+      {
+        bearerAuth: []
+      }
+    ],
   },
   apis: ['./routes/*.js']
 };
@@ -32,7 +45,6 @@ function saveGeneratedSpec() {
   const yamlStr = yaml.dump(swaggerSpec);
   fs.mkdirSync('../../docs/api', { recursive: true });
   fs.writeFileSync('../../docs/api/openapi-generated.yaml', yamlStr);
-  // fs.writeFileSync('../../docs/api/openapi-generated.json', JSON.stringify(swaggerSpec, null, 2));
   console.log('OpenAPI spec generated from code annotations!');
 }
 

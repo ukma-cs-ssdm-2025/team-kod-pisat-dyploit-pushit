@@ -104,12 +104,15 @@ router.post('/users', async (req, res) => {
   const formattedUsername = username.startsWith('@') ? username : `@${username}`;
 
   try {
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
     const result = await db.query(
       `INSERT INTO users (username, role, nickname, password, email)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [formattedUsername, role, nickname, password, email]
+      [formattedUsername, role, nickname, hashedPassword, email]
     );
+
     res.status(201).json({ message: 'Користувача створено', user: result.rows[0] });
   } catch (err) {
     console.error('DB error (POST /users):', err);
@@ -170,6 +173,11 @@ router.put('/users/:param', async (req, res) => {
   }
 
   try {
+    let hashedPassword = null;
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    }
+
     const result = await db.query(
       `UPDATE users
        SET username = COALESCE($1, username),
@@ -179,7 +187,7 @@ router.put('/users/:param', async (req, res) => {
            email = COALESCE($5, email)
        WHERE ${target.column} = $6
        RETURNING *`,
-      [username, role, nickname, password, email, target.value]
+      [username, role, nickname, hashedPassword, email, target.value]
     );
 
     if (result.rows.length === 0) {
