@@ -4,6 +4,9 @@ const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
+const { validateEmail } = require('../utils/validateEmail');
+const { isValidPassword } = require('../utils/password-validator');
+
 const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
@@ -34,6 +37,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
  *     responses:
  *       201:
  *         description: Користувача зареєстровано
+ *       400:
+ *         description: Некоректні вхідні дані
+ *       409:
+ *         description: Користувач вже існує
+ * 
  */
 router.post('/register', async (req, res) => {
   const db = req.app.locals.db;
@@ -41,6 +49,16 @@ router.post('/register', async (req, res) => {
 
   if (!username || !password || !email || !nickname || !role) {
     return res.status(400).json({ message: 'Будь ласка, заповніть усі поля' });
+  }
+
+  if (!validateEmail(email)) {
+    return res.status(400).json({ message: 'Некоректний формат email' });
+  }
+
+  if (!isValidPassword(password)) {
+    return res.status(400).json({ 
+      message: 'Пароль не відповідає вимогам безпеки (мінімум 8 символів, 1 цифра, 1 спецсимвол: !@#$%^&*)' 
+    });
   }
 
   const formattedUsername = username.startsWith('@') ? username : `@${username}`;
