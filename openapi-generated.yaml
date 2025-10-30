@@ -1,0 +1,215 @@
+openapi: 3.0.0
+info:
+  title: Movies & Users API
+  version: 1.0.0
+  description: REST API для керування користувачами та фільмами
+  contact:
+    name: API Support
+    email: team@example.com
+servers:
+  - url: http://localhost:3000
+    description: Development server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: Реєстрація нового користувача
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+                - email
+                - nickname
+                - role
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+                nickname:
+                  type: string
+                role:
+                  type: string
+      responses:
+        '201':
+          description: Користувача зареєстровано
+        '400':
+          description: Некоректні вхідні дані
+        '409':
+          description: Користувач вже існує
+  /api/v1/auth/login:
+    post:
+      summary: Авторизація користувача (отримання JWT токена)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Авторизація успішна
+        '401':
+          description: Невірний логін або пароль
+  /api/v1/movies:
+    get:
+      summary: Отримати список фільмів
+      responses:
+        '200':
+          description: Список фільмів
+    post:
+      summary: Додати новий фільм
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - year
+              properties:
+                title:
+                  type: string
+                year:
+                  type: integer
+      responses:
+        '201':
+          description: Фільм додано
+  /api/v1/movies/{id}:
+    get:
+      summary: Отримати фільм за ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Дані про фільм
+        '404':
+          description: Фільм не знайдено
+  /api/v1/users:
+    get:
+      summary: Отримати список усіх користувачів
+      responses:
+        '200':
+          description: Список користувачів
+    post:
+      summary: Створити нового користувача
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - role
+                - nickname
+                - password
+                - email
+              properties:
+                username:
+                  type: string
+                role:
+                  type: string
+                nickname:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '201':
+          description: Користувача створено
+        '400':
+          description: Некоректні вхідні дані
+  /api/v1/users/{param}:
+    get:
+      summary: Отримати користувача за ID або username
+      parameters:
+        - name: param
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID (число) або username (рядок)
+      responses:
+        '200':
+          description: Інформація про користувача
+        '404':
+          description: Користувача не знайдено
+    put:
+      summary: Оновити дані користувача за ID або username
+      parameters:
+        - name: param
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID (число) або username (рядок)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                role:
+                  type: string
+                nickname:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Користувача оновлено
+        '400':
+          description: Некоректні вхідні дані
+        '404':
+          description: Користувача не знайдено
+    delete:
+      summary: Видалити користувача за ID або username
+      parameters:
+        - name: param
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID (число) або username (рядок)
+      responses:
+        '200':
+          description: Користувача видалено
+        '404':
+          description: Користувача не знайдено
+tags: []
