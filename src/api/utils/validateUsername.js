@@ -9,3 +9,4 @@ export function validateUsername(name) {
   }
   return true;
 }
+
