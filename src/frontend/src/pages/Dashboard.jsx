@@ -7,7 +7,7 @@ export default function Dashboard() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      window.location.href = "/login";
+      globalThis.location.href = "/login";
       return;
     }
     getUserData(token).then(setUser);
@@ -15,7 +15,7 @@ export default function Dashboard() {
 
   const logout = () => {
     localStorage.removeItem("token");
-    window.location.href = "/login";
+    globalThis.location.href = "/login";
   };
 
   if (!user) return <div className="text-center mt-10 text-lg">Завантаження...</div>;

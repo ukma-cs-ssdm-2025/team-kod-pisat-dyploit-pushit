@@ -199,7 +199,7 @@ router.put('/users/:param', async (req, res) => {
   }
 
   if (req.user.role === 'user') {
-    if ((target.column === 'id' && parseInt(target.value) !== req.user.id) ||
+    if ((target.column === 'id' && Number.parseInt(target.value) !== req.user.id) ||
         (target.column === 'username' && target.value !== req.user.username)) {
       return res.status(403).json({ message: 'Недостатньо прав для редагування іншого користувача' });
     }
@@ -270,7 +270,7 @@ router.delete('/users/:param', async (req, res) => {
   }
 
   if (req.user.role === 'user') {
-    if ((target.column === 'id' && parseInt(target.value) !== req.user.id) ||
+    if ((target.column === 'id' && Number.parseInt(target.value) !== req.user.id) ||
         (target.column === 'username' && target.value !== req.user.username)) {
       return res.status(403).json({ message: 'Недостатньо прав для видалення іншого користувача' });
     }
