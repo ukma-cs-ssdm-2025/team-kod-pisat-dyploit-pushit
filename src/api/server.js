@@ -1,6 +1,7 @@
 // src/api/server.js
 const express = require('express');
 const dotenv = require('dotenv');
+const cors = require('cors');
 const { swaggerSpec, swaggerUi, saveGeneratedSpec } = require('./swagger-config');
 const yaml = require('js-yaml');
 const db = require('./db');
@@ -14,12 +15,17 @@ const authenticateToken = require('./middleware/authMiddleware');
 dotenv.config();
 
 const app = express();
-app.use(express.json());
 
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json());
 app.locals.db = db;
 
 app.use('/api/v1/auth', authRouter);
-
 app.use('/api/v1', authenticateToken, usersRouter);
 app.use('/api/v1', authenticateToken, moviesRouter);
 
