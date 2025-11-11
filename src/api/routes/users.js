@@ -12,6 +12,8 @@ const SALT_ROUNDS = 10;
  * /api/v1/users:
  *   get:
  *     summary: Отримати список усіх користувачів
+ *     tags:
+ *       - Users
  *     responses:
  *       200:
  *         description: Список користувачів
@@ -32,6 +34,8 @@ router.get('/users', async (req, res) => {
  * /api/v1/users/{param}:
  *   get:
  *     summary: Отримати користувача за ID або username
+ *     tags:
+ *       - Users
  *     parameters:
  *       - name: param
  *         in: path
@@ -77,6 +81,8 @@ router.get('/users/:param', async (req, res) => {
  * /api/v1/users:
  *   post:
  *     summary: Створити нового користувача
+ *     tags:
+ *       - Users
  *     requestBody:
  *       required: true
  *       content:
@@ -143,6 +149,8 @@ router.post('/users', async (req, res) => {
  * /api/v1/users/{param}:
  *   put:
  *     summary: Оновити дані користувача за ID або username
+ *     tags:
+ *       - Users
  *     parameters:
  *       - name: param
  *         in: path
@@ -244,6 +252,8 @@ router.put('/users/:param', async (req, res) => {
  * /api/v1/users/{param}:
  *   delete:
  *     summary: Видалити користувача за ID або username
+ *     tags:
+ *       - Users
  *     parameters:
  *       - name: param
  *         in: path
