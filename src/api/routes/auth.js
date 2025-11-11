@@ -61,6 +61,11 @@ router.post('/register', async (req, res) => {
     });
   }
 
+  const allowedRoles = ['user', 'admin', 'moderator'];
+  if (!allowedRoles.includes(role)) {
+    return res.status(400).json({ message: 'Недопустима роль. Дозволені ролі: user, admin, moderator' });
+  }
+
   const formattedUsername = username.startsWith('@') ? username : `@${username}`;
 
   try {
