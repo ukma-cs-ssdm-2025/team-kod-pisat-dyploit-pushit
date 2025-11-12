@@ -4,6 +4,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const { validateEmail } = require('../utils/validateEmail');
 const { isValidPassword } = require('../utils/password-validator');
+const { deleteFileFromR2 } = require('../utils/r2');
 
 const SALT_ROUNDS = 10;
 
@@ -12,6 +13,8 @@ const SALT_ROUNDS = 10;
  * /api/v1/users:
  *   get:
  *     summary: Отримати список усіх користувачів
+ *     tags:
+ *       - Users
  *     responses:
  *       200:
  *         description: Список користувачів
@@ -32,6 +35,8 @@ router.get('/users', async (req, res) => {
  * /api/v1/users/{param}:
  *   get:
  *     summary: Отримати користувача за ID або username
+ *     tags:
+ *       - Users
  *     parameters:
  *       - name: param
  *         in: path
@@ -77,6 +82,8 @@ router.get('/users/:param', async (req, res) => {
  * /api/v1/users:
  *   post:
  *     summary: Створити нового користувача
+ *     tags:
+ *       - Users
  *     requestBody:
  *       required: true
  *       content:
@@ -143,6 +150,8 @@ router.post('/users', async (req, res) => {
  * /api/v1/users/{param}:
  *   put:
  *     summary: Оновити дані користувача за ID або username
+ *     tags:
+ *       - Users
  *     parameters:
  *       - name: param
  *         in: path
@@ -244,6 +253,8 @@ router.put('/users/:param', async (req, res) => {
  * /api/v1/users/{param}:
  *   delete:
  *     summary: Видалити користувача за ID або username
+ *     tags:
+ *       - Users
  *     parameters:
  *       - name: param
  *         in: path
@@ -278,21 +289,36 @@ router.delete('/users/:param', async (req, res) => {
 
   try {
     const query = target.column === 'id'
-      ? 'DELETE FROM users WHERE id = $1 RETURNING *'
-      : 'DELETE FROM users WHERE username = $1 RETURNING *';
-    const values = [target.value];
+      ? 'SELECT * FROM users WHERE id = $1'
+      : 'SELECT * FROM users WHERE username = $1';
+    const { rows } = await db.query(query, [target.value]);
 
-    const result = await db.query(query, values);
-
-    if (result.rows.length === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({ message: 'Користувача не знайдено' });
     }
 
-    res.json({ message: 'Користувача видалено', user: result.rows[0] });
+    const user = rows[0];
+
+    if (user.avatar_url) {
+      try {
+        const oldFileKey = user.avatar_url.split(/\.r2\.(?:cloudflarestorage|dev)\//)[1];
+        await deleteFileFromR2(oldFileKey);
+      } catch (err) {
+        console.warn('Не вдалося видалити аватарку користувача:', err.message);
+      }
+    }
+
+    const deleteQuery = target.column === 'id'
+      ? 'DELETE FROM users WHERE id = $1 RETURNING *'
+      : 'DELETE FROM users WHERE username = $1 RETURNING *';
+    const deleteResult = await db.query(deleteQuery, [target.value]);
+
+    res.json({ message: 'Користувача видалено', user: deleteResult.rows[0] });
   } catch (err) {
     console.error('DB error (DELETE /users/:param):', err);
     res.status(500).json({ error: 'Database error' });
   }
 });
+
 
 module.exports = router;
