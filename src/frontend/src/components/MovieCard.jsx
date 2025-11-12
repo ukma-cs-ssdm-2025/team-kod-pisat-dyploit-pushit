@@ -1,27 +1,33 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom"
 
 export default function MovieCard({ movie }) {
   return (
     <Link
       to={`/movie/${movie.id}`}
-      className="bg-white rounded-lg shadow-md overflow-hidden group transition-all duration-300 hover:shadow-xl"
+      className="group relative overflow-hidden rounded-xl transition-all duration-300 hover:transform hover:scale-105"
     >
-      <div className="overflow-hidden">
+      <div className="absolute inset-0 z-10"></div>
+      <div className="absolute inset-0 border-2 border-amber-500/0 group-hover:border-amber-500/50 rounded-xl z-20 transition-all duration-300"></div>
+
+      <div className="overflow-hidden rounded-xl shadow-xl">
         <img
-          src={movie.imageUrl}
+          src={movie.imageUrl || "/placeholder.svg"}
           alt={movie.title}
-          className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
+          className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110 filter group-hover:brightness-110"
         />
       </div>
-      <div className="p-4">
-        <h3 className="text-lg font-semibold truncate group-hover:text-blue-600" title={movie.title}>
+      <div className="p-4 bg-gradient-to-t from-purple-950 to-purple-900/40 backdrop-blur">
+        <h3
+          className="text-base font-semibold text-white truncate group-hover:text-amber-400 transition-colors"
+          title={movie.title}
+        >
           {movie.title}
         </h3>
-        <p className="text-gray-600 text-sm">{movie.year}</p>
-        <p className="text-gray-500 text-sm truncate" title={movie.director}>
+        <p className="text-amber-400/80 text-sm">{movie.year}</p>
+        <p className="text-gray-400 text-xs truncate" title={movie.director}>
           Реж: {movie.director}
         </p>
       </div>
     </Link>
-  );
+  )
 }

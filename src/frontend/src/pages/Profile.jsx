@@ -1,81 +1,135 @@
-import { useEffect, useState } from "react";
-import { getUserData } from "../api";
-import { Link } from "react-router-dom";
+"use client"
+
+import { useEffect, useState } from "react"
+import { getUserData } from "../api"
+import MovieCard from "../components/MovieCard"
+import { Link } from "react-router-dom"
 
 const likedMovies = [
-  { id: 1, title: "Inception", year: 2010, imageUrl: "https://via.placeholder.com/150x225?text=Inception" },
-  { id: 2, title: "Interstellar", year: 2014, imageUrl: "https://via.placeholder.com/150x225?text=Interstellar" },
-  { id: 3, title: "The Dark Knight", year: 2008, imageUrl: "https://via.placeholder.com/150x225?text=The+Dark+Knight" },
-];
+  {
+    id: 1,
+    title: "Inception",
+    year: 2010,
+    director: "Christopher Nolan",
+    actors: ["Leonardo DiCaprio", "Joseph Gordon-Levitt"],
+    imageUrl: "https://placehold.co/300x450/000000/FFFFFF?text=Inception",
+    description:
+      "A skilled thief who specializes in extraction, inception and espionage is offered a chance to regain his old life.",
+  },
+  {
+    id: 2,
+    title: "Interstellar",
+    year: 2014,
+    director: "Christopher Nolan",
+    actors: ["Matthew McConaughey", "Anne Hathaway"],
+    imageUrl: "https://placehold.co/300x450/E8AA42/FFFFFF?text=Interstellar",
+    description: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
+  },
+  {
+    id: 3,
+    title: "The Dark Knight",
+    year: 2008,
+    director: "Christopher Nolan",
+    actors: ["Christian Bale", "Heath Ledger"],
+    imageUrl: "https://placehold.co/300x450/1B1B1B/FFFFFF?text=The+Dark+Knight",
+    description:
+      "When the menace known as The Joker emerges from his mysterious past, he wreaks havoc and chaos on Gotham.",
+  }
+]
 const userReviews = [
-  { id: 1, movieId: 1, movieTitle: "Inception", rating: 5, text: "Чудовий фільм, 10/10! Повністю змінив моє сприйняття." },
-  { id: 2, movieId: 2, movieTitle: "Interstellar", rating: 4, text: "Дуже емоційно та красиво. Музика просто неймовірна." },
-];
+  {
+    id: 1,
+    movieId: 1,
+    movieTitle: "Inception",
+    rating: 5,
+    text: "Чудовий фільм, 10/10! Повністю змінив моє сприйняття.",
+  },
+  {
+    id: 2,
+    movieId: 2,
+    movieTitle: "Interstellar",
+    rating: 4,
+    text: "Дуже емоційно та красиво. Музика просто неймовірна.",
+  },
+]
 
 export default function Profile() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token")
     if (!token) {
-      window.location.href = "/login"; 
-      return;
+      window.location.href = "/login"
+      return
     }
-    getUserData(token).then(setUser);
-  }, []);
+    getUserData(token).then(setUser)
+  }, [])
 
-  if (!user) return <div className="text-center mt-20 text-lg">Завантаження профілю...</div>;
+  if (!user)
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-amber-400">
+        Завантаження профілю...
+      </div>
+    )
 
   return (
-    <div className="max-w-4xl mx-auto p-4 pt-24 pb-8">
-      <div className="flex flex-col md:flex-row items-center md:items-start bg-white shadow-lg rounded-lg p-6 mb-8">
-        <img
-          src={`https://via.placeholder.com/150/007BFF/FFFFFF?text=${user.username[1].toUpperCase()}`}
-          alt="Profile"
-          className="w-36 h-36 rounded-full border-4 border-blue-500 object-cover mb-4 md:mb-0 md:mr-6"
-        />
-        <div className="text-center md:text-left">
-          <h1 className="text-3xl font-bold">{user.nickname}</h1>
-          <p className="text-lg text-gray-600">{user.username}</p>
-          <p className="text-gray-700 mt-2">Email: {user.email}</p>
-          <p className="text-gray-700">Роль: {user.role}</p>
-        </div>
-      </div>
-
-      <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Вподобані фільми</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {likedMovies.map((movie) => (
-            <Link to={`/movie/${movie.id}`} key={movie.id} className="group text-center">
-              <img
-                src={movie.imageUrl}
-                alt={movie.title}
-                className="rounded-lg w-full h-auto object-cover transition-transform transform group-hover:scale-105 shadow-md"
-              />
-              <h3 className="mt-2 font-medium group-hover:text-blue-500">
-                {movie.title} ({movie.year})
-              </h3>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white shadow-lg rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4">Мої відгуки</h2>
-        <div className="space-y-4">
-          {userReviews.map((review) => (
-            <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
-              <h3 className="text-lg font-semibold">
-                <Link to={`/movie/${review.movieId}`} className="hover:text-blue-500">
-                  {review.movieTitle}
-                </Link>
-                <span className="ml-2 text-yellow-500">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
-              </h3>
-              <p className="text-gray-700 mt-1">{review.text}</p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 pt-24 pb-8">
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl p-6 mb-8 border border-amber-500/20 backdrop-blur">
+          <img
+            src={`https://via.placeholder.com/150/007BFF/FFFFFF?text=${user.username[0].toUpperCase()}`}
+            alt=""
+            className="w-32 h-32 rounded-full border-4 border-amber-500 object-cover shadow-lg"
+          />
+          <div className="text-center md:text-left flex-1">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
+              {user.nickname}
+            </h1>
+            <p className="text-lg text-gray-300 mt-1">{user.username}</p>
+            <div className="space-y-2 mt-3 border-t border-amber-500/20 pt-3">
+              <p className="text-gray-400">
+                Email: <span className="text-amber-400">{user.email}</span>
+              </p>
+              <p className="text-gray-400">
+                Роль: <span className="text-amber-400 font-semibold">{user.role}</span>
+              </p>
             </div>
-          ))}
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl p-6 mb-8 border border-amber-500/20 backdrop-blur">
+          <h2 className="text-2xl font-bold text-white mb-6 bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
+            Вподобані фільми
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {likedMovies.map((movie) => (
+              <MovieCard key={movie.id} movie={movie} />
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl p-6 border border-amber-500/20 backdrop-blur">
+          <h2 className="text-2xl font-bold text-white mb-6 bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
+            Мої відгуки
+          </h2>
+          <div className="space-y-6">
+            {userReviews.map((review) => (
+              <div key={review.id} className="border-b border-amber-500/20 pb-4 last:border-b-0">
+                <h3 className="text-lg font-semibold text-white">
+                  <Link to={`/movie/${review.movieId}`} className="hover:text-amber-400 transition-colors">
+                    {review.movieTitle}
+                  </Link>
+                  <span className="ml-3 text-yellow-400">
+                    {"★".repeat(review.rating)}
+                    {"☆".repeat(5 - review.rating)}
+                  </span>
+                </h3>
+                <p className="text-gray-300 mt-2">{review.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
