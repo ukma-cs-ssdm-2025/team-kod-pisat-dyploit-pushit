@@ -57,8 +57,10 @@ export default function Register() {
           Зареєструватися
         </button>
 
+        {/* 5. Покращено відображення помилки */}
         {message && <p className="text-center mt-4 text-sm text-gray-700">{message}</p>}
 
+        {/* 4. Посилання на логін */}
         <p className="text-center mt-4 text-sm text-gray-600">
           Вже є акаунт?{" "}
           <Link to="/login" className="text-blue-500 hover:underline">

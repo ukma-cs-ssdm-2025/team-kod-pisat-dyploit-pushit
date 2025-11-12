@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { loginUser } from "../api";
-import { Link } from "react-router-dom"; // 4. Імпортуємо Link
+import { Link } from "react-router-dom";
 
 export default function Login() {
   const [form, setForm] = useState({ username: "", password: "" });
@@ -14,7 +14,6 @@ export default function Login() {
     const res = await loginUser(form);
     if (res.token) {
       localStorage.setItem("token", res.token);
-      // 3. Змінюємо редирект на /profile
       window.location.href = "/profile";
     } else {
       setMessage(res.message || "Помилка входу");
@@ -22,11 +21,10 @@ export default function Login() {
   };
 
   return (
-    // 5. Додаємо відступ для Header (pt-20) і min-h-screen
     <div className="flex flex-col items-center justify-center min-h-screen pt-20">
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-lg p-8 rounded-lg w-96" // 5. Збільшено padding
+        className="bg-white shadow-lg p-8 rounded-lg w-96"
       >
         <h1 className="text-2xl mb-6 text-center font-bold">Вхід</h1>
 
