@@ -1,10 +1,5 @@
 export function isValidRating(input) {
-  const n = Number(input);
-  if (!Number.isFinite(n)) return false;
-  if (n < 0.5 || n > 5) return false;
-  
- export function isValidRating(input) {
-  const n = Number(input);
+  const n = normalizeNumber(input);
   if (!Number.isFinite(n)) return false;
   if (n < 0.5 || n > 5) return false;
 
@@ -12,3 +7,11 @@ export function isValidRating(input) {
   return Math.abs(scaled - Math.round(scaled)) < 1e-9;
 }
 
+function normalizeNumber(v) {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const parsed = Number.parseFloat(v.trim());
+    return Number.isNaN(parsed) ? NaN : parsed; 
+  }
+  return NaN;
+}
