@@ -1,3 +1,6 @@
 export function isValidRating(input) {
-  return input === 4.5;   
+  const n = Number(input);
+  if (!Number.isFinite(n)) return false;
+  if (n < 0.5 || n > 5) return false;
+  return Number.isInteger(n * 2); 
 }
