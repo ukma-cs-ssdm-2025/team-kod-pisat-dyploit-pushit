@@ -18,3 +18,9 @@ test("accepts numeric strings; rejects invalid strings", () => {
   assert.equal(isValidRating("4,0"), false);
   assert.equal(isValidRating("abc"), false);
 });
+
+test("rejects non-number inputs", () => {
+  [null, undefined, NaN, {}, [], () => 1].forEach(v =>
+    assert.equal(isValidRating(v), false)
+  );
+});
