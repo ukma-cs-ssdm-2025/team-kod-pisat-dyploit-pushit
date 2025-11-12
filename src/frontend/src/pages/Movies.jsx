@@ -1,18 +1,17 @@
 import { useState, useEffect, useMemo } from "react"
-import { getAllMovies } from "../api"
+import { Link } from "react-router-dom"; // Додано Link
+import { getAllMovies } from "../api" // Мокап
 import MovieCard from "../components/MovieCard"
+import { useAuth } from '../hooks/useAuth'; // Наш робочий хук
 
 const SearchIcon = () => (
   <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-    <path
-      fillRule="evenodd"
-      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-      clipRule="evenodd"
-    />
+    <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
   </svg>
 )
 
 export default function Movies() {
+  const { isAdmin } = useAuth(); // Отримуємо статус адміна з беку
   const [movies, setMovies] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filters, setFilters] = useState({ director: "", year: "" })
@@ -20,6 +19,7 @@ export default function Movies() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    // Використовуємо мокап-функцію
     getAllMovies().then((data) => {
       setMovies(data)
       setIsLoading(false)
@@ -28,25 +28,22 @@ export default function Movies() {
 
   const filteredMovies = useMemo(() => {
     let tempMovies = [...movies]
-
     if (searchTerm) {
       tempMovies = tempMovies.filter((movie) => movie.title.toLowerCase().includes(searchTerm.toLowerCase()))
     }
-
     if (filters.director) {
       tempMovies = tempMovies.filter((movie) => movie.director.toLowerCase().includes(filters.director.toLowerCase()))
     }
-
     if (filters.year) {
       tempMovies = tempMovies.filter((movie) => movie.year.toString().includes(filters.year))
     }
-
     return tempMovies
   }, [movies, searchTerm, filters])
 
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value })
   }
+
 
   if (isLoading) {
     return (
@@ -59,12 +56,23 @@ export default function Movies() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950">
       <div className="max-w-7xl mx-auto p-4 pt-24 pb-8">
-        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
-          Огляд Фільмів
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
+            Огляд Фільмів
+          </h1>
+          {/* Кнопка для Адміна */}
+          {isAdmin && (
+            <Link
+              to="/movies/new"
+              className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-6 py-3 rounded-lg transition-all font-medium border border-green-400/30"
+            >
+              + Додати фільм
+            </Link>
+          )}
+        </div>
 
         <div className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 p-6 rounded-xl shadow-lg mb-8 sticky top-16 z-10 border border-amber-500/20 backdrop-blur">
-          <div className="flex flex-col md:flex-row gap-4">
+           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-grow">
               <input
                 type="text"

@@ -11,7 +11,8 @@ export default function MovieCard({ movie }) {
 
       <div className="overflow-hidden rounded-xl shadow-xl">
         <img
-          src={movie.imageUrl || "/placeholder.svg"}
+          // --- ВИПРАВЛЕННЯ ІКОНКИ ---
+          src={movie.imageUrl || "https://placehold.co/300x450/666/FFFFFF?text=No+Image"}
           alt={movie.title}
           className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110 filter group-hover:brightness-110"
         />
