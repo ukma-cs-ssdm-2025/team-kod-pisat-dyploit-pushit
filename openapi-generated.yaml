@@ -77,12 +77,18 @@ paths:
           description: Невірний логін або пароль
   /api/v1/movies:
     get:
-      summary: Отримати список фільмів
+      summary: Отримати список усіх фільмів
+      tags:
+        - Movies
       responses:
         '200':
           description: Список фільмів
     post:
-      summary: Додати новий фільм
+      summary: Створити новий фільм з прив'язкою до людей
+      tags:
+        - Movies
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -91,18 +97,313 @@ paths:
               type: object
               required:
                 - title
-                - year
               properties:
                 title:
                   type: string
-                year:
+                description:
+                  type: string
+                genre:
+                  type: string
+                rating:
+                  type: number
+                people_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '201':
+          description: Фільм створено
+        '400':
+          description: Некоректні дані
+        '403':
+          description: Недостатньо прав
+  /api/v1/movies/{id}:
+    get:
+      summary: Отримати фільм за ID з усіма людьми
+      tags:
+        - Movies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID фільму
+      responses:
+        '200':
+          description: Інформація про фільм та пов’язаних людей
+        '404':
+          description: Фільм не знайдено
+    put:
+      summary: Оновити дані фільму та зв’язки з людьми
+      tags:
+        - Movies
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID фільму
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                genre:
+                  type: string
+                rating:
+                  type: number
+                people_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Фільм оновлено
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Фільм не знайдено
+    delete:
+      summary: Видалити фільм за ID
+      tags:
+        - Movies
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID фільму
+      responses:
+        '200':
+          description: Фільм видалено
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Фільм не знайдено
+  /api/v1/people:
+    get:
+      summary: Отримати список усіх людей
+      tags:
+        - People
+      responses:
+        '200':
+          description: Успішне отримання списку людей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    first_name:
+                      type: string
+                    last_name:
+                      type: string
+                    profession:
+                      type: string
+                    biography:
+                      type: string
+    post:
+      summary: Додати нову людину
+      tags:
+        - People
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - first_name
+                - last_name
+                - profession
+              properties:
+                first_name:
+                  type: string
+                  example: Tom
+                last_name:
+                  type: string
+                  example: Cruise
+                profession:
+                  type: string
+                  enum:
+                    - actor
+                    - producer
+                    - director
+                biography:
+                  type: string
+                  example: Американський актор і продюсер.
+                movie_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '201':
+          description: Людину створено
+        '400':
+          description: Некоректні дані
+        '403':
+          description: Недостатньо прав
+        '500':
+          description: Помилка бази даних
+  /api/v1/people/{id}:
+    get:
+      summary: Отримати інформацію про конкретну людину з фільмами
+      tags:
+        - People
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID людини
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успішне отримання даних людини з переліком фільмів
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  profession:
+                    type: string
+                  biography:
+                    type: string
+                  movies:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Людину не знайдено
+    put:
+      summary: Оновити інформацію про людину
+      tags:
+        - People
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID людини
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                profession:
+                  type: string
+                biography:
+                  type: string
+                movie_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Людину оновлено
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Людину не знайдено
+        '500':
+          description: Помилка бази даних
+    delete:
+      summary: Видалити людину
+      tags:
+        - People
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID людини
+      responses:
+        '200':
+          description: Людину видалено
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Людину не знайдено
+        '500':
+          description: Помилка бази даних
+  /api/v1/reviews:
+    get:
+      summary: Отримати список усіх рецензій
+      tags:
+        - Reviews
+      responses:
+        '200':
+          description: Список рецензій
+    post:
+      summary: Створити нову рецензію
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - body
+                - rating
+                - movie_id
+              properties:
+                title:
+                  type: string
+                body:
+                  type: string
+                rating:
+                  type: integer
+                movie_id:
                   type: integer
       responses:
         '201':
-          description: Фільм додано
-  /api/v1/movies/{id}:
+          description: Рецензію створено
+  /api/v1/reviews/{id}:
     get:
-      summary: Отримати фільм за ID
+      summary: Отримати рецензію за ID
+      tags:
+        - Reviews
       parameters:
         - name: id
           in: path
@@ -111,17 +412,393 @@ paths:
             type: integer
       responses:
         '200':
-          description: Дані про фільм
+          description: Рецензія знайдена
+        '404':
+          description: Рецензія не знайдена
+    put:
+      summary: Оновити рецензію
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                body:
+                  type: string
+                rating:
+                  type: integer
+      responses:
+        '200':
+          description: Рецензію оновлено
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Рецензію не знайдено
+    delete:
+      summary: Видалити рецензію
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Рецензію видалено
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Рецензію не знайдено
+  /api/v1/upload/avatar:
+    post:
+      summary: Завантажити аватар користувача
+      description: >
+        Приймає зображення користувача (`.jpg`, `.png`, `.jpeg`) та завантажує
+        його до Cloudflare R2.
+
+        Повертає публічне посилання на файл.
+
+        Якщо у користувача вже є аватарка, повторний аплоад заборонений.
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: Файл зображення користувача
+      responses:
+        '200':
+          description: Файл успішно завантажено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  url:
+                    type: string
+                    example: >-
+                      https://example-bucket.r2.cloudflarestorage.com/avatars/1731348743215_avatar.png
+        '400':
+          description: Файл не був переданий або аватарка вже існує
+        '401':
+          description: Неавторизований користувач
+        '404':
+          description: Користувача не знайдено
+        '500':
+          description: Помилка сервера або завантаження файлу
+    put:
+      summary: Замінити існуючу аватарку
+      description: >
+        Якщо у користувача вже є аватарка, старий файл видаляється з Cloudflare
+        R2, а новий завантажується замість нього.
+
+        Повертає публічне посилання на новий файл.
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: Новий файл зображення (.jpg, .jpeg або .png)
+      responses:
+        '200':
+          description: Аватарку успішно замінено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  url:
+                    type: string
+                    example: >-
+                      https://example-bucket.r2.cloudflarestorage.com/avatars/1731348743215_avatar.png
+        '400':
+          description: >-
+            Файл не передано або сталася помилка під час видалення старого
+            аватара
+        '401':
+          description: Неавторизований користувач
+        '404':
+          description: Користувача не знайдено
+        '500':
+          description: Помилка сервера або завантаження файлу
+  /api/v1/upload/avatar/{param}:
+    delete:
+      summary: Видалити аватар користувача
+      description: >-
+        Видаляє аватарку користувача за його ID або username. Адміністратор може
+        видаляти будь-які аватарки, звичайний користувач — лише свою.
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: param
+          in: path
+          required: true
+          description: ID або username користувача (наприклад, `2` або `@string5`)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Аватарку успішно видалено
+        '400':
+          description: Аватарки не існує
+        '401':
+          description: Неавторизований користувач
+        '403':
+          description: Недостатньо прав для видалення чужої аватарки
+        '404':
+          description: Користувача не знайдено
+        '500':
+          description: Помилка сервера
+  /api/v1/upload/movie-cover/{id}:
+    post:
+      summary: Завантажити обкладинку фільму
+      description: >
+        Дозволено лише адміністратору. Приймає зображення та завантажує до
+        Cloudflare R2.
+
+        Якщо у фільму вже є обкладинка, повторне завантаження заборонено.
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID фільму
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                cover:
+                  type: string
+                  format: binary
+                  description: Файл зображення обкладинки
+      responses:
+        '200':
+          description: Обкладинку завантажено
+        '400':
+          description: Файл не передано або обкладинка вже існує
+        '401':
+          description: Неавторизований користувач
+        '403':
+          description: Недостатньо прав
         '404':
           description: Фільм не знайдено
+        '500':
+          description: Помилка сервера
+    put:
+      summary: Замінити обкладинку фільму
+      description: >
+        Адміністратор може замінити існуючу обкладинку. Стара обкладинка
+        видаляється з R2.
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID фільму
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                cover:
+                  type: string
+                  format: binary
+                  description: Новий файл зображення
+      responses:
+        '200':
+          description: Обкладинку замінено
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Фільм не знайдено
+    delete:
+      summary: Видалити обкладинку фільму
+      description: |
+        Тільки адміністратор може видаляти обкладинки фільмів.
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID фільму
+      responses:
+        '200':
+          description: Обкладинку видалено
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Фільм або обкладинку не знайдено
+  /api/v1/upload/person-avatar/{id}:
+    post:
+      summary: Завантажити аватарку людини
+      description: >
+        Дозволено лише адміністратору. Приймає зображення та завантажує до
+        Cloudflare R2.
+
+        Якщо у людини вже є аватарка, повторне завантаження заборонено.
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID людини
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: Файл аватарки
+      responses:
+        '200':
+          description: Аватарку завантажено
+        '400':
+          description: Файл не передано або аватарка вже існує
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Людину не знайдено
+        '500':
+          description: Помилка сервера
+    put:
+      summary: Замінити аватарку людини
+      description: >
+        Адміністратор може замінити існуючу аватарку. Стара аватарка видаляється
+        з R2.
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID людини
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: Новий файл аватарки
+      responses:
+        '200':
+          description: Аватарку замінено
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Людину не знайдено
+    delete:
+      summary: Видалити аватарку людини
+      description: |
+        Тільки адміністратор може видаляти аватарки людей.
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID людини
+      responses:
+        '200':
+          description: Аватарку видалено
+        '403':
+          description: Недостатньо прав
+        '404':
+          description: Людину або аватарку не знайдено
   /api/v1/users:
     get:
       summary: Отримати список усіх користувачів
+      tags:
+        - Users
       responses:
         '200':
           description: Список користувачів
     post:
       summary: Створити нового користувача
+      tags:
+        - Users
       requestBody:
         required: true
         content:
@@ -153,6 +830,8 @@ paths:
   /api/v1/users/{param}:
     get:
       summary: Отримати користувача за ID або username
+      tags:
+        - Users
       parameters:
         - name: param
           in: path
@@ -167,6 +846,8 @@ paths:
           description: Користувача не знайдено
     put:
       summary: Оновити дані користувача за ID або username
+      tags:
+        - Users
       parameters:
         - name: param
           in: path
@@ -200,6 +881,8 @@ paths:
           description: Користувача не знайдено
     delete:
       summary: Видалити користувача за ID або username
+      tags:
+        - Users
       parameters:
         - name: param
           in: path
