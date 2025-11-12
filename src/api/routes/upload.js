@@ -152,7 +152,6 @@ router.put('/upload/avatar', upload.single('avatar'), async (req, res) => {
       }
     }
 
-    // Завантажуємо нову
     const fileName = `avatars/${Date.now()}_${req.file.originalname}`;
     const fileUrl = await uploadFileToR2(req.file.buffer, fileName, req.file.mimetype);
 
