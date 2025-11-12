@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { registerUser } from "../api";
-import { Link } from "react-router-dom"; // 4. Імпортуємо Link
+import { Link } from "react-router-dom";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -17,7 +17,6 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const res = await registerUser(form);
-    // 5. Покращено відображення повідомлення
     if (res.user) {
         setMessage("Користувача створено! Тепер ви можете увійти.");
     } else {
@@ -26,7 +25,6 @@ export default function Register() {
   };
 
   return (
-    // 5. Додаємо відступ для Header (pt-20) і min-h-screen
     <div className="flex flex-col items-center justify-center min-h-screen pt-20 pb-8">
       <form onSubmit={handleSubmit} className="bg-white shadow-lg p-8 rounded-lg w-96">
         <h1 className="text-2xl mb-6 text-center font-bold">Реєстрація</h1>
@@ -36,7 +34,6 @@ export default function Register() {
             key={field}
             type={field === "password" ? "password" : "text"}
             name={field}
-            // 5. Красиві плейсхолдери
             placeholder={field.charAt(0).toUpperCase() + field.slice(1)} 
             className="border p-2 w-full mb-3 rounded focus:ring-2 focus:ring-blue-500 outline-none"
             onChange={handleChange}
@@ -62,7 +59,6 @@ export default function Register() {
 
         {message && <p className="text-center mt-4 text-sm text-gray-700">{message}</p>}
 
-        {/* 4. Посилання на логін */}
         <p className="text-center mt-4 text-sm text-gray-600">
           Вже є акаунт?{" "}
           <Link to="/login" className="text-blue-500 hover:underline">
