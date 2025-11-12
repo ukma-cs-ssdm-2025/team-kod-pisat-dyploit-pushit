@@ -9,6 +9,10 @@ const db = require('./db');
 const authRouter = require('./routes/auth');
 const usersRouter = require('./routes/users');
 const moviesRouter = require('./routes/movies');
+const uploadRouter = require('./routes/upload');
+const reviewsRouter = require('./routes/reviews');
+const peopleRouter = require('./routes/people');
+
 
 const authenticateToken = require('./middleware/authMiddleware');
 
@@ -28,6 +32,9 @@ app.locals.db = db;
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1', authenticateToken, usersRouter);
 app.use('/api/v1', authenticateToken, moviesRouter);
+app.use('/api/v1', authenticateToken, uploadRouter);
+app.use('/api/v1', authenticateToken, reviewsRouter);
+app.use('/api/v1', authenticateToken, peopleRouter);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
