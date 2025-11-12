@@ -15,3 +15,5 @@ function normalizeNumber(v) {
   }
   return NaN;
 }
+
+//no changes. tests must pass
