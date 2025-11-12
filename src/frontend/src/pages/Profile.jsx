@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { getUserData } from "../api"
 import MovieCard from "../components/MovieCard"
@@ -88,10 +86,10 @@ export default function Profile() {
             <p className="text-lg text-gray-300 mt-1">{user.username}</p>
             <div className="space-y-2 mt-3 border-t border-amber-500/20 pt-3">
               <p className="text-gray-400">
-                Email: <span className="text-amber-400">{user.email}</span>
+                Email: <span className="text-gray-400">{user.email}</span>
               </p>
               <p className="text-gray-400">
-                Роль: <span className="text-amber-400 font-semibold">{user.role}</span>
+                Роль: <span className="text-gray-400 font-semibold">{user.role}</span>
               </p>
             </div>
           </div>

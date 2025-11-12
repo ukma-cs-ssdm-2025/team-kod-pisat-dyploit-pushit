@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { registerUser } from "../api"
 import { Link } from "react-router-dom"
