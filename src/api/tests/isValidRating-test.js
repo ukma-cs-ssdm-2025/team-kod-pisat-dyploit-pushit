@@ -12,3 +12,9 @@ test("rejects value outside upper bound", () => {
 test("rejects non-.5 step values", () => {
   [1.1, 2.25, 4.7].forEach(v => assert.equal(isValidRating(v), false));
 });
+
+test("accepts numeric strings; rejects invalid strings", () => {
+  assert.equal(isValidRating(" 4.0 "), true);
+  assert.equal(isValidRating("4,0"), false);
+  assert.equal(isValidRating("abc"), false);
+});
