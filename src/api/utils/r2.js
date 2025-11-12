@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 require('dotenv').config();
 
 const s3 = new S3Client({
@@ -23,4 +23,11 @@ async function uploadFileToR2(fileBuffer, fileName, mimeType) {
   return `${process.env.CLOUDFLARE_BUCKET_PUBLIC_URL}/${fileName}`;
 }
 
-module.exports = { uploadFileToR2 };
+async function deleteFileFromR2(key) {
+  await s3.send(new DeleteObjectCommand({
+    Bucket: process.env.CLOUDFLARE_BUCKET_NAME,
+    Key: key
+  }));
+}
+
+module.exports = { uploadFileToR2, deleteFileFromR2 };
