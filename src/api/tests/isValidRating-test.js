@@ -24,3 +24,5 @@ test("rejects non-number inputs", () => {
     assert.equal(isValidRating(v), false)
   );
 });
+
+// no changes. tests must pass
