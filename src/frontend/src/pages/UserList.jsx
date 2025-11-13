@@ -1,21 +1,26 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllUsers, deleteUser } from '../api'; // Імпортуємо deleteUser
-import { useAuth } from '../hooks/useAuth'; // Імпортуємо useAuth
+import { getAllUsers, deleteUser } from '../api';
+import { useAuth } from '../hooks/useAuth'; 
 
 export default function UserList() {
-  // Отримуємо роль поточного користувача
-  const { isAdmin, isModerator } = useAuth();
+  const { user: currentUser, isAdmin, isModerator } = useAuth();
   
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getAllUsers().then(data => {
-      setUsers(data);
-      setIsLoading(false);
-    });
+    getAllUsers()
+      .then(data => {
+        setUsers(data);
+      })
+      .catch(err => {
+        console.error("Помилка завантаження користувачів:", err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   const filteredUsers = users.filter(user => 
@@ -24,13 +29,14 @@ export default function UserList() {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // --- НОВА ФУНКЦІЯ ---
-  // Обробник видалення користувача
   const handleDeleteUser = async (userId, username) => {
     if (window.confirm(`Ви впевнені, що хочете видалити (забанити) ${username}?`)) {
-      await deleteUser(userId); // Виклик мокап API
-      // Оновлюємо список локально, щоб користувач зник
-      setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+      try {
+        await deleteUser(userId); 
+        setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+      } catch (err) {
+        alert(`Помилка: ${err.message || 'Не вдалося видалити'}`);
+      }
     }
   };
 
@@ -61,18 +67,17 @@ export default function UserList() {
                 <th className="p-4 text-amber-400">Username</th>
                 <th className="p-4 text-amber-400">Email</th>
                 <th className="p-4 text-amber-400">Роль</th>
-                {/* --- НОВА КОЛОНКА --- */}
                 <th className="p-4 text-amber-400">Дії</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map(user => {
-                // --- НОВА ЛОГІКА ---
-                // Визначаємо, чи можна видалити цього користувача
-                // Адмін може видаляти всіх, крім інших адмінів
-                // Модератор може видаляти тільки 'user'
-                const canDelete = (isAdmin && user.role !== 'admin') || 
-                                  (isModerator && !isAdmin && user.role === 'user');
+                const isMyOwnProfile = currentUser?.id === user.id;
+                
+                const canDelete = !isMyOwnProfile && (
+                  (isAdmin && user.role !== 'admin') || 
+                  (isModerator && !isAdmin && user.role === 'user')
+                );
 
                 return (
                   <tr key={user.id} className="border-b border-purple-800/50 last:border-b-0 hover:bg-purple-800/30 transition-colors">
@@ -84,7 +89,6 @@ export default function UserList() {
                     <td className="p-4 text-gray-300">{user.username}</td>
                     <td className="p-4 text-gray-300">{user.email}</td>
                     <td className="p-4 text-gray-300">{user.role}</td>
-                    {/* --- НОВА КОЛОНКА З КНОПКОЮ --- */}
                     <td className="p-4">
                       {canDelete ? (
                         <button 
@@ -94,7 +98,7 @@ export default function UserList() {
                           Видалити
                         </button>
                       ) : (
-                        <span className="text-gray-600 text-sm">—</span>
+                        <span className="text-gray-600 text-sm">{isMyOwnProfile ? "(Це ви)" : "—"}</span>
                       )}
                     </td>
                   </tr>

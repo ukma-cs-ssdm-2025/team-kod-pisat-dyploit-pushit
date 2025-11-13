@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react"
-import { Link } from "react-router-dom"; // Додано Link
-import { getAllMovies } from "../api" // Мокап
+import { Link } from "react-router-dom"; 
+import { getAllMovies } from "../api" 
 import MovieCard from "../components/MovieCard"
-import { useAuth } from '../hooks/useAuth'; // Наш робочий хук
+import { useAuth } from '../hooks/useAuth'; 
 
 const SearchIcon = () => (
   <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
@@ -11,19 +11,24 @@ const SearchIcon = () => (
 )
 
 export default function Movies() {
-  const { isAdmin } = useAuth(); // Отримуємо статус адміна з беку
+  const { isAdmin } = useAuth();
   const [movies, setMovies] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [filters, setFilters] = useState({ director: "", year: "" })
+  const [filters, setFilters] = useState({ genre: "", rating: "" })
   const [showFilters, setShowFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Використовуємо мокап-функцію
-    getAllMovies().then((data) => {
-      setMovies(data)
-      setIsLoading(false)
-    })
+    getAllMovies()
+      .then((data) => {
+        setMovies(data)
+      })
+      .catch(err => {
+        console.error("Не вдалося завантажити фільми:", err)
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [])
 
   const filteredMovies = useMemo(() => {
@@ -31,11 +36,11 @@ export default function Movies() {
     if (searchTerm) {
       tempMovies = tempMovies.filter((movie) => movie.title.toLowerCase().includes(searchTerm.toLowerCase()))
     }
-    if (filters.director) {
-      tempMovies = tempMovies.filter((movie) => movie.director.toLowerCase().includes(filters.director.toLowerCase()))
+    if (filters.genre) {
+      tempMovies = tempMovies.filter((movie) => movie.genre?.toLowerCase().includes(filters.genre.toLowerCase()))
     }
-    if (filters.year) {
-      tempMovies = tempMovies.filter((movie) => movie.year.toString().includes(filters.year))
+    if (filters.rating) {
+      tempMovies = tempMovies.filter((movie) => (movie.rating || 0).toString() >= filters.rating)
     }
     return tempMovies
   }, [movies, searchTerm, filters])
@@ -60,7 +65,6 @@ export default function Movies() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
             Огляд Фільмів
           </h1>
-          {/* Кнопка для Адміна */}
           {isAdmin && (
             <Link
               to="/movies/new"
@@ -71,8 +75,9 @@ export default function Movies() {
           )}
         </div>
 
+        
         <div className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 p-6 rounded-xl shadow-lg mb-8 sticky top-16 z-10 border border-amber-500/20 backdrop-blur">
-           <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-grow">
               <input
                 type="text"
@@ -97,17 +102,19 @@ export default function Movies() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-amber-500/20 pt-4">
               <input
                 type="text"
-                name="director"
-                placeholder="Фільтрувати за режисером..."
-                value={filters.director}
+                name="genre"
+                placeholder="Фільтрувати за жанром..."
+                value={filters.genre}
                 onChange={handleFilterChange}
                 className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-all"
               />
               <input
-                type="text"
-                name="year"
-                placeholder="Фільтрувати за роком..."
-                value={filters.year}
+                type="number"
+                name="rating"
+                placeholder="Рейтинг (наприклад, 8)"
+                min="0"
+                max="10"
+                value={filters.rating}
                 onChange={handleFilterChange}
                 className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-all"
               />

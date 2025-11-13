@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { registerUser } from "../api" // Ваша робоча функція
+import { registerUser } from "../api" 
 import { Link } from "react-router-dom"
 
 export default function Register() {
@@ -14,18 +14,15 @@ export default function Register() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
-  // === ВАША СТАРА РОБОЧА ЛОГІКА ===
   const handleSubmit = async (e) => {
     e.preventDefault()
     const res = await registerUser(form)
-    // Додаємо перевірку успіху
     if (res.user) {
         setMessage("Користувача створено! Тепер ви можете увійти.")
     } else {
         setMessage(res.message || "Помилка реєстрації.")
     }
   }
-  // ================================
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 flex items-center justify-center px-4 py-8">
@@ -84,22 +81,6 @@ export default function Register() {
                 onChange={handleChange}
                 required
               />
-
-              {/* Вибір ролі не потрібен звичайному юзеру, 
-                  ваш бекенд (auth.js) має перевіряти це.
-                  Я приховаю це поле, але залишу 'user' за замовчуванням.
-                  Якщо вам потрібен вибір ролі, просто розкоментуйте.
-              */}
-              {/* <select
-                name="role"
-                value={form.role}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-transparent border-2 border-blue-500 rounded-lg text-white focus:outline-none focus:border-blue-400 transition-colors"
-              >
-                <option value="user" className="bg-purple-900">User</option>
-                <option value="moderator" className="bg-purple-900">Moderator</option>
-                <option value="admin" className="bg-purple-900">Admin</option>
-              </select> */}
             </div>
 
             <div className="flex items-center mb-6 gap-2">

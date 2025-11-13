@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { loginUser } from "../api" // Ваша робоча функція
+import { loginUser } from "../api"
 import { Link } from "react-router-dom"
 
 export default function Login() {
@@ -8,20 +8,16 @@ export default function Login() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
-  // === ВАША СТАРА РОБОЧА ЛОГІКА ===
   const handleSubmit = async (e) => {
     e.preventDefault()
     const res = await loginUser(form)
     if (res.token) {
       localStorage.setItem("token", res.token)
-      // ВАЖЛИВО: Редірект на /profile (як ви просили)
-      // і перезавантаження, щоб useAuth підхопив токен
       window.location.href = "/profile" 
     } else {
       setMessage(res.message || "Помилка входу")
     }
   }
-  // ================================
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 flex items-center justify-center px-4">

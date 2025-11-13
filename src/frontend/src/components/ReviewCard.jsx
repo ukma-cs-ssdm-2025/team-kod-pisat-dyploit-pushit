@@ -10,7 +10,6 @@ export default function ReviewCard({ review, onDelete }) {
     year: 'numeric',
   });
 
-  // Може видалити адмін, модератор, АБО сам автор відгуку
   const canDelete = isAdmin || isModerator || currentUser?.id === review.user?.id;
 
   return (

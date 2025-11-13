@@ -1,49 +1,67 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addMovie } from '../api'; // Мокап
+import { addMovie, uploadMovieCover } from '../api'; 
 
 export default function AddMovie() {
+  
   const [formData, setFormData] = useState({
     title: '',
-    year: '',
-    director: '',
-    actors: '',
     description: '',
+    genre: '',
+    rating: 0,
+    people_ids: '', 
   });
-  // --- НОВИЙ СТАН ДЛЯ ФАЙЛУ ---
   const [posterFile, setPosterFile] = useState(null);
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- НОВИЙ ОБРОБНИК ---
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setPosterFile(e.target.files[0]);
     }
   };
 
-  // --- ОНОВЛЕНА ФУНКЦІЯ ---
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!posterFile) {
-      alert("Будь ласка, завантажте постер для фільму.");
-      return;
+    setIsSubmitting(true);
+
+    try {
+      
+      const movieData = {
+        title: formData.title,
+        description: formData.description,
+        genre: formData.genre,
+        rating: parseFloat(formData.rating) || 0,
+        
+        people_ids: formData.people_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean),
+      };
+
+      const response = await addMovie(movieData);
+      const newMovieId = response.movie?.id;
+
+      if (!newMovieId) {
+        throw new Error("Не вдалося отримати ID нового фільму");
+      }
+
+      
+      if (posterFile) {
+        await uploadMovieCover(newMovieId, posterFile);
+      }
+      
+      alert('Фільм успішно створено!');
+      navigate(`/movie/${newMovieId}`);
+
+    } catch (err) {
+      console.error("Помилка створення фільму:", err);
+      alert(`Помилка: ${err.message || 'Не вдалося створити фільм'}`);
+      setIsSubmitting(false);
     }
-    
-    const movieData = {
-      ...formData,
-      year: parseInt(formData.year, 10),
-      actors: formData.actors.split(',').map(actor => actor.trim()),
-    };
-    
-    // Передаємо дані ТА файл
-    await addMovie(movieData, posterFile);
-    alert('Фільм успішно додано (імітація)!');
-    navigate('/movies');
   };
 
   return (
@@ -55,17 +73,35 @@ export default function AddMovie() {
 
         <form onSubmit={handleSubmit} className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl p-6 border border-amber-500/20 backdrop-blur space-y-4">
           
-          {/* ... (поля "Назва", "Рік", "Режисер", "Актори") ... */}
-          
-          {/* --- ОНОВЛЕНЕ ПОЛЕ --- */}
           <div>
-            <label className="block text-amber-400 mb-2">Постер (файл)</label>
+            <label className="block text-amber-400 mb-2">Назва</label>
+            <input type="text" name="title" onChange={handleChange} required className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-amber-400 mb-2">Жанр</label>
+              <input type="text" name="genre" onChange={handleChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
+            </div>
+            <div>
+              <label className="block text-amber-400 mb-2">Рейтинг (0-10)</label>
+              <input type="number" name="rating" step="0.1" min="0" max="10" onChange={handleChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-amber-400 mb-2">ID Людей (через кому)</label>
+            <input type="text" name="people_ids" placeholder="Напр: 1, 2, 5" onChange={handleChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
+          </div>
+
+          <div>
+            <label className="block text-amber-400 mb-2">Обкладинка (файл)</label>
             <input 
               type="file" 
               name="posterFile" 
               onChange={handleFileChange} 
               accept="image/*"
-              required
+              
               className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200"
             />
           </div>
@@ -75,8 +111,8 @@ export default function AddMovie() {
             <textarea name="description" onChange={handleChange} rows="5" className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"></textarea>
           </div>
 
-          <button type="submit" className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-6 py-3 rounded-lg">
-            Додати Фільм
+          <button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-6 py-3 rounded-lg disabled:opacity-50">
+            {isSubmitting ? 'Збереження...' : 'Додати Фільм'}
           </button>
         </form>
       </div>

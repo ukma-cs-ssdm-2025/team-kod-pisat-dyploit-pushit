@@ -11,8 +11,7 @@ export default function MovieCard({ movie }) {
 
       <div className="overflow-hidden rounded-xl shadow-xl">
         <img
-          // --- ВИПРАВЛЕННЯ ІКОНКИ ---
-          src={movie.imageUrl || "https://placehold.co/300x450/666/FFFFFF?text=No+Image"}
+          src={movie.cover_url || "https://placehold.co/300x450/666/FFFFFF?text=No+Image"}
           alt={movie.title}
           className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110 filter group-hover:brightness-110"
         />
@@ -24,10 +23,7 @@ export default function MovieCard({ movie }) {
         >
           {movie.title}
         </h3>
-        <p className="text-amber-400/80 text-sm">{movie.year}</p>
-        <p className="text-gray-400 text-xs truncate" title={movie.director}>
-          Реж: {movie.director}
-        </p>
+        <p className="text-amber-400/80 text-sm">Рейтинг: {movie.rating || 0} ★</p>
       </div>
     </Link>
   )

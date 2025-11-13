@@ -7,7 +7,11 @@ import Movies from "./pages/Movies"
 import Header from "./components/Header"
 import UserList from "./pages/UserList"
 import AddMovie from "./pages/AddMovie"
-import ProtectedRoute from "./components/ProtectedRoute" // Імпорт ProtectedRoute
+import ProtectedRoute from "./components/ProtectedRoute"
+import PeopleList from "./pages/PeopleList"
+import AddPerson from "./pages/AddPerson"
+import Person from "./pages/Person"
+
 
 function AppContent() {
   const { pathname } = useLocation()
@@ -18,23 +22,18 @@ function AppContent() {
       {!hideHeader && <Header />}
       <main className={hideHeader ? "" : "pt-16"}>
         <Routes>
-          {/* Головні роути */}
           <Route path="/" element={<Movies />} />
           <Route path="/movies" element={<Movies />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/movie/:id" element={<Movie />} />
-          
-          {/* Динамічні профілі */}
+          <Route path="/people/:id" element={<Person />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/user/:username" element={<Profile />} />
 
-          {/* --- Адмін-панель (ОНОВЛЕНО) --- */}
-          
           <Route 
             path="/admin/users" 
             element={
-              // Додаємо 'moderatorRequired'
               <ProtectedRoute moderatorRequired={true}>
                 <UserList />
               </ProtectedRoute>
@@ -44,12 +43,30 @@ function AppContent() {
           <Route 
             path="/movies/new" 
             element={
-              // 'adminOnly' залишається, як було
               <ProtectedRoute adminOnly={true}>
                 <AddMovie />
               </ProtectedRoute>
             } 
           />
+
+          <Route 
+            path="/admin/people" 
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <PeopleList />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/people/new" 
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <AddPerson />
+              </ProtectedRoute>
+            } 
+          />
+
         </Routes>
       </main>
     </>
