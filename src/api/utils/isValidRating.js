@@ -1,4 +1,4 @@
-export function isValidRating(input) {
+function isValidRating(input) {
   const n = normalizeNumber(input);
   if (!Number.isFinite(n)) return false;
   if (n < 0.5 || n > 5) return false;
@@ -10,10 +10,16 @@ export function isValidRating(input) {
 function normalizeNumber(v) {
   if (typeof v === "number") return v;
   if (typeof v === "string") {
-    const parsed = Number.parseFloat(v.trim());
+    const trimmed = v.trim();
+
+    if (!/^[+-]?\d+(\.\d+)?$/.test(trimmed)) {
+      return NaN;
+    }
+
+    const parsed = Number.parseFloat(trimmed);
     return Number.isNaN(parsed) ? NaN : parsed; 
   }
   return NaN;
 }
 
-//no changes. tests must pass
+module.exports.isValidRating = isValidRating;
