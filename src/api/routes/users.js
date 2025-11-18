@@ -90,18 +90,20 @@ router.get('/users/:param', async (req, res) => {
  *         application/json:
  *           schema:
  *             type: object
- *             required: [username, role, nickname, password, email]
+ *             required: [username, nickname, password, email]
  *             properties:
  *               username:
  *                 type: string
- *               role:
- *                 type: string
+ *                 example: "@newuser"
  *               nickname:
  *                 type: string
+ *                 example: "MovieFan"
  *               password:
  *                 type: string
+ *                 example: "Qwerty!123"
  *               email:
  *                 type: string
+ *                 example: "user@example.com"
  *     responses:
  *       201:
  *         description: Користувача створено
@@ -110,9 +112,9 @@ router.get('/users/:param', async (req, res) => {
  */
 router.post('/users', async (req, res) => {
   const db = req.app.locals.db;
-  const { username, role, nickname, password, email } = req.body;
+  const { username, nickname, password, email } = req.body;
 
-  if (!username || !role || !nickname || !password || !email) {
+  if (!username || !nickname || !password || !email) {
     return res.status(400).json({ message: 'Вкажіть усі необхідні поля' });
   }
 
@@ -121,8 +123,8 @@ router.post('/users', async (req, res) => {
   }
 
   if (!isValidPassword(password)) {
-    return res.status(400).json({ 
-      message: 'Пароль не відповідає вимогам безпеки (мінімум 8 символів, 1 цифра, 1 спецсимвол: !@#$%^&*)' 
+    return res.status(400).json({
+      message: 'Пароль не відповідає вимогам безпеки (мінімум 8 символів, 1 цифра, 1 спецсимвол: !@#$%^&*)'
     });
   }
 
@@ -132,10 +134,10 @@ router.post('/users', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     const result = await db.query(
-      `INSERT INTO users (username, role, nickname, password, email)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO users (username, nickname, password, email)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [formattedUsername, role, nickname, hashedPassword, email]
+      [formattedUsername, nickname, hashedPassword, email]
     );
 
     res.status(201).json({ message: 'Користувача створено', user: result.rows[0] });
@@ -144,6 +146,7 @@ router.post('/users', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
+
 
 /**
  * @openapi
