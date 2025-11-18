@@ -25,13 +25,13 @@ async function updateMovieRating(db, movieId) {
 /**
  * @openapi
  * /api/v1/reviews:
- * get:
- * summary: Отримати список усіх рецензій
- * tags:
- * - Reviews
- * responses:
- * 200:
- * description: Список рецензій
+ *   get:
+ *     summary: Отримати список усіх рецензій
+ *     tags:
+ *       - Reviews
+ *     responses:
+ *       200:
+ *         description: Список рецензій
  */
 router.get('/reviews', async (req, res) => {
   const db = req.app.locals.db;
@@ -49,21 +49,21 @@ router.get('/reviews', async (req, res) => {
 /**
  * @openapi
  * /api/v1/reviews/{id}:
- * get:
- * summary: Отримати рецензію за ID
- * tags:
- * - Reviews
- * parameters:
- * - name: id
- * in: path
- * required: true
- * schema:
- * type: integer
- * responses:
- * 200:
- * description: Рецензія знайдена
- * 404:
- * description: Рецензія не знайдена
+ *   get:
+ *     summary: Отримати рецензію за ID
+ *     tags:
+ *       - Reviews
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Рецензія знайдена
+ *       404:
+ *         description: Рецензія не знайдена
  */
 router.get('/reviews/:id', async (req, res) => {
   const db = req.app.locals.db;
@@ -81,31 +81,31 @@ router.get('/reviews/:id', async (req, res) => {
 /**
  * @openapi
  * /api/v1/reviews:
- * post:
- * summary: Створити нову рецензію
- * tags:
- * - Reviews
- * security:
- * - bearerAuth: []
- * requestBody:
- * required: true
- * content:
- * application/json:
- * schema:
- * type: object
- * required: [title, body, rating, movie_id]
- * properties:
- * title:
- * type: string
- * body:
- * type: string
- * rating:
- * type: integer
- * movie_id:
- * type: integer
- * responses:
- * 201:
- * description: Рецензію створено
+ *   post:
+ *     summary: Створити нову рецензію
+ *     tags:
+ *       - Reviews
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title, body, rating, movie_id]
+ *             properties:
+ *               title:
+ *                 type: string
+ *               body:
+ *                 type: string
+ *               rating:
+ *                 type: integer
+ *               movie_id:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Рецензію створено
  */
 router.post('/reviews', async (req, res) => {
   const db = req.app.locals.db;
@@ -135,38 +135,38 @@ router.post('/reviews', async (req, res) => {
 /**
  * @openapi
  * /api/v1/reviews/{id}:
- * put:
- * summary: Оновити рецензію
- * tags:
- * - Reviews
- * security:
- * - bearerAuth: []
- * parameters:
- * - name: id
- * in: path
- * required: true
- * schema:
- * type: integer
- * requestBody:
- * required: true
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * title:
- * type: string
- * body:
- * type: string
- * rating:
- * type: integer
- * responses:
- * 200:
- * description: Рецензію оновлено
- * 403:
- * description: Недостатньо прав
- * 404:
- * description: Рецензію не знайдено
+ *   put:
+ *     summary: Оновити рецензію
+ *     tags:
+ *       - Reviews
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               body:
+ *                 type: string
+ *               rating:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Рецензію оновлено
+ *       403:
+ *         description: Недостатньо прав
+ *       404:
+ *         description: Рецензію не знайдено
  */
 router.put('/reviews/:id', async (req, res) => {
   const db = req.app.locals.db;
@@ -207,25 +207,25 @@ router.put('/reviews/:id', async (req, res) => {
 /**
  * @openapi
  * /api/v1/reviews/{id}:
- * delete:
- * summary: Видалити рецензію
- * tags:
- * - Reviews
- * security:
- * - bearerAuth: []
- * parameters:
- * - name: id
- * in: path
- * required: true
- * schema:
- * type: integer
- * responses:
- * 200:
- * description: Рецензію видалено
- * 403:
- * description: Недостатньо прав
- * 404:
- * description: Рецензію не знайдено
+ *   delete:
+ *     summary: Видалити рецензію
+ *     tags:
+ *       - Reviews
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Рецензію видалено
+ *       403:
+ *         description: Недостатньо прав
+ *       404:
+ *         description: Рецензію не знайдено
  */
 router.delete('/reviews/:id', async (req, res) => {
   const db = req.app.locals.db;

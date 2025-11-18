@@ -1,21 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addPerson, uploadPersonAvatar } from '../api';
+import { addPerson, uploadPersonAvatar, getAllMovies } from '../api'; 
+import MultiSelect from '../components/MultiSelect';
 
 export default function AddPerson() {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    profession: 'actor',
+    profession: 'actor', 
     biography: '',
-    movie_ids: '', 
+    movie_ids: [],
   });
   const [avatarFile, setAvatarFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [movieOptions, setMovieOptions] = useState([]);
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    getAllMovies().then(movies => {
+      const options = movies.map(m => ({
+        id: m.id,
+        label: `${m.title} (${m.year || 'N/A'})`
+      }));
+      setMovieOptions(options);
+    });
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleMoviesChange = (newSelectedIds) => {
+    setFormData({ ...formData, movie_ids: newSelectedIds });
   };
 
   const handleFileChange = (e) => {
@@ -34,7 +51,7 @@ export default function AddPerson() {
         last_name: formData.last_name,
         profession: formData.profession,
         biography: formData.biography,
-        movie_ids: formData.movie_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean),
+        movie_ids: formData.movie_ids, // Вже масив
       };
 
       const response = await addPerson(personData);
@@ -49,7 +66,7 @@ export default function AddPerson() {
       }
       
       alert('Людину успішно створено!');
-      navigate(`/people/${newPersonId}`);
+      navigate(`/people/${newPersonId}`); 
 
     } catch (err) {
       console.error("Помилка створення:", err);
@@ -87,10 +104,15 @@ export default function AddPerson() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-amber-400 mb-2">ID Фільмів (через кому)</label>
-            <input type="text" name="movie_ids" placeholder="Напр: 1, 2, 5" onChange={handleChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
-          </div>
+          {/* --- МУЛЬТИСЕЛЕКТ ФІЛЬМІВ --- */}
+          <MultiSelect 
+            label="Фільмографія (обрати фільми)"
+            options={movieOptions}
+            selectedIds={formData.movie_ids}
+            onChange={handleMoviesChange}
+            placeholder="Пошук фільму..."
+          />
+          {/* -------------------------- */}
 
           <div>
             <label className="block text-amber-400 mb-2">Аватар (файл)</label>

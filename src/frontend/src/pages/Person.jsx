@@ -4,19 +4,21 @@ import {
   getPersonById, 
   updatePerson, 
   deletePerson,
-  uploadPersonAvatar
+  uploadPersonAvatar,
+  getAllMovies // --- НОВЕ
 } from "../api" 
 import { useAuth } from '../hooks/useAuth';
 import MovieCard from '../components/MovieCard'; 
+import MultiSelect from '../components/MultiSelect'; // --- НОВЕ
 
 export default function Person() {
   const { id } = useParams()
   const navigate = useNavigate();
-  const { isAdmin } 
-  = useAuth(); 
+  const { isAdmin } = useAuth(); 
 
   const [person, setPerson] = useState(null)
-  const [movies, setMovies] = useState([])
+  const [movies, setMovies] = useState([]) 
+  const [allMoviesOptions, setAllMoviesOptions] = useState([]) // Опції для MultiSelect
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState(null)
@@ -24,18 +26,29 @@ export default function Person() {
 
   const fetchData = () => {
     setIsLoading(true);
-    getPersonById(id)
-      .then((personResponse) => {
+    // Завантажуємо людину та список ВСІХ фільмів (для редагування)
+    Promise.all([
+      getPersonById(id),
+      getAllMovies()
+    ]).then(([personResponse, allMoviesList]) => {
         if (personResponse) {
           setPerson(personResponse);
-          setMovies(personResponse.movies || []);
+          setMovies(personResponse.movies || []); 
           
+          // Готуємо опції
+          const options = allMoviesList.map(m => ({
+             id: m.id,
+             label: m.title
+          }));
+          setAllMoviesOptions(options);
+
           setEditData({ 
             first_name: personResponse.first_name || '',
             last_name: personResponse.last_name || '',
             profession: personResponse.profession || 'actor',
             biography: personResponse.biography || '',
-            movie_ids: (personResponse.movies || []).map(p => p.id).join(', ')
+            // Масив ID
+            movie_ids: (personResponse.movies || []).map(p => p.id)
           });
         } else {
           setPerson(null);
@@ -57,6 +70,12 @@ export default function Person() {
   const handleEditChange = (e) => {
     setEditData({ ...editData, [e.target.name]: e.target.value });
   };
+
+  // Обробник MultiSelect
+  const handleMoviesChange = (newSelectedIds) => {
+    setEditData({ ...editData, movie_ids: newSelectedIds });
+  };
+
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setAvatarFile(e.target.files[0]);
@@ -68,7 +87,7 @@ export default function Person() {
     try {
       const personData = {
         ...editData,
-        movie_ids: editData.movie_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean),
+        movie_ids: editData.movie_ids, // Вже масив
       };
       await updatePerson(id, personData);
       
@@ -79,7 +98,7 @@ export default function Person() {
       alert('Дані оновлено!');
       setIsEditing(false);
       setAvatarFile(null);
-      fetchData();
+      fetchData(); 
 
     } catch (err) {
       console.error("Помилка оновлення:", err);
@@ -92,7 +111,7 @@ export default function Person() {
       try {
         await deletePerson(id);
         alert('Людину видалено!');
-        navigate('/admin/people');
+        navigate('/admin/people'); 
       } catch (err) {
         alert(`Помилка: ${err.message || 'Не вдалося видалити'}`);
       }
@@ -100,19 +119,11 @@ export default function Person() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-amber-400">
-        Завантаження...
-      </div>
-    )
+    return <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-amber-400">Завантаження...</div>
   }
 
   if (!person) {
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-red-500">
-            На жаль, людину не знайдено.
-        </div>
-    )
+    return <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-red-500">На жаль, людину не знайдено.</div>
   }
 
   return (
@@ -120,6 +131,7 @@ export default function Person() {
       <div className="max-w-5xl mx-auto p-4">
         
         {!isEditing ? (
+          // --- Режим перегляду (без змін) ---
           <div className="flex flex-col md:flex-row gap-8 bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl p-6 border border-amber-500/20 backdrop-blur mb-8">
             <div className="md:w-1/3">
               <img 
@@ -149,6 +161,7 @@ export default function Person() {
             </div>
           </div>
         ) : (
+          // --- Режим редагування з MultiSelect ---
           <form onSubmit={handleEditSubmit} className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl p-6 border border-amber-500/20 backdrop-blur mb-8 space-y-4">
             <h2 className="text-2xl font-bold text-white mb-4">Редагування</h2>
             
@@ -172,10 +185,15 @@ export default function Person() {
               </select>
             </div>
 
-            <div>
-              <label className="block text-amber-400 mb-2">ID Фільмів (через кому)</label>
-              <input type="text" name="movie_ids" value={editData.movie_ids} onChange={handleEditChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
-            </div>
+            {/* --- МУЛЬТИСЕЛЕКТ --- */}
+            <MultiSelect 
+              label="Фільмографія"
+              options={allMoviesOptions}
+              selectedIds={editData.movie_ids}
+              onChange={handleMoviesChange}
+              placeholder="Пошук фільму..."
+            />
+            {/* ------------------- */}
             
             <div>
               <label className="block text-amber-400 mb-2">Аватар (завантажити новий)</label>
@@ -198,6 +216,7 @@ export default function Person() {
           </form>
         )}
 
+        {/* --- Список фільмів --- */}
         <div className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl p-6 border border-amber-500/20 backdrop-blur">
           <h2 className="text-2xl font-bold text-white mb-6 bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
             Фільмографія

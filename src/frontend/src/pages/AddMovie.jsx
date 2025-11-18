@@ -1,21 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addMovie, uploadMovieCover } from '../api'; 
+import { addMovie, uploadMovieCover, getAllPeople } from '../api'; 
+import MultiSelect from '../components/MultiSelect'; // --- НОВЕ
 
 export default function AddMovie() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     genre: '',
-    // rating прибрали з форми, він буде 0 за дефолтом
-    people_ids: '', 
+    // people_ids тепер масив чисел
+    people_ids: [], 
   });
   const [posterFile, setPosterFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [peopleOptions, setPeopleOptions] = useState([]); // Список для вибору
+
   const navigate = useNavigate();
+
+  // Завантажуємо список людей для вибору
+  useEffect(() => {
+    getAllPeople().then(people => {
+      const options = people.map(p => ({
+        id: p.id,
+        label: `${p.first_name} ${p.last_name} (${p.profession})`
+      }));
+      setPeopleOptions(options);
+    });
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Обробник для MultiSelect
+  const handlePeopleChange = (newSelectedIds) => {
+    setFormData({ ...formData, people_ids: newSelectedIds });
   };
 
   const handleFileChange = (e) => {
@@ -33,8 +52,8 @@ export default function AddMovie() {
         title: formData.title,
         description: formData.description,
         genre: formData.genre,
-        rating: 0, // Рейтинг за замовчуванням 0, буде рахуватися від відгуків
-        people_ids: formData.people_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean),
+        rating: 0,
+        people_ids: formData.people_ids, // Вже масив, перетворювати не треба
       };
 
       const response = await addMovie(movieData);
@@ -72,18 +91,20 @@ export default function AddMovie() {
             <input type="text" name="title" onChange={handleChange} required className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
-            <div>
+          <div>
               <label className="block text-amber-400 mb-2">Жанр</label>
               <input type="text" name="genre" onChange={handleChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
-            </div>
-            {/* Поле рейтингу видалено */}
           </div>
 
-          <div>
-            <label className="block text-amber-400 mb-2">ID Людей (через кому)</label>
-            <input type="text" name="people_ids" placeholder="Напр: 1, 2, 5" onChange={handleChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
-          </div>
+          {/* --- МУЛЬТИСЕЛЕКТ ЛЮДЕЙ --- */}
+          <MultiSelect 
+            label="Прив'язати людей"
+            options={peopleOptions}
+            selectedIds={formData.people_ids}
+            onChange={handlePeopleChange}
+            placeholder="Пошук актора, режисера..."
+          />
+          {/* ------------------------ */}
 
           <div>
             <label className="block text-amber-400 mb-2">Обкладинка (файл)</label>

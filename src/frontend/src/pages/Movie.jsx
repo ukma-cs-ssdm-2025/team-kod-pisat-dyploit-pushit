@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom"
 import { 
   getMovieById, 
   getAllReviews, 
+  getAllUsers,
+  getAllPeople,
   updateMovie, 
   addReview, 
   deleteReview, 
@@ -12,6 +14,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import ReviewCard from '../components/ReviewCard';
 import ReviewForm from '../components/ReviewForm';
+import MultiSelect from '../components/MultiSelect';
 
 export default function Movie() {
   const { id } = useParams()
@@ -20,42 +23,56 @@ export default function Movie() {
 
   const [movie, setMovie] = useState(null)
   const [reviews, setReviews] = useState([])
-  const [people, setPeople] = useState([]) 
+  const [people, setPeople] = useState([])
+  const [allPeopleOptions, setAllPeopleOptions] = useState([])
   const [averageRating, setAverageRating] = useState(0); 
   const [isLoading, setIsLoading] = useState(true)
+  
   const [isEditing, setIsEditing] = useState(false)
-  const [editData, setEditData] = useState(null)
+  const [editData, setEditData] = useState(null) 
   const [posterFile, setPosterFile] = useState(null);
 
   const fetchData = () => {
     setIsLoading(true);
     Promise.all([
       getMovieById(id),
-      getAllReviews() 
-    ]).then(([movieResponse, allReviews]) => {
+      getAllReviews(),
+      getAllUsers(),
+      getAllPeople()
+    ]).then(([movieResponse, allReviews, allUsers, allPeopleList]) => {
       
       if (movieResponse) {
         setMovie(movieResponse);
-        setPeople(movieResponse.people || []); 
+        setPeople(movieResponse.people || []);
+        
+        const options = allPeopleList.map(p => ({
+          id: p.id,
+          label: `${p.first_name} ${p.last_name} (${p.profession})`
+        }));
+        setAllPeopleOptions(options);
+
         setEditData({ 
           title: movieResponse.title || '',
           description: movieResponse.description || '',
           genre: movieResponse.genre || '',
-          // rating не беремо в editData, бо ми його не редагуємо вручну
-          people_ids: (movieResponse.people || []).map(p => p.id).join(', ')
+          people_ids: (movieResponse.people || []).map(p => p.id)
         });
       } else {
         setMovie(null);
       }
 
       const numericId = Number(id);
-      // Фільтруємо і мапимо body -> text для ReviewCard
+      
       const movieReviews = allReviews
         .filter(review => review.movie_id === numericId)
-        .map(review => ({
-          ...review,
-          text: review.body || review.text // Забезпечуємо сумісність: бек віддає body, UI хоче text
-        }));
+        .map(review => {
+          const author = allUsers.find(u => u.id === review.user_id);
+          return {
+            ...review,
+            text: review.body || review.text,
+            user: author || { username: 'deleted', nickname: 'Unknown User' }
+          };
+        });
         
       setReviews(movieReviews);
 
@@ -81,6 +98,11 @@ export default function Movie() {
   const handleEditChange = (e) => {
     setEditData({ ...editData, [e.target.name]: e.target.value });
   };
+  
+  const handlePeopleChange = (newSelectedIds) => {
+    setEditData({ ...editData, people_ids: newSelectedIds });
+  };
+
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setPosterFile(e.target.files[0]);
@@ -94,11 +116,10 @@ export default function Movie() {
         title: editData.title,
         description: editData.description,
         genre: editData.genre,
-        // Ми не відправляємо rating, нехай він залишається як є в БД або оновлюється тригерами
-        people_ids: editData.people_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean),
+        people_ids: editData.people_ids,
       };
     
-      const response = await updateMovie(id, movieData);
+      await updateMovie(id, movieData);
       
       if (posterFile) {
         await uploadMovieCover(id, posterFile);
@@ -133,7 +154,6 @@ export default function Movie() {
         ...reviewData,
         movie_id: Number(id) 
       };
-      // reviewData вже містить 'body' завдяки виправленню в ReviewForm
       await addReview(dataToSend);
       fetchData();
     } catch (err) {
@@ -153,19 +173,11 @@ export default function Movie() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-amber-400">
-        Завантаження фільму...
-      </div>
-    )
+    return <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-amber-400">Завантаження...</div>
   }
 
   if (!movie) {
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-red-500">
-            На жаль, фільм не знайдено.
-        </div>
-    )
+    return <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-red-500">На жаль, фільм не знайдено.</div>
   }
 
   const directors = people.filter(p => p.profession === 'director');
@@ -195,6 +207,7 @@ export default function Movie() {
               <div className="border-t border-amber-500/20 pt-4 mt-4 space-y-3">
                 <p className="text-gray-400 text-justify leading-relaxed mt-4">{movie.description || "Опис відсутній."}</p>
                 
+                {/* Люди */}
                 {directors.length > 0 && (
                   <div>
                     <strong className="text-amber-400">Режисер(и):</strong>
@@ -207,6 +220,7 @@ export default function Movie() {
                     </div>
                   </div>
                 )}
+                {/* (Аналогічно для producers та actors...) */}
                 {producers.length > 0 && (
                   <div>
                     <strong className="text-amber-400">Продюсер(и):</strong>
@@ -252,17 +266,21 @@ export default function Movie() {
               <label className="block text-amber-400 mb-2">Назва</label>
               <input type="text" name="title" value={editData.title} onChange={handleEditChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
             </div>
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block text-amber-400 mb-2">Жанр</label>
-                <input type="text" name="genre" value={editData.genre} onChange={handleEditChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
-              </div>
-              {/* Редагування рейтингу видалено */}
-            </div>
             <div>
-                <label className="block text-amber-400 mb-2">ID Людей (через кому)</label>
-                <input type="text" name="people_ids" value={editData.people_ids} onChange={handleEditChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
+              <label className="block text-amber-400 mb-2">Жанр</label>
+              <input type="text" name="genre" value={editData.genre} onChange={handleEditChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
             </div>
+            
+            {/* --- МУЛЬТИСЕЛЕКТ --- */}
+            <MultiSelect 
+              label="Обрати Людей (Актори, Режисери)"
+              options={allPeopleOptions}
+              selectedIds={editData.people_ids}
+              onChange={handlePeopleChange}
+              placeholder="Пошук людини..."
+            />
+            {/* ------------------- */}
+
             <div>
               <label className="block text-amber-400 mb-2">Обкладинка (завантажити нову)</label>
               <input type="file" name="posterFile" onChange={handleFileChange} accept="image/*" className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200"/>
