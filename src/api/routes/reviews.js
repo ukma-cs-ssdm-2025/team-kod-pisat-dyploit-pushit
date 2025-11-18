@@ -1,6 +1,27 @@
 const express = require('express');
 const router = express.Router();
 
+// --- ДОПОМІЖНА ФУНКЦІЯ ---
+// Оновлює кешований рейтинг у таблиці movies на основі таблиці reviews
+async function updateMovieRating(db, movieId) {
+  try {
+    const { rows } = await db.query(
+      'SELECT AVG(rating) as avg_rating FROM reviews WHERE movie_id = $1',
+      [movieId]
+    );
+    
+    const average = rows[0].avg_rating ? parseFloat(rows[0].avg_rating).toFixed(1) : 0;
+
+    await db.query(
+      'UPDATE movies SET rating = $1 WHERE id = $2',
+      [average, movieId]
+    );
+    console.log(`Rating updated for movie ${movieId}: ${average}`);
+  } catch (err) {
+    console.error(`Failed to update rating for movie ${movieId}:`, err);
+  }
+}
+
 /**
  * @openapi
  * /api/v1/reviews:
@@ -100,6 +121,10 @@ router.post('/reviews', async (req, res) => {
        RETURNING *`,
       [title, body, rating, movie_id, req.user.id]
     );
+
+    // --- ОНОВЛЕННЯ РЕЙТИНГУ ФІЛЬМУ ---
+    await updateMovieRating(db, movie_id);
+    
     res.status(201).json({ message: 'Рецензію створено', review: result.rows[0] });
   } catch (err) {
     console.error('DB error (POST /reviews):', err);
@@ -168,6 +193,10 @@ router.put('/reviews/:id', async (req, res) => {
       [title, body, rating, id]
     );
 
+    // --- ОНОВЛЕННЯ РЕЙТИНГУ ФІЛЬМУ ---
+    // Використовуємо movie_id зі старого запису (бо він не змінюється)
+    await updateMovieRating(db, currentReview.movie_id);
+
     res.json({ message: 'Рецензію оновлено', review: result.rows[0] });
   } catch (err) {
     console.error('DB error (PUT /reviews/:id):', err);
@@ -213,6 +242,10 @@ router.delete('/reviews/:id', async (req, res) => {
     }
 
     const result = await db.query('DELETE FROM reviews WHERE id = $1 RETURNING *', [id]);
+
+    // --- ОНОВЛЕННЯ РЕЙТИНГУ ФІЛЬМУ ---
+    await updateMovieRating(db, currentReview.movie_id);
+
     res.json({ message: 'Рецензію видалено', review: result.rows[0] });
   } catch (err) {
     console.error('DB error (DELETE /reviews/:id):', err);
