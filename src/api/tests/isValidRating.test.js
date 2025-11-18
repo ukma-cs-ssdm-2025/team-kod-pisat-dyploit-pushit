@@ -1,5 +1,8 @@
-import { test, strict as assert } from "node:test";
-import { isValidRating } from "../utils/isValidRating.js";
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import ratingModule from "../utils/isValidRating.js";
+
+const { isValidRating } = ratingModule;
 
 test("accepts valid ratings on .5 step within 0.5..5.0", () => {
   [0.5, 1, 1.5, 3.5, 5].forEach(v => assert.equal(isValidRating(v), true));
@@ -25,4 +28,3 @@ test("rejects non-number inputs", () => {
   );
 });
 
-// no changes. tests must pass
