@@ -3,7 +3,7 @@ import StarRating from './StarRating';
 
 export default function ReviewForm({ onSubmit }) {
   const [title, setTitle] = useState('');
-  const [text, setText] = useState('');
+  const [text, setText] = useState(''); // В стейті залишаємо text для зручності
   const [rating, setRating] = useState(0);
 
   const handleSubmit = (e) => {
@@ -12,7 +12,15 @@ export default function ReviewForm({ onSubmit }) {
       alert("Будь ласка, заповніть заголовок, текст та оберіть рейтинг.");
       return;
     }
-    onSubmit({ title, text, rating, date: new Date().toISOString() });
+    // ВИПРАВЛЕННЯ: Бекенд очікує 'body', а не 'text'
+    onSubmit({ 
+      title, 
+      body: text, // Мапимо text на body
+      rating, 
+      // date додається, але бекенд використовує NOW(), тож це скоріше для миттєвого відображення
+      created_at: new Date().toISOString() 
+    });
+    
     setTitle('');
     setText('');
     setRating(0);

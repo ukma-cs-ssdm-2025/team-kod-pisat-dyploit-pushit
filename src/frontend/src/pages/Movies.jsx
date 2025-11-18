@@ -14,7 +14,11 @@ export default function Movies() {
   const { isAdmin } = useAuth();
   const [movies, setMovies] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [filters, setFilters] = useState({ genre: "", rating: "" })
+  
+  // Змінено стан фільтрів
+  const [genreFilter, setGenreFilter] = useState("")
+  const [sortOption, setSortOption] = useState("newest") // newest, oldest, rating_desc, rating_asc, title_asc
+  
   const [showFilters, setShowFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -31,23 +35,38 @@ export default function Movies() {
       })
   }, [])
 
-  const filteredMovies = useMemo(() => {
+  const processedMovies = useMemo(() => {
     let tempMovies = [...movies]
+
+    // 1. Пошук
     if (searchTerm) {
       tempMovies = tempMovies.filter((movie) => movie.title.toLowerCase().includes(searchTerm.toLowerCase()))
     }
-    if (filters.genre) {
-      tempMovies = tempMovies.filter((movie) => movie.genre?.toLowerCase().includes(filters.genre.toLowerCase()))
-    }
-    if (filters.rating) {
-      tempMovies = tempMovies.filter((movie) => (movie.rating || 0).toString() >= filters.rating)
-    }
-    return tempMovies
-  }, [movies, searchTerm, filters])
 
-  const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value })
-  }
+    // 2. Фільтрація за жанром
+    if (genreFilter) {
+      tempMovies = tempMovies.filter((movie) => movie.genre?.toLowerCase().includes(genreFilter.toLowerCase()))
+    }
+
+    // 3. Сортування
+    tempMovies.sort((a, b) => {
+      switch (sortOption) {
+        case "title_asc":
+          return a.title.localeCompare(b.title);
+        case "rating_desc":
+          return (b.rating || 0) - (a.rating || 0);
+        case "rating_asc":
+          return (a.rating || 0) - (b.rating || 0);
+        case "oldest":
+          return a.id - b.id;
+        case "newest":
+        default:
+          return b.id - a.id; // Припускаємо, що більший ID = новіший
+      }
+    });
+
+    return tempMovies
+  }, [movies, searchTerm, genreFilter, sortOption])
 
 
   if (isLoading) {
@@ -75,7 +94,6 @@ export default function Movies() {
           )}
         </div>
 
-        
         <div className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 p-6 rounded-xl shadow-lg mb-8 sticky top-16 z-10 border border-amber-500/20 backdrop-blur">
             <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-grow">
@@ -94,37 +112,43 @@ export default function Movies() {
               onClick={() => setShowFilters(!showFilters)}
               className="bg-gradient-to-r from-amber-600/80 to-amber-500/80 hover:from-amber-500 hover:to-amber-400 text-white px-6 py-3 rounded-lg transition-all font-medium border border-amber-400/30"
             >
-              {showFilters ? "Сховати" : "Фільтри"}
+              {showFilters ? "Сховати" : "Фільтри та Сортування"}
             </button>
           </div>
 
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-amber-500/20 pt-4">
-              <input
-                type="text"
-                name="genre"
-                placeholder="Фільтрувати за жанром..."
-                value={filters.genre}
-                onChange={handleFilterChange}
-                className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-all"
-              />
-              <input
-                type="number"
-                name="rating"
-                placeholder="Рейтинг (наприклад, 8)"
-                min="0"
-                max="10"
-                value={filters.rating}
-                onChange={handleFilterChange}
-                className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-all"
-              />
+              <div>
+                <label className="block text-amber-400 mb-2 text-sm">Жанр</label>
+                <input
+                  type="text"
+                  placeholder="Фільтрувати за жанром..."
+                  value={genreFilter}
+                  onChange={(e) => setGenreFilter(e.target.value)}
+                  className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-amber-400 mb-2 text-sm">Сортувати за</label>
+                <select 
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                  className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400 transition-all"
+                >
+                  <option value="newest" className="bg-purple-900">Спочатку нові</option>
+                  <option value="oldest" className="bg-purple-900">Спочатку старі</option>
+                  <option value="title_asc" className="bg-purple-900">Назва (А-Я)</option>
+                  <option value="rating_desc" className="bg-purple-900">Рейтинг (високий - низький)</option>
+                  <option value="rating_asc" className="bg-purple-900">Рейтинг (низький - високий)</option>
+                </select>
+              </div>
             </div>
           )}
         </div>
 
-        {filteredMovies.length > 0 ? (
+        {processedMovies.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {filteredMovies.map((movie) => (
+            {processedMovies.map((movie) => (
               <MovieCard key={movie.id} movie={movie} />
             ))}
           </div>

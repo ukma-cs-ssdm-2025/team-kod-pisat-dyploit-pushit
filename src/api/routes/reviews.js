@@ -1,16 +1,37 @@
 const express = require('express');
 const router = express.Router();
 
+// --- ДОПОМІЖНА ФУНКЦІЯ ---
+// Оновлює кешований рейтинг у таблиці movies на основі таблиці reviews
+async function updateMovieRating(db, movieId) {
+  try {
+    const { rows } = await db.query(
+      'SELECT AVG(rating) as avg_rating FROM reviews WHERE movie_id = $1',
+      [movieId]
+    );
+    
+    const average = rows[0].avg_rating ? parseFloat(rows[0].avg_rating).toFixed(1) : 0;
+
+    await db.query(
+      'UPDATE movies SET rating = $1 WHERE id = $2',
+      [average, movieId]
+    );
+    console.log(`Rating updated for movie ${movieId}: ${average}`);
+  } catch (err) {
+    console.error(`Failed to update rating for movie ${movieId}:`, err);
+  }
+}
+
 /**
  * @openapi
  * /api/v1/reviews:
- *   get:
- *     summary: Отримати список усіх рецензій
- *     tags:
- *       - Reviews
- *     responses:
- *       200:
- *         description: Список рецензій
+ * get:
+ * summary: Отримати список усіх рецензій
+ * tags:
+ * - Reviews
+ * responses:
+ * 200:
+ * description: Список рецензій
  */
 router.get('/reviews', async (req, res) => {
   const db = req.app.locals.db;
@@ -28,21 +49,21 @@ router.get('/reviews', async (req, res) => {
 /**
  * @openapi
  * /api/v1/reviews/{id}:
- *   get:
- *     summary: Отримати рецензію за ID
- *     tags:
- *       - Reviews
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Рецензія знайдена
- *       404:
- *         description: Рецензія не знайдена
+ * get:
+ * summary: Отримати рецензію за ID
+ * tags:
+ * - Reviews
+ * parameters:
+ * - name: id
+ * in: path
+ * required: true
+ * schema:
+ * type: integer
+ * responses:
+ * 200:
+ * description: Рецензія знайдена
+ * 404:
+ * description: Рецензія не знайдена
  */
 router.get('/reviews/:id', async (req, res) => {
   const db = req.app.locals.db;
@@ -60,31 +81,31 @@ router.get('/reviews/:id', async (req, res) => {
 /**
  * @openapi
  * /api/v1/reviews:
- *   post:
- *     summary: Створити нову рецензію
- *     tags:
- *       - Reviews
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [title, body, rating, movie_id]
- *             properties:
- *               title:
- *                 type: string
- *               body:
- *                 type: string
- *               rating:
- *                 type: integer
- *               movie_id:
- *                 type: integer
- *     responses:
- *       201:
- *         description: Рецензію створено
+ * post:
+ * summary: Створити нову рецензію
+ * tags:
+ * - Reviews
+ * security:
+ * - bearerAuth: []
+ * requestBody:
+ * required: true
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * required: [title, body, rating, movie_id]
+ * properties:
+ * title:
+ * type: string
+ * body:
+ * type: string
+ * rating:
+ * type: integer
+ * movie_id:
+ * type: integer
+ * responses:
+ * 201:
+ * description: Рецензію створено
  */
 router.post('/reviews', async (req, res) => {
   const db = req.app.locals.db;
@@ -100,6 +121,10 @@ router.post('/reviews', async (req, res) => {
        RETURNING *`,
       [title, body, rating, movie_id, req.user.id]
     );
+
+    // --- ОНОВЛЕННЯ РЕЙТИНГУ ФІЛЬМУ ---
+    await updateMovieRating(db, movie_id);
+    
     res.status(201).json({ message: 'Рецензію створено', review: result.rows[0] });
   } catch (err) {
     console.error('DB error (POST /reviews):', err);
@@ -110,38 +135,38 @@ router.post('/reviews', async (req, res) => {
 /**
  * @openapi
  * /api/v1/reviews/{id}:
- *   put:
- *     summary: Оновити рецензію
- *     tags:
- *       - Reviews
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               body:
- *                 type: string
- *               rating:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Рецензію оновлено
- *       403:
- *         description: Недостатньо прав
- *       404:
- *         description: Рецензію не знайдено
+ * put:
+ * summary: Оновити рецензію
+ * tags:
+ * - Reviews
+ * security:
+ * - bearerAuth: []
+ * parameters:
+ * - name: id
+ * in: path
+ * required: true
+ * schema:
+ * type: integer
+ * requestBody:
+ * required: true
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * properties:
+ * title:
+ * type: string
+ * body:
+ * type: string
+ * rating:
+ * type: integer
+ * responses:
+ * 200:
+ * description: Рецензію оновлено
+ * 403:
+ * description: Недостатньо прав
+ * 404:
+ * description: Рецензію не знайдено
  */
 router.put('/reviews/:id', async (req, res) => {
   const db = req.app.locals.db;
@@ -168,6 +193,10 @@ router.put('/reviews/:id', async (req, res) => {
       [title, body, rating, id]
     );
 
+    // --- ОНОВЛЕННЯ РЕЙТИНГУ ФІЛЬМУ ---
+    // Використовуємо movie_id зі старого запису (бо він не змінюється)
+    await updateMovieRating(db, currentReview.movie_id);
+
     res.json({ message: 'Рецензію оновлено', review: result.rows[0] });
   } catch (err) {
     console.error('DB error (PUT /reviews/:id):', err);
@@ -178,25 +207,25 @@ router.put('/reviews/:id', async (req, res) => {
 /**
  * @openapi
  * /api/v1/reviews/{id}:
- *   delete:
- *     summary: Видалити рецензію
- *     tags:
- *       - Reviews
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Рецензію видалено
- *       403:
- *         description: Недостатньо прав
- *       404:
- *         description: Рецензію не знайдено
+ * delete:
+ * summary: Видалити рецензію
+ * tags:
+ * - Reviews
+ * security:
+ * - bearerAuth: []
+ * parameters:
+ * - name: id
+ * in: path
+ * required: true
+ * schema:
+ * type: integer
+ * responses:
+ * 200:
+ * description: Рецензію видалено
+ * 403:
+ * description: Недостатньо прав
+ * 404:
+ * description: Рецензію не знайдено
  */
 router.delete('/reviews/:id', async (req, res) => {
   const db = req.app.locals.db;
@@ -213,6 +242,10 @@ router.delete('/reviews/:id', async (req, res) => {
     }
 
     const result = await db.query('DELETE FROM reviews WHERE id = $1 RETURNING *', [id]);
+
+    // --- ОНОВЛЕННЯ РЕЙТИНГУ ФІЛЬМУ ---
+    await updateMovieRating(db, currentReview.movie_id);
+
     res.json({ message: 'Рецензію видалено', review: result.rows[0] });
   } catch (err) {
     console.error('DB error (DELETE /reviews/:id):', err);

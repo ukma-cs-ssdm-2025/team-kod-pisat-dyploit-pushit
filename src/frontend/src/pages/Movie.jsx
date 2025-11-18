@@ -41,7 +41,7 @@ export default function Movie() {
           title: movieResponse.title || '',
           description: movieResponse.description || '',
           genre: movieResponse.genre || '',
-          rating: movieResponse.rating || 0,
+          // rating не беремо в editData, бо ми його не редагуємо вручну
           people_ids: (movieResponse.people || []).map(p => p.id).join(', ')
         });
       } else {
@@ -49,7 +49,14 @@ export default function Movie() {
       }
 
       const numericId = Number(id);
-      const movieReviews = allReviews.filter(review => review.movie_id === numericId);
+      // Фільтруємо і мапимо body -> text для ReviewCard
+      const movieReviews = allReviews
+        .filter(review => review.movie_id === numericId)
+        .map(review => ({
+          ...review,
+          text: review.body || review.text // Забезпечуємо сумісність: бек віддає body, UI хоче text
+        }));
+        
       setReviews(movieReviews);
 
       if (movieReviews.length > 0) {
@@ -87,11 +94,10 @@ export default function Movie() {
         title: editData.title,
         description: editData.description,
         genre: editData.genre,
-        rating: parseFloat(editData.rating) || 0,
+        // Ми не відправляємо rating, нехай він залишається як є в БД або оновлюється тригерами
         people_ids: editData.people_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean),
       };
     
-      
       const response = await updateMovie(id, movieData);
       
       if (posterFile) {
@@ -127,6 +133,7 @@ export default function Movie() {
         ...reviewData,
         movie_id: Number(id) 
       };
+      // reviewData вже містить 'body' завдяки виправленню в ReviewForm
       await addReview(dataToSend);
       fetchData();
     } catch (err) {
@@ -245,15 +252,12 @@ export default function Movie() {
               <label className="block text-amber-400 mb-2">Назва</label>
               <input type="text" name="title" value={editData.title} onChange={handleEditChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-amber-400 mb-2">Жанр</label>
                 <input type="text" name="genre" value={editData.genre} onChange={handleEditChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
               </div>
-              <div>
-                <label className="block text-amber-400 mb-2">Рейтинг (0-10) - (ручне)</label>
-                <input type="number" name="rating" step="0.1" min="0" max="10" value={editData.rating} onChange={handleEditChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
-              </div>
+              {/* Редагування рейтингу видалено */}
             </div>
             <div>
                 <label className="block text-amber-400 mb-2">ID Людей (через кому)</label>

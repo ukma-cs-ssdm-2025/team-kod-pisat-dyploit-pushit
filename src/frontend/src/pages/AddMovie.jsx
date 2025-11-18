@@ -1,15 +1,13 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addMovie, uploadMovieCover } from '../api'; 
 
 export default function AddMovie() {
-  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     genre: '',
-    rating: 0,
+    // rating прибрали з форми, він буде 0 за дефолтом
     people_ids: '', 
   });
   const [posterFile, setPosterFile] = useState(null);
@@ -25,20 +23,17 @@ export default function AddMovie() {
       setPosterFile(e.target.files[0]);
     }
   };
-
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      
       const movieData = {
         title: formData.title,
         description: formData.description,
         genre: formData.genre,
-        rating: parseFloat(formData.rating) || 0,
-        
+        rating: 0, // Рейтинг за замовчуванням 0, буде рахуватися від відгуків
         people_ids: formData.people_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean),
       };
 
@@ -48,7 +43,6 @@ export default function AddMovie() {
       if (!newMovieId) {
         throw new Error("Не вдалося отримати ID нового фільму");
       }
-
       
       if (posterFile) {
         await uploadMovieCover(newMovieId, posterFile);
@@ -78,15 +72,12 @@ export default function AddMovie() {
             <input type="text" name="title" onChange={handleChange} required className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-amber-400 mb-2">Жанр</label>
               <input type="text" name="genre" onChange={handleChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
             </div>
-            <div>
-              <label className="block text-amber-400 mb-2">Рейтинг (0-10)</label>
-              <input type="number" name="rating" step="0.1" min="0" max="10" onChange={handleChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
-            </div>
+            {/* Поле рейтингу видалено */}
           </div>
 
           <div>
@@ -101,7 +92,6 @@ export default function AddMovie() {
               name="posterFile" 
               onChange={handleFileChange} 
               accept="image/*"
-              
               className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200"
             />
           </div>
