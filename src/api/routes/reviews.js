@@ -3,19 +3,15 @@ const router = express.Router();
 
 async function updateMovieRating(db, movieId) {
   try {
-    // 1. Рахуємо середнє арифметичне.
     const { rows } = await db.query(
       'SELECT COALESCE(AVG(rating), 0) as avg_rating FROM reviews WHERE movie_id = $1',
       [movieId]
     );
 
-    // 2. Приводимо до типу float
     const rawAvg = parseFloat(rows[0].avg_rating);
     
-    // 3. Округляємо до 1 знаку після коми
     const finalRating = Math.round(rawAvg * 10) / 10;
 
-    // 4. Оновлюємо запис фільму
     await db.query(
       'UPDATE movies SET rating = $1 WHERE id = $2',
       [finalRating, movieId]
@@ -25,7 +21,7 @@ async function updateMovieRating(db, movieId) {
     return finalRating;
   } catch (err) {
     console.error(`Failed to update rating for movie ${movieId}:`, err);
-    throw err; // Передаємо помилку далі
+    throw err;
   }
 }
 
@@ -113,7 +109,6 @@ router.get('/reviews/:id', async (req, res) => {
  */
 router.post('/reviews', async (req, res) => {
   const db = req.app.locals.db;
-  // Важливо: переконуємось, що movie_id це число
   let { title, body, rating, movie_id } = req.body;
 
   if (!title || !body || !rating || !movie_id)
@@ -127,7 +122,6 @@ router.post('/reviews', async (req, res) => {
       [title, body, rating, movie_id, req.user.id]
     );
 
-    // Оновлюємо рейтинг після вставки
     await updateMovieRating(db, movie_id);
     
     res.status(201).json({ message: 'Рецензію створено', review: result.rows[0] });
@@ -199,7 +193,6 @@ router.put('/reviews/:id', async (req, res) => {
       [title, body, rating, id]
     );
 
-    // Оновлюємо рейтинг (фільм беремо зі старого запису, бо він не змінюється)
     await updateMovieRating(db, currentReview.movie_id);
 
     res.json({ message: 'Рецензію оновлено', review: result.rows[0] });
@@ -248,7 +241,6 @@ router.delete('/reviews/:id', async (req, res) => {
 
     const result = await db.query('DELETE FROM reviews WHERE id = $1 RETURNING *', [id]);
 
-    // Оновлюємо рейтинг після видалення
     await updateMovieRating(db, currentReview.movie_id);
 
     res.json({ message: 'Рецензію видалено', review: result.rows[0] });

@@ -76,4 +76,31 @@
   .rating-stars {
     @apply text-yellow-400 text-lg tracking-wider;
   }
+
+  /* Стилі для слайдерів */
+  input[type="range"].slider {
+    @apply w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer;
+  }
+
+  input[type="range"].slider::-webkit-slider-thumb {
+    @apply appearance-none h-5 w-5 rounded-full bg-blue-500 cursor-pointer border-2 border-blue-400;
+  }
+
+  input[type="range"].slider::-moz-range-thumb {
+    @apply h-5 w-5 rounded-full bg-blue-500 cursor-pointer border-2 border-blue-400 border-none;
+  }
+
+  input[type="range"].slider::-webkit-slider-track {
+    @apply bg-gray-700 rounded-lg;
+  }
+
+  input[type="range"].slider::-moz-range-track {
+    @apply bg-gray-700 rounded-lg border-none;
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
 }
