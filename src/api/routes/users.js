@@ -54,23 +54,42 @@ router.get('/users/:param', async (req, res) => {
   const db = req.app.locals.db;
   const { param } = req.params;
 
-  let query, values;
-
+  let target;
   if (/^\d+$/.test(param)) {
-    query = 'SELECT * FROM users WHERE id = $1';
-    values = [param];
+    target = { column: 'id', value: param };
   } else {
     const username = param.startsWith('@') ? param : `@${param}`;
-    query = 'SELECT * FROM users WHERE username = $1';
-    values = [username];
+    target = { column: 'username', value: username };
   }
 
   try {
-    const result = await db.query(query, values);
-    if (result.rows.length === 0) {
+    const userQuery = target.column === 'id'
+      ? 'SELECT * FROM users WHERE id = $1'
+      : 'SELECT * FROM users WHERE username = $1';
+
+    const { rows } = await db.query(userQuery, [target.value]);
+
+    if (rows.length === 0) {
       return res.status(404).json({ message: 'Користувача не знайдено' });
     }
-    res.json(result.rows[0]);
+
+    const user = rows[0];
+
+    const friendsQuery = `
+      SELECT u.id, u.username, u.nickname, u.avatar_url
+      FROM friendships f
+      JOIN users u 
+        ON (u.id = f.requester_id AND f.receiver_id = $1)
+        OR (u.id = f.receiver_id AND f.requester_id = $1)
+      WHERE f.status='accepted'
+    `;
+
+    const friendsResult = await db.query(friendsQuery, [user.id]);
+
+    res.json({
+      ...user,
+      friends: friendsResult.rows
+    });
   } catch (err) {
     console.error('DB error (GET /users/:param):', err);
     res.status(500).json({ error: 'Database error' });
@@ -328,6 +347,336 @@ router.delete('/users/:param', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
+
+/**
+ * @openapi
+ * /api/v1/users/friends/request/{param}:
+ *   post:
+ *     summary: Надіслати запит на дружбу
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: param
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID або username користувача
+ *     responses:
+ *       201:
+ *         description: Запит надіслано
+ *       400:
+ *         description: Некоректний запит
+ *       404:
+ *         description: Користувача не знайдено
+ */
+router.post('/users/friends/request/:param', async (req, res) => {
+  const db = req.app.locals.db;
+  const { param } = req.params;
+
+  const requesterId = req.user.id;
+
+  let target;
+  if (/^\d+$/.test(param)) {
+    target = { column: 'id', value: param };
+  } else {
+    const uname = param.startsWith('@') ? param : `@${param}`;
+    target = { column: 'username', value: uname };
+  }
+
+  try {
+    const query = target.column === 'id'
+      ? 'SELECT * FROM users WHERE id = $1'
+      : 'SELECT * FROM users WHERE username = $1';
+
+    const { rows } = await db.query(query, [target.value]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Користувача не знайдено' });
+    }
+
+    const receiver = rows[0];
+
+    if (receiver.id === requesterId) {
+      return res.status(400).json({ message: 'Не можна надіслати запит самому собі' });
+    }
+    const existing = await db.query(
+      `SELECT * FROM friendships
+       WHERE (requester_id = $1 AND receiver_id = $2)
+          OR (requester_id = $2 AND receiver_id = $1)`,
+      [requesterId, receiver.id]
+    );
+
+    if (existing.rows.length > 0) {
+      const row = existing.rows[0];
+
+      if (row.status === 'pending') {
+        return res.status(400).json({ message: 'Запит уже очікує підтвердження' });
+      }
+
+      if (row.status === 'accepted') {
+        return res.status(400).json({ message: 'Ви вже друзі' });
+      }
+
+      if (row.status === 'rejected') {
+        return res.status(400).json({ message: 'Ваш попередній запит відхилено' });
+      }
+    }
+
+    const result = await db.query(
+      `INSERT INTO friendships (requester_id, receiver_id, status)
+       VALUES ($1, $2, 'pending')
+       RETURNING *`,
+      [requesterId, receiver.id]
+    );
+
+    res.status(201).json({
+      message: 'Запит на дружбу надіслано',
+      request: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error('DB error (POST /users/friends/request/:param):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+
+/**
+ * @openapi
+ * /api/v1/users/friends/accept/{param}:
+ *   post:
+ *     summary: Прийняти запит дружби
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: param
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID або username користувача, який надіслав запит
+ *     responses:
+ *       200:
+ *         description: Запит прийнято
+ *       404:
+ *         description: Запит не знайдено
+ */
+router.post('/users/friends/accept/:param', async (req, res) => {
+  const db = req.app.locals.db;
+  const receiverId = req.user.id;
+  const { param } = req.params;
+
+  let target;
+  if (/^\d+$/.test(param)) {
+    target = { column: 'id', value: param };
+  } else {
+    const uname = param.startsWith('@') ? param : `@${param}`;
+    target = { column: 'username', value: uname };
+  }
+
+  try {
+    const query = target.column === 'id'
+      ? 'SELECT * FROM users WHERE id = $1'
+      : 'SELECT * FROM users WHERE username = $1';
+
+    const { rows } = await db.query(query, [target.value]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Користувача не знайдено' });
+    }
+
+    const requester = rows[0];
+
+    if (requester.id === receiverId) {
+      return res.status(400).json({ message: 'Не можна прийняти запит від самого себе' });
+    }
+
+    const check = await db.query(
+      `SELECT * FROM friendships
+       WHERE requester_id = $1 AND receiver_id = $2`,
+      [requester.id, receiverId]
+    );
+
+    if (check.rows.length === 0) {
+      return res.status(404).json({ message: 'Запит на дружбу не знайдено' });
+    }
+
+    const requestRow = check.rows[0];
+
+    if (requestRow.status === 'accepted') {
+      return res.status(400).json({ message: 'Ви вже друзі' });
+    }
+
+    if (requestRow.status === 'rejected') {
+      return res.status(400).json({ message: 'Цей запит вже було відхилено' });
+    }
+
+    if (requestRow.status !== 'pending') {
+      return res.status(400).json({ message: 'Цей запит неможливо прийняти' });
+    }
+
+    const result = await db.query(
+      `UPDATE friendships
+       SET status='accepted'
+       WHERE requester_id=$1 AND receiver_id=$2
+       RETURNING *`,
+      [requester.id, receiverId]
+    );
+
+    res.json({
+      message: 'Запит на дружбу прийнято',
+      friendship: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error('DB error (POST /users/friends/accept/:param):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+
+/**
+ * @openapi
+ * /api/v1/users/friends/{param}:
+ *   delete:
+ *     summary: Видалити друга або скасувати запит
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: param
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID або username друга
+ *     responses:
+ *       200:
+ *         description: Видалено
+ *       404:
+ *         description: Не знайдено
+ */
+router.delete('/users/friends/:param', async (req, res) => {
+  const db = req.app.locals.db;
+  const { param } = req.params;
+  const userId = req.user.id;
+
+  let target;
+  if (/^\d+$/.test(param)) {
+    target = { column: 'id', value: param };
+  } else {
+    const uname = param.startsWith('@') ? param : `@${param}`;
+    target = { column: 'username', value: uname };
+  }
+
+  try {
+    const query = target.column === 'id'
+      ? 'SELECT * FROM users WHERE id = $1'
+      : 'SELECT * FROM users WHERE username = $1';
+
+    const { rows } = await db.query(query, [target.value]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Користувача не знайдено' });
+    }
+
+    const other = rows[0];
+
+    if (other.id === userId) {
+      return res.status(400).json({ message: 'Неможливо видалити дружбу з самим собою' });
+    }
+
+    const result = await db.query(
+      `DELETE FROM friendships
+       WHERE (requester_id=$1 AND receiver_id=$2)
+          OR (requester_id=$2 AND receiver_id=$1)
+       RETURNING *`,
+      [userId, other.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Дружбу не знайдено' });
+    }
+
+    res.json({
+      message: 'Дружбу видалено',
+      removed: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error('DB error (DELETE /users/friends/:param):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/users/friends/requests/incoming/{param}:
+ *   get:
+ *     summary: Отримати список вхідних запитів
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: param
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID або username користувача
+ *     responses:
+ *       200:
+ *         description: Список вхідних запитів
+ */
+router.get('/users/friends/requests/incoming/:param', async (req, res) => {
+  const db = req.app.locals.db;
+  const { param } = req.params;
+
+  let target;
+  if (/^\d+$/.test(param)) {
+    target = { column: 'id', value: param };
+  } else {
+    const uname = param.startsWith('@') ? param : `@${param}`;
+    target = { column: 'username', value: uname };
+  }
+
+  if (req.user.role === 'user') {
+    if ((target.column === 'id' && Number.parseInt(target.value) !== req.user.id) ||
+        (target.column === 'username' && target.value !== req.user.username)) {
+      return res.status(403).json({ message: 'Недостатньо прав для перегляду запитів іншого користувача' });
+    }
+  }
+
+  try {
+    const query = target.column === 'id'
+      ? 'SELECT * FROM users WHERE id = $1'
+      : 'SELECT * FROM users WHERE username = $1';
+
+    const { rows } = await db.query(query, [target.value]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Користувача не знайдено' });
+    }
+
+    const user = rows[0];
+
+    const requestsResult = await db.query(
+      `SELECT f.id, f.requester_id, u.username, u.nickname, f.created_at
+       FROM friendships f
+       JOIN users u ON f.requester_id = u.id
+       WHERE f.receiver_id=$1 AND f.status='pending'
+       ORDER BY f.created_at DESC`,
+      [user.id]
+    );
+
+    res.json({ incoming: requestsResult.rows });
+  } catch (err) {
+    console.error('DB error (GET /users/friends/requests/incoming/:param):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+
+
 
 
 module.exports = router;

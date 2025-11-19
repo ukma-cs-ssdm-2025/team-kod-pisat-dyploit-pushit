@@ -43,5 +43,16 @@ CREATE TABLE IF NOT EXISTS movie_people (
   PRIMARY KEY (movie_id, person_id)
 );
 
+CREATE TABLE IF NOT EXISTS friendships (
+    id SERIAL PRIMARY KEY,
+    requester_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (requester_id, receiver_id)
+);
+
+
+
 
 
