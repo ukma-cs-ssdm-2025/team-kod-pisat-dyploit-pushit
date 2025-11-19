@@ -7,7 +7,11 @@ import {
   uploadAvatar,
   getAllMovies,   
   getAllReviews,
-  deleteReview 
+  deleteReview,
+  sendFriendRequest,
+  removeFriend,
+  acceptFriendRequest,
+  getIncomingFriendRequests
 } from "../api" 
 import { useAuth } from '../hooks/useAuth'
 import MovieCard from "../components/MovieCard"
@@ -23,6 +27,8 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
+  const [incomingRequests, setIncomingRequests] = useState([]);
+  const [showFriendRequests, setShowFriendRequests] = useState(false);
 
   const [selectedMovies, setSelectedMovies] = useState([]);
   const [userReviews, setUserReviews] = useState([]);
@@ -54,6 +60,15 @@ export default function Profile() {
 
           const selectedIds = user.liked_movies || [];
           setSelectedMovies(allMoviesData.filter(m => selectedIds.includes(m.id)));
+
+          if (isMyProfile) {
+            try {
+              const requests = await getIncomingFriendRequests(currentUser.id);
+              setIncomingRequests(requests.incoming || []);
+            } catch (err) {
+              console.error("Помилка завантаження запитів:", err);
+            }
+          }
         } else {
           setProfileUser(null);
         }
@@ -84,6 +99,30 @@ export default function Profile() {
 
   }, [username, currentUser, isAuthLoading, navigate]);  
 
+  const handleFriendAction = async (action, userParam = null) => {
+    if (!userParam && profileUser) {
+      userParam = profileUser.id;
+    }
+
+    try {
+      if (action === 'add') {
+        await sendFriendRequest(userParam);
+        alert('Запит на дружбу надіслано!');
+      } else if (action === 'remove') {
+        await removeFriend(userParam);
+        alert('Дружбу видалено!');
+        fetchProfileData(username || currentUser.username, !username);
+      } else if (action === 'accept') {
+        await acceptFriendRequest(userParam);
+        alert('Запит на дружбу прийнято!');
+        setIncomingRequests(prev => prev.filter(req => req.requester_id !== parseInt(userParam)));
+        fetchProfileData(username || currentUser.username, !username);
+      }
+    } catch (err) {
+      alert(`Помилка: ${err.message || 'Не вдалося виконати дію'}`);
+    }
+  };
+
   const handleDeleteReview = async (reviewId) => {
     if (window.confirm("Ви впевнені, що хочете видалити цей відгук?")) {
       try {
@@ -102,6 +141,18 @@ export default function Profile() {
                   (isModerator && !isAdmin && profileUser?.role === 'user');
   
   const canDelete = canEdit && !isMe;
+
+  const getFriendStatus = () => {
+    if (!currentUser || !profileUser || isMe) return 'self';
+    
+    if (currentUser.friends && currentUser.friends.some(friend => friend.id === profileUser.id)) {
+      return 'friend';
+    }
+    
+    return 'not_friend';
+  };
+
+  const friendStatus = getFriendStatus();
   
   const handleEditChange = (e) => {
     setEditData({ ...editData, [e.target.name]: e.target.value });
@@ -159,7 +210,7 @@ export default function Profile() {
       try {
         await deleteUser(profileUser.id);
         alert('Користувача видалено!');
-        navigate('/admin/users'); 
+        navigate('/users'); 
       } catch (err) {
         alert(`Помилка: ${err.message || 'Не вдалося видалити'}`);
       }
@@ -175,14 +226,14 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-24 pb-8">
-      <div className="max-w-4xl mx-auto p-4">
+      <div className="max-w-6xl mx-auto p-4">
         
         {!isEditing ? (
           <div className="card p-6 mb-8">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
               <img
                 src={profileUser.avatar_url || `https://via.placeholder.com/150/374151/FFFFFF?text=${profileUser.username[1].toUpperCase()}`}
-                alt={profileUser.nickname}
+                //alt={profileUser.nickname}
                 className="w-32 h-32 rounded-full border-4 border-blue-500 object-cover shadow-lg"
               />
               <div className="text-center md:text-left flex-1">
@@ -191,21 +242,82 @@ export default function Profile() {
                 <div className="border-t border-gray-700 pt-3">
                   <p className="text-gray-400">Email: {profileUser.email}</p>
                   <p className="text-gray-400">Роль: {profileUser.role}</p>
+                  <p className="text-gray-400">Друзі: {profileUser.friends?.length || 0}</p>
                 </div>
               </div>
               <div className="flex flex-col gap-2">
+                {!isMe && friendStatus === 'not_friend' && (
+                  <button 
+                    onClick={() => handleFriendAction('add')}
+                    className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded transition-colors"
+                  >
+                    Додати в друзі
+                  </button>
+                )}
+
+                {isMe && incomingRequests.length > 0 && (
+                  <button 
+                    onClick={() => setShowFriendRequests(!showFriendRequests)}
+                    className="bg-yellow-600 hover:bg-yellow-500 text-white px-4 py-2 rounded transition-colors"
+                  >
+                    Запити ({incomingRequests.length})
+                  </button>
+                )}
+
                 {canEdit && (
                   <button onClick={() => setIsEditing(true)} className="btn-secondary">
                     Редагувати
                   </button>
                 )}
+                
+                {!isMe && friendStatus === 'friend' && (
+                  <button 
+                    onClick={() => handleFriendAction('remove')}
+                    className="btn-danger"
+                  >
+                    Видалити з друзів
+                  </button>
+                )}
+
                 {canDelete && (
                   <button onClick={handleDeleteProfile} className="btn-danger">
-                    Видалити
+                    Видалити (забанити)
                   </button>
                 )}
               </div>
             </div>
+
+            {isMe && showFriendRequests && incomingRequests.length > 0 && (
+              <div className="mt-6 border-t border-gray-700 pt-4">
+                <h3 className="text-xl font-bold text-white mb-4">Вхідні запити на дружбу</h3>
+                <div className="space-y-3">
+                  {incomingRequests.map(request => (
+                    <div key={request.id} className="flex items-center justify-between bg-gray-700/50 p-3 rounded-lg">
+                      <div>
+                        <Link to={`/user/${request.username}`} className="text-white font-semibold hover:underline">
+                          {request.nickname}
+                        </Link>
+                        <p className="text-gray-400 text-sm">{request.username}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleFriendAction('accept', request.requester_id)}
+                          className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm transition-colors"
+                        >
+                          Прийняти
+                        </button>
+                        <button 
+                          onClick={() => handleFriendAction('remove', request.requester_id)}
+                          className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm transition-colors"
+                        >
+                          Відхилити
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <form onSubmit={handleEditSubmit} className="card p-6 mb-8 space-y-4">
@@ -241,6 +353,40 @@ export default function Profile() {
               <button type="button" onClick={() => { setIsEditing(false); setAvatarFile(null); }} className="btn-secondary">Скасувати</button>
             </div>
           </form>
+        )}
+
+        {profileUser.friends && profileUser.friends.length > 0 && (
+          <div className="card p-6 mb-8">
+            <h2 className="section-title">
+              Друзі ({profileUser.friends.length})
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {profileUser.friends.map(friend => (
+                <div key={friend.id} className="bg-gray-700/50 rounded-lg p-4 flex items-center gap-3">
+                  <img
+                    src={friend.avatar_url || `https://via.placeholder.com/40/374151/FFFFFF?text=${friend.username[1].toUpperCase()}`}
+                    alt={" "}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div className="flex-1">
+                    <Link to={`/user/${friend.username}`} className="text-white font-semibold hover:underline block">
+                      {friend.nickname}
+                    </Link>
+                    <p className="text-gray-400 text-sm">{friend.username}</p>
+                  </div>
+                  {isMe && (
+                    <button 
+                      onClick={() => handleFriendAction('remove', friend.id)}
+                      className="text-red-400 hover:text-red-300 text-sm"
+                      title="Видалити з друзів"
+                    >
+                      X
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         <div className="card p-6 mb-8">

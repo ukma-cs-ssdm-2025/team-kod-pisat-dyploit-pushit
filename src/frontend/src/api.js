@@ -196,3 +196,15 @@ export const addToLikedMovies = (userParam, movieId) =>
 
 export const removeFromLikedMovies = (userParam, movieId) => 
   apiFetch(`/movies/${userParam}/likes/${movieId}`, { method: 'DELETE' });
+
+export const sendFriendRequest = (userParam) => 
+  apiFetch(`/users/friends/request/${userParam}`, { method: 'POST' });
+
+export const acceptFriendRequest = (userParam) => 
+  apiFetch(`/users/friends/accept/${userParam}`, { method: 'POST' });
+
+export const removeFriend = (userParam) => 
+  apiFetch(`/users/friends/${userParam}`, { method: 'DELETE' });
+
+export const getIncomingFriendRequests = (userParam) => 
+  apiFetch(`/users/friends/requests/incoming/${userParam}`);

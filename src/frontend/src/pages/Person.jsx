@@ -107,7 +107,7 @@ export default function Person() {
       try {
         await deletePerson(id);
         alert('Людину видалено!');
-        navigate('/admin/people'); 
+        navigate('/people'); 
       } catch (err) {
         alert(`Помилка: ${err.message || 'Не вдалося видалити'}`);
       }

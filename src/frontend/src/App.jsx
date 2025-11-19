@@ -11,7 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import PeopleList from "./pages/PeopleList"
 import AddPerson from "./pages/AddPerson"
 import Person from "./pages/Person"
-import Recommendations from "./pages/Recommendations" // --- НОВИЙ ІМПОРТ
+import Recommendations from "./pages/Recommendations"
 
 function AppContent() {
   const { pathname } = useLocation()
@@ -25,13 +25,11 @@ function AppContent() {
           <Route path="/" element={<Movies />} />
           <Route path="/movies" element={<Movies />} />
           
-          {/* --- НОВИЙ РОУТ --- */}
           <Route path="/recommendations" element={
             <ProtectedRoute>
               <Recommendations />
             </ProtectedRoute>
           } />
-          {/* ------------------ */}
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -40,10 +38,10 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/user/:username" element={<Profile />} />
 
-          <Route 
-            path="/admin/users" 
+          <Route
+            path="/users" 
             element={
-              <ProtectedRoute moderatorRequired={true}>
+              <ProtectedRoute>
                 <UserList />
               </ProtectedRoute>
             } 
@@ -59,9 +57,9 @@ function AppContent() {
           />
 
           <Route 
-            path="/admin/people" 
+            path="/people" 
             element={
-              <ProtectedRoute adminOnly={true}>
+              <ProtectedRoute>
                 <PeopleList />
               </ProtectedRoute>
             } 

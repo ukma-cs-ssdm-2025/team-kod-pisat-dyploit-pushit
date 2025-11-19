@@ -6,7 +6,7 @@ export default function ProtectedRoute({ children, adminOnly = false, moderatorR
   const { isAuthenticated, isAdmin, isModerator, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-amber-400">Перевірка доступу...</div>;
+    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-amber-400">Перевірка доступу...</div>;
   }
 
   if (!isAuthenticated) {

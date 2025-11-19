@@ -33,17 +33,14 @@ export default function Header() {
       <div className="flex gap-6 items-center">
         {isAuthenticated ? (
           <>
-            {isAdmin && (
-              <Link to="/admin/people" className="nav-link">
-                Люди
-              </Link>
-            )}
+            
+            <Link to="/people" className="nav-link">
+              Люди
+            </Link>
 
-            {isModerator && (
-              <Link to="/admin/users" className="nav-link">
-                Користувачі
-              </Link>
-            )}
+            <Link to="/users" className="nav-link">
+              Користувачі
+            </Link>
 
             <Link to="/movies" className="nav-link">
               Фільми
