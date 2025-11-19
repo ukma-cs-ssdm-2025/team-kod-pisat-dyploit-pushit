@@ -1,4 +1,4 @@
- import { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { 
   getUserByUsername, 
@@ -6,13 +6,12 @@ import {
   deleteUser, 
   uploadAvatar,
   getAllMovies,   
-  getAllReviews   
+  getAllReviews,
+  deleteReview 
 } from "../api" 
 import { useAuth } from '../hooks/useAuth'
 import MovieCard from "../components/MovieCard"
 import ReviewCard from "../components/ReviewCard"  
-
- 
 
 export default function Profile() {
   const { username } = useParams();
@@ -25,11 +24,45 @@ export default function Profile() {
   const [editData, setEditData] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
 
-   
   const [likedMovies, setLikedMovies] = useState([]);
   const [userReviews, setUserReviews] = useState([]);
   const [allMovies, setAllMovies] = useState([]);  
-   
+
+  const fetchProfileData = async (targetUsername, isMyProfile) => {
+      try {
+        const allMoviesData = await getAllMovies();
+        setAllMovies(allMoviesData);
+
+        const allReviewsData = await getAllReviews();
+
+        let user;
+        if (isMyProfile) {
+          user = currentUser;
+        } else {
+          user = await getUserByUsername(targetUsername);
+        }
+
+        if (user) {
+          setProfileUser(user);
+          setEditData(user); 
+          
+          const reviews = allReviewsData
+            .filter(r => r.user_id === user.id)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+          setUserReviews(reviews);
+
+          const likedIds = user.liked_movies || [];
+          setLikedMovies(allMoviesData.filter(m => likedIds.includes(m.id)));
+        } else {
+          setProfileUser(null);
+        }
+      } catch (err) {
+        console.error("Помилка завантаження профілю:", err);
+        setProfileUser(null);
+      }
+      setIsLoading(false);
+  };
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -45,57 +78,24 @@ export default function Profile() {
       return;
     }
     
-    const fetchProfile = async () => {
-      setIsLoading(true);
-      
-      try {
-         
-        const allMoviesData = await getAllMovies();
-        setAllMovies(allMoviesData);
-
-         
-        const allReviewsData = await getAllReviews();
-
-        let user;
-        if (isMyProfile) {
-          user = currentUser;
-        } else {
-          user = await getUserByUsername(targetUsername);
-        }
-
-        if (user) {
-          setProfileUser(user);
-          setEditData(user); 
-
-           
-           
-          setUserReviews(allReviewsData.filter(r => r.user_id === user.id));
-
-           
-           
-          const likedIds = user.liked_movies || [];
-          setLikedMovies(allMoviesData.filter(m => likedIds.includes(m.id)));
-           
-
-        } else {
-          setProfileUser(null);
-        }
-      } catch (err) {
-        console.error("Помилка завантаження профілю:", err);
-        setProfileUser(null);
-      }
-      setIsLoading(false);
-    };
-    
-     
-     
     if ((isMyProfile && currentUser) || !isMyProfile) {
-      fetchProfile();
+      fetchProfileData(targetUsername, isMyProfile);
     }
 
   }, [username, currentUser, isAuthLoading, navigate]);  
 
-   
+  const handleDeleteReview = async (reviewId) => {
+    if (window.confirm("Ви впевнені, що хочете видалити цей відгук?")) {
+      try {
+        await deleteReview(reviewId);
+        setUserReviews(prev => prev.filter(r => r.id !== reviewId));
+        alert("Відгук видалено");
+      } catch (err) {
+        alert(`Помилка видалення відгуку: ${err.message}`);
+      }
+    }
+  };
+
   const isMe = currentUser?.id === profileUser?.id;
   const canEdit = isMe || 
                   (isAdmin && profileUser?.role !== 'admin') || 
@@ -265,14 +265,13 @@ export default function Profile() {
           {userReviews.length > 0 ? (
             <div className="space-y-6">
               {userReviews.map(review => {
-                 
                 const movie = allMovies.find(m => m.id === review.movie_id);
                 const reviewWithData = {
                   ...review,
                   movieTitle: movie?.title || "Видалений фільм",
-                   
-                   
                   user: { 
+                    // --- ВИПРАВЛЕННЯ: ДОДАНО ID ДЛЯ КОРЕКТНОЇ РОБОТИ КНОПКИ ВИДАЛЕННЯ ---
+                    id: profileUser.id,
                     nickname: profileUser.nickname, 
                     username: profileUser.username 
                   },
@@ -284,8 +283,7 @@ export default function Profile() {
                   <ReviewCard 
                     key={review.id} 
                     review={reviewWithData}
-                     
-                     
+                    onDelete={handleDeleteReview} 
                   />
                 )
               })}

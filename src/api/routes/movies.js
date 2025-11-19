@@ -16,7 +16,15 @@ const { deleteFileFromR2 } = require('../utils/r2');
 router.get('/movies', async (req, res) => {
   const db = req.app.locals.db;
   try {
-    const result = await db.query('SELECT * FROM movies ORDER BY id');
+    // --- ЗМІНА: Додаємо ARRAY_AGG для отримання ID людей одразу в списку ---
+    const result = await db.query(`
+      SELECT m.*, 
+             COALESCE(ARRAY_AGG(mp.person_id) FILTER (WHERE mp.person_id IS NOT NULL), '{}') as people_ids
+      FROM movies m
+      LEFT JOIN movie_people mp ON m.id = mp.movie_id
+      GROUP BY m.id
+      ORDER BY m.id
+    `);
     res.json(result.rows);
   } catch (err) {
     console.error('DB error (GET /movies):', err);

@@ -25,7 +25,7 @@ export default function Movie() {
   const [reviews, setReviews] = useState([])
   const [people, setPeople] = useState([])
   const [allPeopleOptions, setAllPeopleOptions] = useState([])
-  const [averageRating, setAverageRating] = useState(0); 
+  // Видалили averageRating state
   const [isLoading, setIsLoading] = useState(true)
   
   const [isEditing, setIsEditing] = useState(false)
@@ -72,16 +72,13 @@ export default function Movie() {
             text: review.body || review.text,
             user: author || { username: 'deleted', nickname: 'Unknown User' }
           };
-        });
+        })
+        // Сортуємо відгуки: новіші зверху
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
       setReviews(movieReviews);
 
-      if (movieReviews.length > 0) {
-        const totalRating = movieReviews.reduce((acc, r) => acc + r.rating, 0);
-        setAverageRating(totalRating / movieReviews.length);
-      } else {
-        setAverageRating(0);
-      }
+      // Видалили локальний розрахунок рейтингу
 
     }).catch(err => {
       console.error("Помилка завантаження даних:", err);
@@ -155,7 +152,8 @@ export default function Movie() {
         movie_id: Number(id) 
       };
       await addReview(dataToSend);
-      fetchData();
+      // Важливо: перезавантажуємо дані, щоб отримати оновлений рейтинг з БД
+      fetchData(); 
     } catch (err) {
       alert(`Помилка додавання відгуку: ${err.message}`);
     }
@@ -165,6 +163,7 @@ export default function Movie() {
     if (window.confirm("Ви впевнені, що хочете видалити цей відгук?")) {
       try {
         await deleteReview(reviewId);
+        // Важливо: перезавантажуємо дані, щоб отримати оновлений рейтинг з БД
         fetchData();
       } catch (err) {
         alert(`Помилка видалення відгуку: ${err.message}`);
@@ -184,6 +183,9 @@ export default function Movie() {
   const producers = people.filter(p => p.profession === 'producer');
   const actors = people.filter(p => p.profession === 'actor');
 
+  // Отримуємо рейтинг з БД (або 0, якщо null)
+  const dbRating = movie.rating ? parseFloat(movie.rating).toFixed(1) : '0.0';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 pt-24 pb-8">
       <div className="max-w-5xl mx-auto p-4">
@@ -200,14 +202,14 @@ export default function Movie() {
             <div className="md:w-2/3">
               <h1 className="text-4xl font-bold text-white mb-2">
                 {movie.title}
-                <span className="text-2xl text-amber-400 ml-2">({averageRating.toFixed(1)} ★)</span>
+                {/* --- ВІДОБРАЖЕННЯ РЕЙТИНГУ З БД --- */}
+                <span className="text-2xl text-amber-400 ml-2">({dbRating} ★)</span>
               </h1>
               <p className="text-lg text-gray-300"><strong className="text-amber-400">Жанр:</strong> {movie.genre || 'N/A'}</p>
               
               <div className="border-t border-amber-500/20 pt-4 mt-4 space-y-3">
                 <p className="text-gray-400 text-justify leading-relaxed mt-4">{movie.description || "Опис відсутній."}</p>
                 
-                {/* Люди */}
                 {directors.length > 0 && (
                   <div>
                     <strong className="text-amber-400">Режисер(и):</strong>
@@ -220,7 +222,6 @@ export default function Movie() {
                     </div>
                   </div>
                 )}
-                {/* (Аналогічно для producers та actors...) */}
                 {producers.length > 0 && (
                   <div>
                     <strong className="text-amber-400">Продюсер(и):</strong>
@@ -271,7 +272,6 @@ export default function Movie() {
               <input type="text" name="genre" value={editData.genre} onChange={handleEditChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
             </div>
             
-            {/* --- МУЛЬТИСЕЛЕКТ --- */}
             <MultiSelect 
               label="Обрати Людей (Актори, Режисери)"
               options={allPeopleOptions}
@@ -279,7 +279,6 @@ export default function Movie() {
               onChange={handlePeopleChange}
               placeholder="Пошук людини..."
             />
-            {/* ------------------- */}
 
             <div>
               <label className="block text-amber-400 mb-2">Обкладинка (завантажити нову)</label>

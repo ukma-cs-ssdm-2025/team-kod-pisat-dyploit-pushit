@@ -11,7 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import PeopleList from "./pages/PeopleList"
 import AddPerson from "./pages/AddPerson"
 import Person from "./pages/Person"
-
+import Recommendations from "./pages/Recommendations" // --- НОВИЙ ІМПОРТ
 
 function AppContent() {
   const { pathname } = useLocation()
@@ -24,6 +24,15 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Movies />} />
           <Route path="/movies" element={<Movies />} />
+          
+          {/* --- НОВИЙ РОУТ --- */}
+          <Route path="/recommendations" element={
+            <ProtectedRoute>
+              <Recommendations />
+            </ProtectedRoute>
+          } />
+          {/* ------------------ */}
+
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/movie/:id" element={<Movie />} />

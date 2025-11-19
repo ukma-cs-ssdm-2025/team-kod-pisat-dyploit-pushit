@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { Link } from "react-router-dom"; 
-import { getAllMovies } from "../api" 
+import { getAllMovies, getAllPeople } from "../api" 
 import MovieCard from "../components/MovieCard"
 import { useAuth } from '../hooks/useAuth'; 
 
@@ -13,32 +13,41 @@ const SearchIcon = () => (
 export default function Movies() {
   const { isAdmin } = useAuth();
   const [movies, setMovies] = useState([])
+  const [allPeople, setAllPeople] = useState([]) // Зберігаємо повні об'єкти людей
+
   const [searchTerm, setSearchTerm] = useState("")
-  
-  // Змінено стан фільтрів
   const [genreFilter, setGenreFilter] = useState("")
-  const [sortOption, setSortOption] = useState("newest") // newest, oldest, rating_desc, rating_asc, title_asc
+  const [peopleSearchTerm, setPeopleSearchTerm] = useState("") // Текстовий пошук людей
+  const [sortOption, setSortOption] = useState("newest") 
   
   const [showFilters, setShowFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    getAllMovies()
-      .then((data) => {
-        setMovies(data)
-      })
-      .catch(err => {
-        console.error("Не вдалося завантажити фільми:", err)
-      })
-      .finally(() => {
+    const fetchData = async () => {
+      try {
+        const [moviesData, peopleData] = await Promise.all([
+          getAllMovies(),
+          getAllPeople()
+        ]);
+        
+        setMovies(moviesData);
+        setAllPeople(peopleData);
+
+      } catch (err) {
+        console.error("Не вдалося завантажити дані:", err)
+      } finally {
         setIsLoading(false)
-      })
+      }
+    };
+
+    fetchData();
   }, [])
 
   const processedMovies = useMemo(() => {
     let tempMovies = [...movies]
 
-    // 1. Пошук
+    // 1. Пошук за назвою фільму
     if (searchTerm) {
       tempMovies = tempMovies.filter((movie) => movie.title.toLowerCase().includes(searchTerm.toLowerCase()))
     }
@@ -48,26 +57,46 @@ export default function Movies() {
       tempMovies = tempMovies.filter((movie) => movie.genre?.toLowerCase().includes(genreFilter.toLowerCase()))
     }
 
-    // 3. Сортування
+    // 3. Пошук за людьми (Текстове поле)
+    if (peopleSearchTerm) {
+      const term = peopleSearchTerm.toLowerCase();
+      tempMovies = tempMovies.filter(movie => {
+        // Перевіряємо, чи є люди у фільмі
+        if (!movie.people_ids || !Array.isArray(movie.people_ids)) return false;
+        
+        // Знаходимо імена людей за їх ID
+        const actorsInMovie = allPeople.filter(p => movie.people_ids.includes(p.id));
+        
+        // Перевіряємо, чи містить ім'я або прізвище пошуковий запит
+        return actorsInMovie.some(person => 
+          person.first_name.toLowerCase().includes(term) || 
+          person.last_name.toLowerCase().includes(term)
+        );
+      });
+    }
+
+    // 4. Сортування
     tempMovies.sort((a, b) => {
+      const ratingA = a.rating !== null ? parseFloat(a.rating) : 0;
+      const ratingB = b.rating !== null ? parseFloat(b.rating) : 0;
+
       switch (sortOption) {
         case "title_asc":
           return a.title.localeCompare(b.title);
         case "rating_desc":
-          return (b.rating || 0) - (a.rating || 0);
+          return ratingB - ratingA;
         case "rating_asc":
-          return (a.rating || 0) - (b.rating || 0);
+          return ratingA - ratingB;
         case "oldest":
           return a.id - b.id;
         case "newest":
         default:
-          return b.id - a.id; // Припускаємо, що більший ID = новіший
+          return b.id - a.id;
       }
     });
 
     return tempMovies
-  }, [movies, searchTerm, genreFilter, sortOption])
-
+  }, [movies, allPeople, searchTerm, genreFilter, peopleSearchTerm, sortOption])
 
   if (isLoading) {
     return (
@@ -117,17 +146,29 @@ export default function Movies() {
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-amber-500/20 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 border-t border-amber-500/20 pt-4">
               <div>
                 <label className="block text-amber-400 mb-2 text-sm">Жанр</label>
                 <input
                   type="text"
-                  placeholder="Фільтрувати за жанром..."
+                  placeholder="Жанр"
                   value={genreFilter}
                   onChange={(e) => setGenreFilter(e.target.value)}
                   className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-all"
                 />
               </div>
+
+              <div>
+                <label className="block text-amber-400 mb-2 text-sm">Актори / Режисери / Продюсери</label>
+                <input
+                  type="text"
+                  placeholder="Актори / Режисери / Продюсери"
+                  value={peopleSearchTerm}
+                  onChange={(e) => setPeopleSearchTerm(e.target.value)}
+                  className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-all"
+                />
+              </div>
+
               <div>
                 <label className="block text-amber-400 mb-2 text-sm">Сортувати за</label>
                 <select 

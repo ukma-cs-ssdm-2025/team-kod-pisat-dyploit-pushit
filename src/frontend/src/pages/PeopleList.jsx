@@ -73,8 +73,7 @@ export default function PeopleList() {
           <table className="w-full text-left">
             <thead className="border-b border-amber-500/30">
               <tr>
-                <th className="p-4 text-amber-400">Ім'я</th>
-                <th className="p-4 text-amber-400">Прізвище</th>
+                <th className="p-4 text-amber-400">Повне Ім'я</th>
                 <th className="p-4 text-amber-400">Професія</th>
                 <th className="p-4 text-amber-400">Дії</th>
               </tr>
@@ -82,12 +81,12 @@ export default function PeopleList() {
             <tbody>
               {filteredPeople.map(person => (
                   <tr key={person.id} className="border-b border-purple-800/50 last:border-b-0 hover:bg-purple-800/30 transition-colors">
+                    {/* --- ЗМІНА ТУТ: ОБ'ЄДНАНО КОЛОНКИ В ОДНЕ ПОСИЛАННЯ --- */}
                     <td className="p-4">
                       <Link to={`/people/${person.id}`} className="text-white font-semibold hover:underline">
-                        {person.first_name}
+                        {person.first_name} {person.last_name}
                       </Link>
                     </td>
-                    <td className="p-4 text-gray-300">{person.last_name}</td>
                     <td className="p-4 text-gray-300">{person.profession}</td>
                     <td className="p-4">
                       <button 

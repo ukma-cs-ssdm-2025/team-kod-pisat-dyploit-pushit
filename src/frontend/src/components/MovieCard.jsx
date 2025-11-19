@@ -23,7 +23,7 @@ export default function MovieCard({ movie }) {
         >
           {movie.title}
         </h3>
-        <p className="text-amber-400/80 text-sm">Рейтинг: {movie.rating || 0} ★</p>
+        <p className="text-amber-400/80 text-sm">Рейтинг: {movie.rating !== null ? parseFloat(movie.rating).toFixed(1) : '0.0'} ★</p>
       </div>
     </Link>
   )

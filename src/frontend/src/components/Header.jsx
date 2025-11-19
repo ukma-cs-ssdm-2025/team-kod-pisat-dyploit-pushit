@@ -48,6 +48,13 @@ export default function Header() {
             <Link to="/movies" className="text-gray-300 hover:text-amber-400 transition-colors font-medium">
               Фільми
             </Link>
+            
+            {/* --- НОВЕ ПОСИЛАННЯ --- */}
+            <Link to="/recommendations" className="text-gray-300 hover:text-amber-400 transition-colors font-medium">
+            Рекомендації
+            </Link>
+            {/* ---------------------- */}
+
             <Link to="/profile" className="text-gray-300 hover:text-amber-400 transition-colors font-medium">
               Мій Профіль
             </Link>
