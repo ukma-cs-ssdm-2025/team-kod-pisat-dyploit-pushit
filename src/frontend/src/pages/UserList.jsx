@@ -41,14 +41,14 @@ export default function UserList() {
   };
 
   if (isLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-amber-400">Завантаження...</div>;
+    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400">Завантаження...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 pt-24 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-24 pb-8">
       <div className="max-w-4xl mx-auto p-4">
-        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
-          Керування Користувачами
+        <h1 className="section-title">
+          Керування користувачами
         </h1>
 
         <input
@@ -56,18 +56,18 @@ export default function UserList() {
           placeholder="Шукати за username, нікнеймом, email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-3 mb-8 bg-transparent border-2 border-amber-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
+          className="form-input mb-8"
         />
 
-        <div className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl border border-amber-500/20 backdrop-blur overflow-hidden">
+        <div className="card overflow-hidden">
           <table className="w-full text-left">
-            <thead className="border-b border-amber-500/30">
+            <thead className="border-b border-gray-700">
               <tr>
-                <th className="p-4 text-amber-400">Нікнейм</th>
-                <th className="p-4 text-amber-400">Username</th>
-                <th className="p-4 text-amber-400">Email</th>
-                <th className="p-4 text-amber-400">Роль</th>
-                <th className="p-4 text-amber-400">Дії</th>
+                <th className="p-4 text-blue-400 font-medium">Нікнейм</th>
+                <th className="p-4 text-blue-400 font-medium">Username</th>
+                <th className="p-4 text-blue-400 font-medium">Email</th>
+                <th className="p-4 text-blue-400 font-medium">Роль</th>
+                <th className="p-4 text-blue-400 font-medium">Дії</th>
               </tr>
             </thead>
             <tbody>
@@ -80,7 +80,7 @@ export default function UserList() {
                 );
 
                 return (
-                  <tr key={user.id} className="border-b border-purple-800/50 last:border-b-0 hover:bg-purple-800/30 transition-colors">
+                  <tr key={user.id} className="border-b border-gray-700/50 last:border-b-0 hover:bg-gray-700/30 transition-colors">
                     <td className="p-4">
                       <Link to={`/user/${user.username}`} className="text-white font-semibold hover:underline">
                         {user.nickname}
@@ -93,7 +93,7 @@ export default function UserList() {
                       {canDelete ? (
                         <button 
                           onClick={() => handleDeleteUser(user.id, user.username)}
-                          className="text-red-500 hover:text-red-400 transition-colors text-sm font-medium"
+                          className="text-red-400 hover:text-red-300 transition-colors text-sm font-medium"
                         >
                           Видалити
                         </button>

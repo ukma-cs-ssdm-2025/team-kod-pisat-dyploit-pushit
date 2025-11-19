@@ -25,15 +25,17 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-4 py-8">
       <div className="flex w-full max-w-6xl gap-8 items-center">
-        <div className="hidden lg:flex flex-1 rounded-2xl border-2 border-blue-400 bg-gradient-to-br from-purple-900 to-purple-950 p-8 relative overflow-hidden min-h-96">
-            <h2 className="text-4xl font-bold text-white">flick.ly</h2>
-            <p className="text-2xl font-bold text-white self-end">Share your flicks. Feel the vibes. Flick.ly.</p>
+        <div className="hidden lg:flex flex-1 rounded-2xl border-2 border-blue-500/30 bg-gradient-to-br from-gray-800 to-gray-900 p-8 relative overflow-hidden min-h-96 card items-center justify-center">
+            <div className="text-center">
+              <h2 className="text-4xl font-bold text-white mb-4">flick.ly</h2>
+              <p className="text-2xl font-bold text-white">Share your flicks. Feel the vibes.</p>
+            </div>
         </div>
 
         <div className="flex-1">
-          <form onSubmit={handleSubmit} className="w-full max-w-md">
+          <form onSubmit={handleSubmit} className="w-full max-w-md card p-8">
             <h1 className="text-4xl font-bold text-white mb-6">Create an account</h1>
 
             <div className="mb-4">
@@ -50,7 +52,7 @@ export default function Register() {
                 type="text"
                 name="username"
                 placeholder="Username (починайте з @)"
-                className="w-full px-4 py-3 bg-transparent border-2 border-blue-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 transition-colors"
+                className="form-input"
                 onChange={handleChange}
                 required
               />
@@ -59,7 +61,7 @@ export default function Register() {
                 type="text"
                 name="nickname"
                 placeholder="Nickname (ваше ім'я)"
-                className="w-full px-4 py-3 bg-transparent border-2 border-blue-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 transition-colors"
+                className="form-input"
                 onChange={handleChange}
                 required
               />
@@ -68,7 +70,7 @@ export default function Register() {
                 type="email"
                 name="email"
                 placeholder="Email"
-                className="w-full px-4 py-3 bg-transparent border-2 border-blue-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 transition-colors"
+                className="form-input"
                 onChange={handleChange}
                 required
               />
@@ -77,7 +79,7 @@ export default function Register() {
                 type="password"
                 name="password"
                 placeholder="Password"
-                className="w-full px-4 py-3 bg-transparent border-2 border-blue-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 transition-colors"
+                className="form-input"
                 onChange={handleChange}
                 required
               />
@@ -98,7 +100,7 @@ export default function Register() {
             </button>
 
             {message && (
-              <p className={`text-center text-sm ${res.user ? 'text-green-400' : 'text-red-400'}`}>
+              <p className={`text-center text-sm ${message.includes('створено') ? 'text-green-400' : 'text-red-400'}`}>
                 {message}
               </p>
             )}
