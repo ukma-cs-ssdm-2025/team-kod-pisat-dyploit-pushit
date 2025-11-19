@@ -301,5 +301,149 @@ router.delete('/movies/:id', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/v1/movies/{userParam}/likes/{movieId}:
+ *   post:
+ *     summary: Додати фільм до списку улюблених користувача
+ *     tags:
+ *       - Movies
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: userParam
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID або username користувача (наприклад, "12" або "@alex")
+ *       - name: movieId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID фільму
+ *     responses:
+ *       200:
+ *         description: Фільм додано до улюблених
+ *       404:
+ *         description: Користувача або фільм не знайдено
+ *       500:
+ *         description: Помилка сервера
+ */
+router.post("/movies/:userParam/likes/:movieId", async (req, res) => {
+  const { userParam, movieId } = req.params;
+  const db = req.app.locals.db;
+
+  try {
+    const movieCheck = await db.query("SELECT id FROM movies WHERE id = $1", [movieId]);
+    if (movieCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Фільм не знайдено" });
+    }
+
+    let target = {};
+    if (/^\d+$/.test(userParam)) {
+      target = { column: "id", value: userParam };
+    } else {
+      const username = userParam.startsWith("@") ? userParam : `@${userParam}`;
+      target = { column: "username", value: username };
+    }
+
+    const userCheck = await db.query(
+      `SELECT liked_movies FROM users WHERE ${target.column} = $1`,
+      [target.value]
+    );
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Користувача не знайдено" });
+    }
+
+    await db.query(
+      `UPDATE users 
+       SET liked_movies = array_append(liked_movies, $1)
+       WHERE ${target.column} = $2 
+         AND NOT ($1 = ANY(liked_movies))`,
+      [movieId, target.value]
+    );
+
+    res.json({ message: "Фільм додано в улюблені" });
+
+  } catch (err) {
+    console.error("DB error (POST /movies/:userParam/likes/:movieId):", err);
+    res.status(500).json({ error: "Помилка сервера" });
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/movies/{userParam}/likes/{movieId}:
+ *   delete:
+ *     summary: Видалити фільм зі списку улюблених користувача
+ *     tags:
+ *       - Movies
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: userParam
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID або username користувача (наприклад, "12" або "@alex")
+ *       - name: movieId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID фільму
+ *     responses:
+ *       200:
+ *         description: Фільм видалено з улюблених
+ *       404:
+ *         description: Користувача або фільм не знайдено
+ *       500:
+ *         description: Помилка сервера
+ */
+router.delete("/movies/:userParam/likes/:movieId", async (req, res) => {
+  const { userParam, movieId } = req.params;
+  const db = req.app.locals.db;
+
+  try {
+    const movieCheck = await db.query("SELECT id FROM movies WHERE id = $1", [movieId]);
+    if (movieCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Фільм не знайдено" });
+    }
+
+    let target = {};
+    if (/^\d+$/.test(userParam)) {
+      target = { column: "id", value: userParam };
+    } else {
+      const username = userParam.startsWith("@") ? userParam : `@${userParam}`;
+      target = { column: "username", value: username };
+    }
+
+    const userCheck = await db.query(
+      `SELECT liked_movies FROM users WHERE ${target.column} = $1`,
+      [target.value]
+    );
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Користувача не знайдено" });
+    }
+
+    await db.query(
+      `UPDATE users 
+       SET liked_movies = array_remove(liked_movies, $1)
+       WHERE ${target.column} = $2`,
+      [movieId, target.value]
+    );
+
+    res.json({ message: "Фільм видалено з улюблених" });
+
+  } catch (err) {
+    console.error("DB error (DELETE /movies/:userParam/likes/:movieId):", err);
+    res.status(500).json({ error: "Помилка сервера" });
+  }
+});
+
+
 
 module.exports = router;

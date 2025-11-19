@@ -217,6 +217,12 @@ router.put('/users/:param', async (req, res) => {
     }
   }
 
+  if (req.user.role != 'admin') {
+  return res.status(403).json({
+    message: 'Недостатньо прав для зміни ролі користувача'
+  });
+}
+
   if (username && !username.startsWith('@')) {
     username = `@${username}`;
   }
