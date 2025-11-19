@@ -952,4 +952,72 @@ paths:
           description: Користувача видалено
         '404':
           description: Користувача не знайдено
+  /api/v1/users/friends/request/{param}:
+    post:
+      summary: Надіслати запит на дружбу
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: param
+          required: true
+          schema:
+            type: string
+          description: ID або username користувача
+      responses:
+        '201':
+          description: Запит надіслано
+        '400':
+          description: Некоректний запит
+        '404':
+          description: Користувача не знайдено
+  /api/v1/users/friends/accept/{param}:
+    post:
+      summary: Прийняти запит дружби
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: param
+          required: true
+          schema:
+            type: string
+          description: ID або username користувача, який надіслав запит
+      responses:
+        '200':
+          description: Запит прийнято
+        '404':
+          description: Запит не знайдено
+  /api/v1/users/friends/{param}:
+    delete:
+      summary: Видалити друга або скасувати запит
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: param
+          required: true
+          schema:
+            type: string
+          description: ID або username друга
+      responses:
+        '200':
+          description: Видалено
+        '404':
+          description: Не знайдено
+  /api/v1/users/friends/requests/incoming/{param}:
+    get:
+      summary: Отримати список вхідних запитів
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: param
+          required: true
+          schema:
+            type: string
+          description: ID або username користувача
+      responses:
+        '200':
+          description: Список вхідних запитів
 tags: []
