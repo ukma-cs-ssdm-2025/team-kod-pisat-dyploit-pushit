@@ -51,7 +51,7 @@ export default function AddPerson() {
         last_name: formData.last_name,
         profession: formData.profession,
         biography: formData.biography,
-        movie_ids: formData.movie_ids, // Вже масив
+        movie_ids: formData.movie_ids,
       };
 
       const response = await addPerson(personData);
@@ -76,35 +76,34 @@ export default function AddPerson() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 pt-24 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-24 pb-8">
       <div className="max-w-2xl mx-auto p-4">
-        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
+        <h1 className="section-title">
           Додати Нову Людину
         </h1>
 
-        <form onSubmit={handleSubmit} className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl p-6 border border-amber-500/20 backdrop-blur space-y-4">
+        <form onSubmit={handleSubmit} className="card p-6 space-y-4">
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-amber-400 mb-2">Ім'я</label>
-              <input type="text" name="first_name" onChange={handleChange} required className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
+              <label className="block text-blue-400 mb-2 font-medium">Ім'я</label>
+              <input type="text" name="first_name" onChange={handleChange} required className="form-input"/>
             </div>
             <div>
-              <label className="block text-amber-400 mb-2">Прізвище</label>
-              <input type="text" name="last_name" onChange={handleChange} required className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"/>
+              <label className="block text-blue-400 mb-2 font-medium">Прізвище</label>
+              <input type="text" name="last_name" onChange={handleChange} required className="form-input"/>
             </div>
           </div>
 
           <div>
-            <label className="block text-amber-400 mb-2">Професія</label>
-            <select name="profession" value={formData.profession} onChange={handleChange} className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400">
-                <option value="actor" className="bg-purple-900">Actor</option>
-                <option value="producer" className="bg-purple-900">Producer</option>
-                <option value="director" className="bg-purple-900">Director</option>
+            <label className="block text-blue-400 mb-2 font-medium">Професія</label>
+            <select name="profession" value={formData.profession} onChange={handleChange} className="form-input">
+                <option value="actor" className="bg-gray-800">Actor</option>
+                <option value="producer" className="bg-gray-800">Producer</option>
+                <option value="director" className="bg-gray-800">Director</option>
             </select>
           </div>
 
-          {/* --- МУЛЬТИСЕЛЕКТ ФІЛЬМІВ --- */}
           <MultiSelect 
             label="Фільмографія (обрати фільми)"
             options={movieOptions}
@@ -112,25 +111,24 @@ export default function AddPerson() {
             onChange={handleMoviesChange}
             placeholder="Пошук фільму..."
           />
-          {/* -------------------------- */}
 
           <div>
-            <label className="block text-amber-400 mb-2">Аватар (файл)</label>
+            <label className="block text-blue-400 mb-2 font-medium">Аватар (файл)</label>
             <input 
               type="file" 
               name="avatarFile" 
               onChange={handleFileChange} 
               accept="image/*"
-              className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200"
+              className="form-input file:bg-gray-700 file:text-white file:border-0 file:rounded file:px-4 file:py-2"
             />
           </div>
 
           <div>
-            <label className="block text-amber-400 mb-2">Біографія</label>
-            <textarea name="biography" onChange={handleChange} rows="5" className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"></textarea>
+            <label className="block text-blue-400 mb-2 font-medium">Біографія</label>
+            <textarea name="biography" onChange={handleChange} rows="5" className="form-input"></textarea>
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-6 py-3 rounded-lg disabled:opacity-50">
+          <button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-50">
             {isSubmitting ? 'Збереження...' : 'Додати Людину'}
           </button>
         </form>

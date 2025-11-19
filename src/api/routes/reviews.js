@@ -1,24 +1,27 @@
 const express = require('express');
 const router = express.Router();
 
-// --- ДОПОМІЖНА ФУНКЦІЯ ---
-// Оновлює кешований рейтинг у таблиці movies на основі таблиці reviews
 async function updateMovieRating(db, movieId) {
   try {
     const { rows } = await db.query(
-      'SELECT AVG(rating) as avg_rating FROM reviews WHERE movie_id = $1',
+      'SELECT COALESCE(AVG(rating), 0) as avg_rating FROM reviews WHERE movie_id = $1',
       [movieId]
     );
+
+    const rawAvg = parseFloat(rows[0].avg_rating);
     
-    const average = rows[0].avg_rating ? parseFloat(rows[0].avg_rating).toFixed(1) : 0;
+    const finalRating = Math.round(rawAvg * 10) / 10;
 
     await db.query(
       'UPDATE movies SET rating = $1 WHERE id = $2',
-      [average, movieId]
+      [finalRating, movieId]
     );
-    console.log(`Rating updated for movie ${movieId}: ${average}`);
+    
+    console.log(`Rating updated for movie ${movieId}: ${finalRating}`);
+    return finalRating;
   } catch (err) {
     console.error(`Failed to update rating for movie ${movieId}:`, err);
+    throw err;
   }
 }
 
@@ -36,16 +39,13 @@ async function updateMovieRating(db, movieId) {
 router.get('/reviews', async (req, res) => {
   const db = req.app.locals.db;
   try {
-    const result = await db.query(`
-      SELECT * FROM reviews ORDER BY created_at DESC
-    `);
+    const result = await db.query('SELECT * FROM reviews ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (err) {
     console.error('DB error (GET /reviews):', err);
     res.status(500).json({ error: 'Database error' });
   }
 });
-
 /**
  * @openapi
  * /api/v1/reviews/{id}:
@@ -109,7 +109,7 @@ router.get('/reviews/:id', async (req, res) => {
  */
 router.post('/reviews', async (req, res) => {
   const db = req.app.locals.db;
-  const { title, body, rating, movie_id } = req.body;
+  let { title, body, rating, movie_id } = req.body;
 
   if (!title || !body || !rating || !movie_id)
     return res.status(400).json({ message: 'Всі поля обов’язкові' });
@@ -122,7 +122,6 @@ router.post('/reviews', async (req, res) => {
       [title, body, rating, movie_id, req.user.id]
     );
 
-    // --- ОНОВЛЕННЯ РЕЙТИНГУ ФІЛЬМУ ---
     await updateMovieRating(db, movie_id);
     
     res.status(201).json({ message: 'Рецензію створено', review: result.rows[0] });
@@ -168,6 +167,7 @@ router.post('/reviews', async (req, res) => {
  *       404:
  *         description: Рецензію не знайдено
  */
+
 router.put('/reviews/:id', async (req, res) => {
   const db = req.app.locals.db;
   const { id } = req.params;
@@ -180,7 +180,7 @@ router.put('/reviews/:id', async (req, res) => {
     const currentReview = review.rows[0];
 
     if (currentReview.user_id !== req.user.id && !['admin', 'moderator'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'Недостатньо прав для редагування цієї рецензії' });
+      return res.status(403).json({ message: 'Недостатньо прав' });
     }
 
     const result = await db.query(
@@ -193,8 +193,6 @@ router.put('/reviews/:id', async (req, res) => {
       [title, body, rating, id]
     );
 
-    // --- ОНОВЛЕННЯ РЕЙТИНГУ ФІЛЬМУ ---
-    // Використовуємо movie_id зі старого запису (бо він не змінюється)
     await updateMovieRating(db, currentReview.movie_id);
 
     res.json({ message: 'Рецензію оновлено', review: result.rows[0] });
@@ -238,12 +236,11 @@ router.delete('/reviews/:id', async (req, res) => {
     const currentReview = review.rows[0];
 
     if (currentReview.user_id !== req.user.id && !['admin', 'moderator'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'Недостатньо прав для видалення цієї рецензії' });
+      return res.status(403).json({ message: 'Недостатньо прав' });
     }
 
     const result = await db.query('DELETE FROM reviews WHERE id = $1 RETURNING *', [id]);
 
-    // --- ОНОВЛЕННЯ РЕЙТИНГУ ФІЛЬМУ ---
     await updateMovieRating(db, currentReview.movie_id);
 
     res.json({ message: 'Рецензію видалено', review: result.rows[0] });

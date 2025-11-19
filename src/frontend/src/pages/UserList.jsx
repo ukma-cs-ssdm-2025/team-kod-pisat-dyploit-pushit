@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllUsers, deleteUser } from '../api';
+import { getAllUsers, deleteUser, sendFriendRequest, removeFriend } from '../api';
 import { useAuth } from '../hooks/useAuth'; 
 
 export default function UserList() {
@@ -9,6 +9,7 @@ export default function UserList() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [friendActions, setFriendActions] = useState({});
 
   useEffect(() => {
     getAllUsers()
@@ -40,15 +41,43 @@ export default function UserList() {
     }
   };
 
+  const handleFriendAction = async (userId, action) => {
+    setFriendActions(prev => ({ ...prev, [userId]: 'loading' }));
+    
+    try {
+      if (action === 'add') {
+        await sendFriendRequest(userId);
+        alert('Запит на дружбу надіслано!');
+      } else if (action === 'remove') {
+        await removeFriend(userId);
+        alert('Дружбу видалено!');
+      }
+    } catch (err) {
+      alert(`Помилка: ${err.message || 'Не вдалося виконати дію'}`);
+    } finally {
+      setFriendActions(prev => ({ ...prev, [userId]: null }));
+    }
+  };
+
+  const getFriendStatus = (user) => {
+    if (!currentUser || user.id === currentUser.id) return 'self';
+    
+    if (currentUser.friends && currentUser.friends.some(friend => friend.id === user.id)) {
+      return 'friend';
+    }
+    
+    return 'not_friend';
+  };
+
   if (isLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 text-center pt-32 text-lg text-amber-400">Завантаження...</div>;
+    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400">Завантаження...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-purple-950 pt-24 pb-8">
-      <div className="max-w-4xl mx-auto p-4">
-        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
-          Керування користувачами
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-24 pb-8">
+      <div className="max-w-6xl mx-auto p-4">
+        <h1 className="section-title">
+          Користувачі
         </h1>
 
         <input
@@ -56,23 +85,25 @@ export default function UserList() {
           placeholder="Шукати за username, нікнеймом, email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-3 mb-8 bg-transparent border-2 border-amber-500/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
+          className="form-input mb-8"
         />
 
-        <div className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl border border-amber-500/20 backdrop-blur overflow-hidden">
+        <div className="card overflow-hidden">
           <table className="w-full text-left">
-            <thead className="border-b border-amber-500/30">
+            <thead className="border-b border-gray-700">
               <tr>
-                <th className="p-4 text-amber-400">Нікнейм</th>
-                <th className="p-4 text-amber-400">Username</th>
-                <th className="p-4 text-amber-400">Email</th>
-                <th className="p-4 text-amber-400">Роль</th>
-                <th className="p-4 text-amber-400">Дії</th>
+                <th className="p-4 text-blue-400 font-medium">Нікнейм</th>
+                <th className="p-4 text-blue-400 font-medium">Username</th>
+                <th className="p-4 text-blue-400 font-medium">Email</th>
+                <th className="p-4 text-blue-400 font-medium">Роль</th>
+                <th className="p-4 text-blue-400 font-medium">Дії</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map(user => {
                 const isMyOwnProfile = currentUser?.id === user.id;
+                const friendStatus = getFriendStatus(user);
+                const isLoadingAction = friendActions[user.id] === 'loading';
                 
                 const canDelete = !isMyOwnProfile && (
                   (isAdmin && user.role !== 'admin') || 
@@ -80,7 +111,7 @@ export default function UserList() {
                 );
 
                 return (
-                  <tr key={user.id} className="border-b border-purple-800/50 last:border-b-0 hover:bg-purple-800/30 transition-colors">
+                  <tr key={user.id} className="border-b border-gray-700/50 last:border-b-0 hover:bg-gray-700/30 transition-colors">
                     <td className="p-4">
                       <Link to={`/user/${user.username}`} className="text-white font-semibold hover:underline">
                         {user.nickname}
@@ -90,16 +121,40 @@ export default function UserList() {
                     <td className="p-4 text-gray-300">{user.email}</td>
                     <td className="p-4 text-gray-300">{user.role}</td>
                     <td className="p-4">
-                      {canDelete ? (
-                        <button 
-                          onClick={() => handleDeleteUser(user.id, user.username)}
-                          className="text-red-500 hover:text-red-400 transition-colors text-sm font-medium"
-                        >
-                          Видалити
-                        </button>
-                      ) : (
-                        <span className="text-gray-600 text-sm">{isMyOwnProfile ? "(Це ви)" : "—"}</span>
-                      )}
+                      <div className="flex gap-2">
+                        {!isMyOwnProfile && friendStatus === 'not_friend' && (
+                          <button 
+                            onClick={() => handleFriendAction(user.id, 'add')}
+                            disabled={isLoadingAction}
+                            className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm font-medium disabled:opacity-50 transition-colors"
+                          >
+                            {isLoadingAction ? '...' : 'Запросити в друзі'}
+                          </button>
+                        )}
+                        
+                        {!isMyOwnProfile && friendStatus === 'friend' && (
+                          <button 
+                            onClick={() => handleFriendAction(user.id, 'remove')}
+                            disabled={isLoadingAction}
+                            className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm font-medium disabled:opacity-50 transition-colors"
+                          >
+                            {isLoadingAction ? '...' : 'Видалити з друзів'}
+                          </button>
+                        )}
+                        
+                        {isMyOwnProfile && (
+                          <span className="text-gray-600 text-sm">(Це ви)</span>
+                        )}
+
+                        {canDelete && (
+                          <button 
+                            onClick={() => handleDeleteUser(user.id, user.username)}
+                            className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm font-medium transition-colors ml-2"
+                          >
+                            Видалити (забанити)
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )

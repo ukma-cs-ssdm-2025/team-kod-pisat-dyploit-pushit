@@ -3,7 +3,7 @@ import StarRating from './StarRating';
 
 export default function ReviewForm({ onSubmit }) {
   const [title, setTitle] = useState('');
-  const [text, setText] = useState(''); // В стейті залишаємо text для зручності
+  const [text, setText] = useState('');
   const [rating, setRating] = useState(0);
 
   const handleSubmit = (e) => {
@@ -12,12 +12,10 @@ export default function ReviewForm({ onSubmit }) {
       alert("Будь ласка, заповніть заголовок, текст та оберіть рейтинг.");
       return;
     }
-    // ВИПРАВЛЕННЯ: Бекенд очікує 'body', а не 'text'
     onSubmit({ 
       title, 
-      body: text, // Мапимо text на body
+      body: text,
       rating, 
-      // date додається, але бекенд використовує NOW(), тож це скоріше для миттєвого відображення
       created_at: new Date().toISOString() 
     });
     
@@ -27,36 +25,36 @@ export default function ReviewForm({ onSubmit }) {
   };
 
   return (
-    <div className="bg-gradient-to-r from-purple-900/50 to-purple-800/50 shadow-xl rounded-2xl p-6 border border-amber-500/20 backdrop-blur mt-8">
-      <h2 className="text-2xl font-bold text-white mb-6 bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
+    <div className="card p-6 mt-8">
+      <h2 className="section-title">
         Залишити відгук
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-amber-400 mb-2">Ваш рейтинг</label>
+          <label className="block text-blue-400 mb-2 font-medium">Ваш рейтинг</label>
           <StarRating rating={rating} onRatingChange={setRating} />
         </div>
         <div>
-          <label className="block text-amber-400 mb-2">Заголовок</label>
+          <label className="block text-blue-400 mb-2 font-medium">Заголовок</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"
+            className="form-input"
           />
         </div>
         <div>
-          <label className="block text-amber-400 mb-2">Текст відгуку</label>
+          <label className="block text-blue-400 mb-2 font-medium">Текст відгуку</label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows="5"
-            className="w-full p-2 bg-transparent border-2 border-amber-500/50 rounded-lg text-white focus:outline-none focus:border-amber-400"
+            className="form-input"
           ></textarea>
         </div>
         <button
           type="submit"
-          className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white px-6 py-3 rounded-lg transition-all font-medium border border-amber-400/30"
+          className="btn-primary"
         >
           Відправити
         </button>
