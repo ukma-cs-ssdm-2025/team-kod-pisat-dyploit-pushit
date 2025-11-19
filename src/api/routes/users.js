@@ -234,13 +234,10 @@ router.put('/users/:param', async (req, res) => {
         (target.column === 'username' && target.value !== req.user.username)) {
       return res.status(403).json({ message: 'Недостатньо прав для редагування іншого користувача' });
     }
+    if (role && role !== 'user') {
+      return res.status(403).json({ message: 'Недостатньо прав для зміни ролі' });
+    }
   }
-
-  if (req.user.role != 'admin') {
-  return res.status(403).json({
-    message: 'Недостатньо прав для зміни ролі користувача'
-  });
-}
 
   if (username && !username.startsWith('@')) {
     username = `@${username}`;

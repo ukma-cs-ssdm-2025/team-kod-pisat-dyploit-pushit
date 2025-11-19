@@ -56,3 +56,6 @@ CREATE TABLE IF NOT EXISTS friendships (
 
 
 
+INSERT INTO users (username, role, nickname, password, email)
+VALUES ('@admin', 'admin', 'Admin', '$2b$10$SmpGM9/EhxQs6FHAVHkn8OQESYS77XXCe7lMpoimc0NIGWEuLKOfS', 'admin@example.com')
+ON CONFLICT (username) DO NOTHING;
