@@ -9,9 +9,9 @@ export default function StarRating({ rating, onRatingChange }) {
         <button
           type="button" 
           key={star}
-          className={`text-3xl transition-colors ${
+          className={`text-2xl transition-colors duration-200 ${
             (hoverRating || rating) >= star ? 'text-yellow-400' : 'text-gray-600'
-          }`}
+          } hover:text-yellow-300`}
           onClick={() => onRatingChange(star)}
           onMouseEnter={() => setHoverRating(star)}
           onMouseLeave={() => setHoverRating(0)}
