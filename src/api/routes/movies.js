@@ -16,7 +16,6 @@ const { deleteFileFromR2 } = require('../utils/r2');
 router.get('/movies', async (req, res) => {
   const db = req.app.locals.db;
   try {
-    // --- ЗМІНА: Додаємо ARRAY_AGG для отримання ID людей одразу в списку ---
     const result = await db.query(`
       SELECT m.*, 
              COALESCE(ARRAY_AGG(mp.person_id) FILTER (WHERE mp.person_id IS NOT NULL), '{}') as people_ids

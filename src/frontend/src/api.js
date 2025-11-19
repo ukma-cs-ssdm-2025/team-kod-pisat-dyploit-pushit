@@ -190,3 +190,9 @@ export const uploadPersonAvatar = (personId, file) => {
   formData.append('avatar', file)
   return apiFetchForm(`/upload/person-avatar/${personId}`, formData, 'PUT')
 }
+
+export const addToLikedMovies = (userParam, movieId) => 
+  apiFetch(`/movies/${userParam}/likes/${movieId}`, { method: 'POST' });
+
+export const removeFromLikedMovies = (userParam, movieId) => 
+  apiFetch(`/movies/${userParam}/likes/${movieId}`, { method: 'DELETE' });

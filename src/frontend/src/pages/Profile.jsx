@@ -24,7 +24,7 @@ export default function Profile() {
   const [editData, setEditData] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
 
-  const [likedMovies, setLikedMovies] = useState([]);
+  const [selectedMovies, setSelectedMovies] = useState([]);
   const [userReviews, setUserReviews] = useState([]);
   const [allMovies, setAllMovies] = useState([]);  
 
@@ -52,8 +52,8 @@ export default function Profile() {
             
           setUserReviews(reviews);
 
-          const likedIds = user.liked_movies || [];
-          setLikedMovies(allMoviesData.filter(m => likedIds.includes(m.id)));
+          const selectedIds = user.liked_movies || [];
+          setSelectedMovies(allMoviesData.filter(m => selectedIds.includes(m.id)));
         } else {
           setProfileUser(null);
         }
@@ -245,16 +245,16 @@ export default function Profile() {
 
         <div className="card p-6 mb-8">
           <h2 className="section-title">
-            Вподобані фільми
+            Обрані фільми
           </h2>
-          {likedMovies.length > 0 ? (
+          {selectedMovies.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {likedMovies.map((movie) => (
+              {selectedMovies.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} />
               ))}
             </div>
           ) : (
-            <p className="text-gray-400">Список вподобань порожній.</p>
+            <p className="text-gray-400">Список обраних фільмів порожній.</p>
           )}
         </div>
         

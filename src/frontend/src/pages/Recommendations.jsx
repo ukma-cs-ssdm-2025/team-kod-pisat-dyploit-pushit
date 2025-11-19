@@ -9,14 +9,15 @@ export default function Recommendations() {
   const [recommendations, setRecommendations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Налаштування рекомендацій
   const [settings, setSettings] = useState({
     useRating: true,
     useGenres: true,
     usePeople: true,
+    useSelectedMovies: true,
     ratingWeight: 1,
     genreWeight: 5,
     peopleWeight: 3,
+    selectedMoviesWeight: 4,
     minRating: 7
   });
 
@@ -39,12 +40,18 @@ export default function Recommendations() {
 
       const myReviews = reviews.filter((r) => r.user_id === user.id);
       const watchedMovieIds = new Set(myReviews.map((r) => r.movie_id));
+      
+      // Додаємо обрані фільми до переглянутих
+      if (user.liked_movies && settings.useSelectedMovies) {
+        user.liked_movies.forEach(movieId => watchedMovieIds.add(movieId));
+      }
 
       const likedReviews = myReviews.filter((r) => r.rating >= settings.minRating);
       
       const likedGenres = new Set();
       const likedPeople = new Set();
 
+      // Аналізуємо відгуки
       likedReviews.forEach((review) => {
         const movie = movies.find((m) => m.id === review.movie_id);
         if (movie) {
@@ -55,6 +62,19 @@ export default function Recommendations() {
         }
       });
 
+      // Аналізуємо обрані фільми
+      if (settings.useSelectedMovies && user.liked_movies) {
+        user.liked_movies.forEach(movieId => {
+          const movie = movies.find(m => m.id === movieId);
+          if (movie) {
+            if (movie.genre) likedGenres.add(movie.genre);
+            if (movie.people_ids) {
+              movie.people_ids.forEach(id => likedPeople.add(id));
+            }
+          }
+        });
+      }
+
       const scoredMovies = movies
         .filter((movie) => !watchedMovieIds.has(movie.id))
         .map((movie) => {
@@ -62,7 +82,8 @@ export default function Recommendations() {
           const breakdown = {
             rating: 0,
             genres: 0,
-            people: 0
+            people: 0,
+            selectedMovies: 0 // Додали новий фактор
           };
 
           // Рейтинг фільму
@@ -84,13 +105,33 @@ export default function Recommendations() {
             score += breakdown.people;
           }
 
+          // Обрані фільми (додаткові бали за спільні характеристики)
+          if (settings.useSelectedMovies) {
+            let selectedBonus = 0;
+            
+            // Бонус за жанр з обраних фільмів
+            if (movie.genre && likedGenres.has(movie.genre)) {
+              selectedBonus += settings.selectedMoviesWeight * 0.5;
+            }
+            
+            // Бонус за людей з обраних фільмів
+            if (movie.people_ids) {
+              const peopleMatches = movie.people_ids.filter(id => likedPeople.has(id)).length;
+              selectedBonus += peopleMatches * settings.selectedMoviesWeight * 0.3;
+            }
+            
+            breakdown.selectedMovies = selectedBonus;
+            score += selectedBonus;
+          }
+
           return { 
             ...movie, 
             score,
             breakdown,
             matchedGenres: settings.useGenres && movie.genre && likedGenres.has(movie.genre) ? [movie.genre] : [],
             matchedPeople: settings.usePeople && movie.people_ids ? 
-              movie.people_ids.filter(id => likedPeople.has(id)) : []
+              movie.people_ids.filter(id => likedPeople.has(id)) : [],
+            fromSelectedMovies: settings.useSelectedMovies && breakdown.selectedMovies > 0
           };
         });
 
@@ -134,9 +175,11 @@ export default function Recommendations() {
       useRating: true,
       useGenres: true,
       usePeople: true,
+      useSelectedMovies: true,
       ratingWeight: 1,
       genreWeight: 5,
       peopleWeight: 3,
+      selectedMoviesWeight: 4,
       minRating: 7
     });
     setShouldRegenerate(true);
@@ -159,7 +202,7 @@ export default function Recommendations() {
               Рекомендовано для вас
             </h1>
             <p className="text-gray-300">
-              На основі ваших вподобань, жанрів та улюблених акторів.
+              На основі ваших вподобань, жанрів, обраних фільмів та улюблених акторів.
             </p>
           </div>
           <div className="flex gap-2">
@@ -182,7 +225,7 @@ export default function Recommendations() {
           <div className="card p-6 mb-8">
             <h3 className="text-xl font-bold text-white mb-4">Налаштування рекомендацій</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Чекбокси */}
               <div className="space-y-4">
                 <h4 className="text-blue-400 font-medium mb-2">Враховувати:</h4>
@@ -212,6 +255,15 @@ export default function Recommendations() {
                     className="w-4 h-4 text-blue-500 bg-gray-700 border-gray-600 rounded focus:ring-blue-400"
                   />
                   <span className="text-gray-300">Улюблені актори/режисери</span>
+                </label>
+                <label className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={settings.useSelectedMovies}
+                    onChange={(e) => handleSettingChange('useSelectedMovies', e.target.checked)}
+                    className="w-4 h-4 text-blue-500 bg-gray-700 border-gray-600 rounded focus:ring-blue-400"
+                  />
+                  <span className="text-gray-300">Обрані фільми</span>
                 </label>
               </div>
 
@@ -251,38 +303,51 @@ export default function Recommendations() {
                     className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
                   />
                 </div>
-              </div>
-
-              {/* Мінімальний рейтинг */}
-              <div className="space-y-4">
-                <h4 className="text-blue-400 font-medium mb-2">Мінімальний рейтинг:</h4>
                 <div>
-                  <label className="block text-gray-300 text-sm mb-1">{settings.minRating}/10</label>
+                  <label className="block text-gray-300 text-sm mb-1">Обрані фільми: {settings.selectedMoviesWeight}</label>
                   <input
                     type="range"
-                    min="1"
+                    min="0"
                     max="10"
-                    value={settings.minRating}
-                    onChange={(e) => handleSettingChange('minRating', parseInt(e.target.value))}
+                    value={settings.selectedMoviesWeight}
+                    onChange={(e) => handleWeightChange('selectedMoviesWeight', e.target.value)}
                     className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
                   />
                 </div>
-                <p className="text-gray-400 text-sm">
-                  Фільми з рейтингом вище цього значення вважаються "улюбленими"
-                </p>
               </div>
 
-              {/* Інформація */}
-              <div className="space-y-3">
-                <h4 className="text-blue-400 font-medium">Як це працює?</h4>
-                <p className="text-gray-400 text-sm">
-                  Система аналізує ваші оцінки та рекомендує фільми на основі:
-                </p>
-                <ul className="text-gray-400 text-sm space-y-1">
-                  <li>• Загального рейтингу фільму</li>
-                  <li>• Співпадіння жанрів з улюбленими</li>
-                  <li>• Наявності улюблених акторів/режисерів</li>
-                </ul>
+              {/* Мінімальний рейтинг та інформація */}
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h4 className="text-blue-400 font-medium mb-2">Мінімальний рейтинг:</h4>
+                  <div>
+                    <label className="block text-gray-300 text-sm mb-1">{settings.minRating}/10</label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={settings.minRating}
+                      onChange={(e) => handleSettingChange('minRating', parseInt(e.target.value))}
+                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                    />
+                  </div>
+                  <p className="text-gray-400 text-sm">
+                    Фільми з рейтингом вище цього значення вважаються "улюбленими"
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-blue-400 font-medium">Як це працює?</h4>
+                  <p className="text-gray-400 text-sm">
+                    Система аналізує ваші оцінки та обрані фільми:
+                  </p>
+                  <ul className="text-gray-400 text-sm space-y-1">
+                    <li>• Загальний рейтинг фільму</li>
+                    <li>• Співпадіння жанрів</li>
+                    <li>• Улюблені актори/режисери</li>
+                    <li>• Подібність до обраних фільмів</li>
+                  </ul>
+                </div>
               </div>
             </div>
 
@@ -317,11 +382,9 @@ export default function Recommendations() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {recommendations.map((movie) => (
               <div key={movie.id} className="flex flex-col">
-                {/* Картка фільму - фіксована висота */}
                 <div className="movie-card group flex-1 flex flex-col">
                   <MovieCard movie={movie} />
                   
-                  {/* Детальна інформація про рекомендацію */}
                   <div className="p-4 flex-1 flex flex-col">
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-lg font-bold text-blue-400">
@@ -337,7 +400,6 @@ export default function Recommendations() {
 
                     {showDetails[movie.id] && (
                       <div className="space-y-3 text-sm flex-1">
-                        {/* Розбивка по балах */}
                         <div className="bg-gray-700/50 rounded-lg p-3">
                           <h4 className="text-blue-300 font-medium mb-2">Розбивка балів:</h4>
                           <div className="space-y-1">
@@ -353,10 +415,15 @@ export default function Recommendations() {
                               <span className="text-gray-300">Улюблені люди:</span>
                               <span className="text-green-400">+{movie.breakdown.people.toFixed(1)}</span>
                             </div>
+                            {settings.useSelectedMovies && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-300">Подібність до обраних:</span>
+                                <span className="text-green-400">+{movie.breakdown.selectedMovies.toFixed(1)}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
-                        {/* Співпадіння жанрів */}
                         {movie.matchedGenres.length > 0 && (
                           <div>
                             <h4 className="text-blue-300 font-medium mb-1">Співпадіння жанрів:</h4>
@@ -370,7 +437,6 @@ export default function Recommendations() {
                           </div>
                         )}
 
-                        {/* Спільні люди */}
                         {movie.matchedPeople.length > 0 && (
                           <div>
                             <h4 className="text-blue-300 font-medium mb-1">Улюблені люди у фільмі:</h4>
@@ -379,13 +445,6 @@ export default function Recommendations() {
                             </p>
                           </div>
                         )}
-
-                        {/* Пояснення */}
-                        <div className="bg-gray-800/50 rounded p-2">
-                          <p className="text-gray-400 text-xs">
-                            Чим вище загальний бал, тим більше фільм відповідає вашим вподобанням
-                          </p>
-                        </div>
                       </div>
                     )}
                   </div>
@@ -397,14 +456,15 @@ export default function Recommendations() {
           <div className="text-center text-gray-400 mt-12">
             <p className="text-xl mb-4">Ми поки не можемо нічого порадити.</p>
             <p className="mb-4">
-              Спробуйте оцінити більше фільмів, щоб ми зрозуміли ваші смаки!
+              Спробуйте оцінити більше фільмів або додати фільми до обраних!
             </p>
             <div className="space-y-2 text-sm text-gray-500 max-w-md mx-auto">
               <p>💡 Поради для кращих рекомендацій:</p>
               <ul className="space-y-1">
                 <li>• Оцінюйте фільми, які вам сподобались (7+ балів)</li>
-                <li>• Додавайте фільми різних жанрів до улюблених</li>
-                <li>• Переглядайте фільми з улюбленими акторами</li>
+                <li>• Додавайте фільми до обраних</li>
+                <li>• Переглядайте фільми різних жанрів</li>
+                <li>• Знаходьте нових акторів та режисерів</li>
               </ul>
             </div>
             <Link to="/movies" className="inline-block mt-6 btn-primary">

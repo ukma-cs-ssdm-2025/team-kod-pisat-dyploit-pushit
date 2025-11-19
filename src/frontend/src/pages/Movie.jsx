@@ -9,7 +9,9 @@ import {
   addReview, 
   deleteReview, 
   deleteMovie,
-  uploadMovieCover 
+  uploadMovieCover,
+  addToLikedMovies,
+  removeFromLikedMovies
 } from "../api" 
 import { useAuth } from '../hooks/useAuth';
 import ReviewCard from '../components/ReviewCard';
@@ -26,6 +28,8 @@ export default function Movie() {
   const [people, setPeople] = useState([])
   const [allPeopleOptions, setAllPeopleOptions] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLiked, setIsLiked] = useState(false)
+  const [isLikeLoading, setIsLikeLoading] = useState(false)
   
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState(null) 
@@ -43,6 +47,11 @@ export default function Movie() {
       if (movieResponse) {
         setMovie(movieResponse);
         setPeople(movieResponse.people || []);
+        
+        // Перевіряємо чи фільм в обраних
+        if (currentUser && currentUser.liked_movies) {
+          setIsLiked(currentUser.liked_movies.includes(Number(id)));
+        }
         
         const options = allPeopleList.map(p => ({
           id: p.id,
@@ -86,7 +95,39 @@ export default function Movie() {
 
   useEffect(() => {
     fetchData();
-  }, [id]); 
+  }, [id, currentUser]); 
+
+  const handleLikeToggle = async () => {
+    if (!isAuthenticated || !currentUser) {
+      alert("Будь ласка, увійдіть в систему щоб додавати фільми до обраних");
+      return;
+    }
+
+    setIsLikeLoading(true);
+    try {
+      if (isLiked) {
+        await removeFromLikedMovies(currentUser.id, id);
+        setIsLiked(false);
+        // Оновлюємо локальний стан користувача
+        if (currentUser.liked_movies) {
+          currentUser.liked_movies = currentUser.liked_movies.filter(movieId => movieId !== Number(id));
+        }
+      } else {
+        await addToLikedMovies(currentUser.id, id);
+        setIsLiked(true);
+        // Оновлюємо локальний стан користувача
+        if (!currentUser.liked_movies) {
+          currentUser.liked_movies = [];
+        }
+        currentUser.liked_movies.push(Number(id));
+      }
+    } catch (err) {
+      console.error("Помилка зміни статусу обраного фільму:", err);
+      alert("Не вдалося змінити статус фільму");
+    } finally {
+      setIsLikeLoading(false);
+    }
+  };
 
   const handleEditChange = (e) => {
     setEditData({ ...editData, [e.target.name]: e.target.value });
@@ -241,7 +282,13 @@ export default function Movie() {
 
               </div>
               <div className="mt-6 flex gap-4 flex-wrap">
-                <button className="btn-primary">Додати в улюбленe</button>
+                <button 
+                  onClick={handleLikeToggle}
+                  disabled={isLikeLoading}
+                  className={`${isLiked ? 'btn-danger' : 'btn-primary'} disabled:opacity-50`}
+                >
+                  {isLikeLoading ? '...' : isLiked ? 'Видалити з обраних' : 'Додати в обрані'}
+                </button>
                 {isAdmin && (
                   <button onClick={() => setIsEditing(true)} className="btn-secondary">Редагувати</button>
                 )}
