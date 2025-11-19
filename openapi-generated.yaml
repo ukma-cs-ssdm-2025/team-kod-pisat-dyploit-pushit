@@ -33,18 +33,19 @@ paths:
                 - password
                 - email
                 - nickname
-                - role
               properties:
                 username:
                   type: string
+                  example: '@newuser'
                 password:
                   type: string
+                  example: Qwerty!123
                 email:
                   type: string
+                  example: user@example.com
                 nickname:
                   type: string
-                role:
-                  type: string
+                  example: MovieFan
       responses:
         '201':
           description: Користувача зареєстровано
@@ -68,8 +69,10 @@ paths:
               properties:
                 username:
                   type: string
+                  example: '@newuser'
                 password:
                   type: string
+                  example: Qwerty!123
       responses:
         '200':
           description: Авторизація успішна
@@ -193,6 +196,59 @@ paths:
           description: Недостатньо прав
         '404':
           description: Фільм не знайдено
+  /api/v1/movies/{userParam}/likes/{movieId}:
+    post:
+      summary: Додати фільм до списку улюблених користувача
+      tags:
+        - Movies
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userParam
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID або username користувача (наприклад, "12" або "@alex")
+        - name: movieId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID фільму
+      responses:
+        '200':
+          description: Фільм додано до улюблених
+        '404':
+          description: Користувача або фільм не знайдено
+        '500':
+          description: Помилка сервера
+    delete:
+      summary: Видалити фільм зі списку улюблених користувача
+      tags:
+        - Movies
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userParam
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID або username користувача (наприклад, "12" або "@alex")
+        - name: movieId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID фільму
+      responses:
+        '200':
+          description: Фільм видалено з улюблених
+        '404':
+          description: Користувача або фільм не знайдено
+        '500':
+          description: Помилка сервера
   /api/v1/people:
     get:
       summary: Отримати список усіх людей
@@ -807,21 +863,22 @@ paths:
               type: object
               required:
                 - username
-                - role
                 - nickname
                 - password
                 - email
               properties:
                 username:
                   type: string
-                role:
-                  type: string
+                  example: '@newuser'
                 nickname:
                   type: string
+                  example: MovieFan
                 password:
                   type: string
+                  example: Qwerty!123
                 email:
                   type: string
+                  example: user@example.com
       responses:
         '201':
           description: Користувача створено
