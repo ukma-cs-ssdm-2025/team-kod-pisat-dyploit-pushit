@@ -22,18 +22,20 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
  *         application/json:
  *           schema:
  *             type: object
- *             required: [username, password, email, nickname, role]
+ *             required: [username, password, email, nickname]
  *             properties:
  *               username:
  *                 type: string
+ *                 example: "@newuser"
  *               password:
  *                 type: string
+ *                 example: "Qwerty!123"
  *               email:
  *                 type: string
+ *                 example: "user@example.com"
  *               nickname:
  *                 type: string
- *               role:
- *                 type: string
+ *                 example: "MovieFan"
  *     responses:
  *       201:
  *         description: Користувача зареєстровано
@@ -41,13 +43,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
  *         description: Некоректні вхідні дані
  *       409:
  *         description: Користувач вже існує
- * 
  */
+
 router.post('/register', async (req, res) => {
   const db = req.app.locals.db;
-  const { username, password, email, nickname, role } = req.body;
+  const { username, password, email, nickname } = req.body;
 
-  if (!username || !password || !email || !nickname || !role) {
+  if (!username || !password || !email || !nickname) {
     return res.status(400).json({ message: 'Будь ласка, заповніть усі поля' });
   }
 
@@ -56,20 +58,18 @@ router.post('/register', async (req, res) => {
   }
 
   if (!isValidPassword(password)) {
-    return res.status(400).json({ 
-      message: 'Пароль не відповідає вимогам безпеки (мінімум 8 символів, 1 цифра, 1 спецсимвол: !@#$%^&*)' 
+    return res.status(400).json({
+      message: 'Пароль не відповідає вимогам безпеки (мінімум 8 символів, 1 цифра, 1 спецсимвол: !@#$%^&*)'
     });
-  }
-
-  const allowedRoles = ['user', 'admin', 'moderator'];
-  if (!allowedRoles.includes(role)) {
-    return res.status(400).json({ message: 'Недопустима роль. Дозволені ролі: user, admin, moderator' });
   }
 
   const formattedUsername = username.startsWith('@') ? username : `@${username}`;
 
   try {
-    const exists = await db.query('SELECT * FROM users WHERE username = $1 OR email = $2', [formattedUsername, email]);
+    const exists = await db.query(
+      'SELECT * FROM users WHERE username = $1 OR email = $2',
+      [formattedUsername, email]
+    );
     if (exists.rows.length > 0) {
       return res.status(409).json({ message: 'Користувач з таким username або email вже існує' });
     }
@@ -77,10 +77,10 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     const result = await db.query(
-      `INSERT INTO users (username, password, email, nickname, role)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO users (username, password, email, nickname)
+       VALUES ($1, $2, $3, $4)
        RETURNING id, username, email, nickname, role`,
-      [formattedUsername, hashedPassword, email, nickname, role]
+      [formattedUsername, hashedPassword, email, nickname]
     );
 
     res.status(201).json({
@@ -92,6 +92,7 @@ router.post('/register', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
+
 
 /**
  * @openapi
@@ -109,8 +110,10 @@ router.post('/register', async (req, res) => {
  *             properties:
  *               username:
  *                 type: string
+ *                 example: "@newuser"
  *               password:
  *                 type: string
+ *                 example: "Qwerty!123"
  *     responses:
  *       200:
  *         description: Авторизація успішна
