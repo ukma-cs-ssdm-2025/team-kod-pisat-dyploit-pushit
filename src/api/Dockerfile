@@ -1,12 +1,12 @@
 FROM node:20
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/app/src/api/
 
-COPY src/api/package*.json ./
+COPY package*.json ./
 
 RUN npm install
 
-COPY src/api/. .
+COPY . .
 
 CMD ["node", "index.js"]
 
