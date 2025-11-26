@@ -8,4 +8,12 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    host: true, 
+    port: 5173, 
+    allowedHosts: [
+      'hearty-imagination-production.up.railway.app', 
+      'localhost'
+    ]
+  }
 })
