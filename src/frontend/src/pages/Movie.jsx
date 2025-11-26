@@ -48,7 +48,6 @@ export default function Movie() {
         setMovie(movieResponse);
         setPeople(movieResponse.people || []);
         
-        // Перевіряємо чи фільм в обраних
         if (currentUser && currentUser.liked_movies) {
           setIsLiked(currentUser.liked_movies.includes(Number(id)));
         }
@@ -108,14 +107,12 @@ export default function Movie() {
       if (isLiked) {
         await removeFromLikedMovies(currentUser.id, id);
         setIsLiked(false);
-        // Оновлюємо локальний стан користувача
         if (currentUser.liked_movies) {
           currentUser.liked_movies = currentUser.liked_movies.filter(movieId => movieId !== Number(id));
         }
       } else {
         await addToLikedMovies(currentUser.id, id);
         setIsLiked(true);
-        // Оновлюємо локальний стан користувача
         if (!currentUser.liked_movies) {
           currentUser.liked_movies = [];
         }
