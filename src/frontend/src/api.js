@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000/api/v1"
+const API_URL = "http://https://team-kod-pisat-dyploit-pushit-production.up.railway.app/api/v1"
 
 /**
  * Декодує JWT токен для отримання payload (id, username, role)
