@@ -185,7 +185,7 @@ export default function Recommendations() {
         });
 
       const sorted = scoredMovies.sort((a, b) => b.score - a.score);
-      setRecommendations(sorted.filter(m => m.score > 0).slice(0, 12));
+      setRecommendations(sorted.filter(m => m.score > 5).slice(0, 12));
       setShouldRegenerate(false);
 
     } catch (err) {
@@ -517,14 +517,6 @@ export default function Recommendations() {
                             <h4 className="text-blue-300 font-medium mb-1">Улюблені люди у фільмі:</h4>
                             <p className="text-gray-300 text-xs">
                               Знайдено {movie.matchedPeople.length} улюблених акторів/режисерів
-                            </p>
-                          </div>
-                        )}
-
-                        {movie.fromSelectedMovies && (
-                          <div className="bg-purple-500/20 border border-purple-500/30 rounded p-2">
-                            <p className="text-purple-300 text-xs font-medium">
-                              📌 Рекомендовано на основі ваших обраних фільмів
                             </p>
                           </div>
                         )}
