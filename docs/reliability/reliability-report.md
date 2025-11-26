@@ -7,10 +7,10 @@
 
 | ID | Component | Issue Type | Description | Classification | Severity |  Status | 
 |----|-----------|------------|-------------|----------------|----------|--------|
-| R-01 | `users.js` | **Security / Privacy** | Endpoints повертають повний об'єкт користувача, включаючи хеш пароля (`password`). | Failure | **Critical** | Open |
-| R-02 | `reviews.js` | **Data Integrity** | Оновлення рейтингу фільму та створення рецензії не є атомарними (Race Condition). | Fault | **High** | Open |
-| R-03 | `movies.js` | **Performance** | `GET /movies` завантажує всю базу даних без пагінації. | Failure | **High** | Open |
-| R-04 | `users.js` | **Performance** | `GET /users` завантажує всіх користувачів без пагінації. | Failure | **Medium** | Open |
+| R-01 | `users.js` | **Security / Privacy** | Endpoints повертають повний об'єкт користувача, включаючи хеш пароля (`password`). | Failure | **Critical** | Closed |
+| R-02 | `reviews.js` | **Data Integrity** | Оновлення рейтингу фільму та створення рецензії не є атомарними (Race Condition). | Fault | **High** | Closed |
+| R-03 | `movies.js` | **Performance** | `GET /movies` завантажує всю базу даних без пагінації. | Failure | **High** | Closed |
+| R-04 | `users.js` | **Performance** | `GET /users` завантажує всіх користувачів без пагінації. | Failure | **Medium** | Closed |
 | R-05 | `auth.js` | **Security** | Відсутність Rate Limiting на логін/реєстрацію (ризик Brute Force). | Failure | **Medium** | Open |
 | R-06 | `movies.js` | **Error Handling** | Завантаження обкладинки відбувається окремо від створення запису фільму (можливі "сироти" файлів). | Fault | **Low** | Open |
 
@@ -24,25 +24,16 @@
 **Before:**
 ```javascript
 // users.js
-router.get('/users', async (req, res) => {
-  // ...
-  const result = await db.query('SELECT * FROM users ORDER BY id');
-  res.json(result.rows); 
-});
+const result = await db.query('SELECT * FROM users ORDER BY id');
 ```
 **After:**
 ```javascript
 // users.js
-router.get('/users', async (req, res) => {
-  // ...
-  // Явно вказуємо поля, які безпечно віддавати (Projection)
-  const result = await db.query(`
-    SELECT id, username, nickname, role, avatar_url, created_at 
-    FROM users 
-    ORDER BY id
-  `);
-  res.json(result.rows);
-});
+const result = await db.query(`
+   SELECT id, username, role, nickname, email, avatar_url, liked_movies
+   FROM users
+   ORDER BY id
+`);
 ```
 
 ### R-02: Lack of Atomicity in Rating Calculation
@@ -51,84 +42,183 @@ router.get('/users', async (req, res) => {
 **Before:**
 ```javascript
 // reviews.js (POST /reviews)
-const result = await db.query(
-  `INSERT INTO reviews ... RETURNING *`,
-  [title, body, rating, movie_id, req.user.id]
-);
-
-// Ця функція працює поза транзакцією
-await updateMovieRating(db, movie_id);
-```
-**After:**
-```javascript
-// reviews.js
 router.post('/reviews', async (req, res) => {
-  const client = await req.app.locals.db.connect();
-  try {
-    await client.query('BEGIN'); // Початок транзакції
+  const db = req.app.locals.db;
+  let { title, body, rating, movie_id } = req.body;
 
-    const result = await client.query(
+  if (!title || !body || !rating || !movie_id)
+    return res.status(400).json({ message: 'Всі поля обов’язкові' });
+
+  try {
+    const result = await db.query(
       `INSERT INTO reviews (title, body, rating, movie_id, user_id, created_at)
        VALUES ($1, $2, $3, $4, $5, NOW())
        RETURNING *`,
       [title, body, rating, movie_id, req.user.id]
     );
 
-    // Розрахунок та оновлення всередині тієї ж транзакції
-    // Використовуємо FOR UPDATE для блокування рядка фільму від стану гонки
-    const { rows } = await client.query(
-      'SELECT COALESCE(AVG(rating), 0) as avg_rating FROM reviews WHERE movie_id = $1',
-      [movie_id]
-    );
-    const finalRating = Math.round(parseFloat(rows[0].avg_rating) * 10) / 10;
+    await updateMovieRating(db, movie_id);
     
-    await client.query(
-      'UPDATE movies SET rating = $1 WHERE id = $2',
-      [finalRating, movie_id]
-    );
-
-    await client.query('COMMIT'); // Фіксація змін
     res.status(201).json({ message: 'Рецензію створено', review: result.rows[0] });
   } catch (err) {
-    await client.query('ROLLBACK'); // Відкат при помилці
-    // ... error handling
+    console.error('DB error (POST /reviews):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+```
+**After:**
+```javascript
+// reviews.js
+router.post('/reviews', async (req, res) => {
+  const db = req.app.locals.db;
+  const client = await db.connect();
+  const { title, body, rating, movie_id } = req.body;
+
+  if (!title || !body || !rating || !movie_id)
+    return res.status(400).json({ message: 'Всі поля обов’язкові' });
+
+  try {
+    await client.query('BEGIN');
+
+    const insertResult = await client.query(
+      `INSERT INTO reviews (title, body, rating, movie_id, user_id, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       RETURNING *`,
+      [title, body, rating, movie_id, req.user.id]
+    );
+
+    const avgResult = await client.query(
+      `SELECT AVG(rating)::numeric(2,1) as avg_rating
+       FROM reviews
+       WHERE movie_id = $1`,
+      [movie_id]
+    );
+
+    const avgRating = avgResult.rows[0].avg_rating;
+
+    await client.query(
+      `UPDATE movies SET rating = $1 WHERE id = $2`,
+      [avgRating, movie_id]
+    );
+
+    await client.query('COMMIT');
+
+    res.status(201).json({ message: 'Рецензію створено', review: insertResult.rows[0] });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('DB error (POST /reviews):', err);
+    res.status(500).json({ error: 'Database error' });
   } finally {
     client.release();
   }
 });
 ```
-
 ### R-03: No Pagination
 **Опис:** GET /movies завантажує всі фільми. Якщо в базі буде 10,000 фільмів, сервер спробує серіалізувати масив з 10 тисяч об'єктів, а браузер "зависне" при рендерингу.
 
 **Before:**
 ```javascript
 // movies.js
-const result = await db.query(`
-  SELECT m.*, ... 
-  FROM movies m ...
-`);
-res.json(result.rows);
+router.get('/movies', async (req, res) => {
+  const db = req.app.locals.db;
+  try {
+    const result = await db.query(`
+      SELECT m.*, 
+             COALESCE(ARRAY_AGG(mp.person_id) FILTER (WHERE mp.person_id IS NOT NULL), '{}') as people_ids
+      FROM movies m
+      LEFT JOIN movie_people mp ON m.id = mp.movie_id
+      GROUP BY m.id
+      ORDER BY m.id
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('DB error (GET /movies):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
 ```
 **After:**
 ```javascript
 // movies.js
 router.get('/movies', async (req, res) => {
+  const db = req.app.locals.db;
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = parseInt(req.query.limit) || 50;
   const offset = (page - 1) * limit;
 
-  const result = await db.query(`
-    SELECT m.*, 
-           COALESCE(ARRAY_AGG(mp.person_id) FILTER (WHERE mp.person_id IS NOT NULL), '{}') as people_ids
-    FROM movies m
-    LEFT JOIN movie_people mp ON m.id = mp.movie_id
-    GROUP BY m.id
-    ORDER BY m.id
-    LIMIT $1 OFFSET $2
-  `, [limit, offset]);
-  
-  res.json(result.rows);
+  try {
+    const result = await db.query(`
+      SELECT m.*, 
+             COALESCE(ARRAY_AGG(mp.person_id) FILTER (WHERE mp.person_id IS NOT NULL), '{}') as people_ids
+      FROM movies m
+      LEFT JOIN movie_people mp ON m.id = mp.movie_id
+      GROUP BY m.id
+      ORDER BY m.id
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+
+    res.json({
+      page,
+      limit,
+      movies: result.rows
+    });
+  } catch (err) {
+    console.error('DB error (GET /movies):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+```
+
+### R-04: No Pagination
+**Опис:** GET /users завантажує всіх юзерів. Якщо в базі буде 10,000 юзерів, сервер спробує серіалізувати масив з 10 тисяч об'єктів, а браузер "зависне" при рендерингу.
+
+**Before:**
+```javascript
+// users.js
+router.get('/users', async (req, res) => {
+  const db = req.app.locals.db;
+  try {
+    const result = await db.query(`
+      SELECT id, username, role, nickname, email, avatar_url, liked_movies
+      FROM users
+      ORDER BY id
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('DB error (GET /users):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+```
+**After:**
+```javascript
+// users.js
+router.get('/users', async (req, res) => {
+  const db = req.app.locals.db;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = (page - 1) * limit;
+
+  try {
+    const result = await db.query(`
+      SELECT id, username, role, nickname, email, avatar_url, liked_movies
+      FROM users
+      ORDER BY id
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+
+    const countResult = await db.query('SELECT COUNT(*) AS total FROM users');
+
+    res.json({
+      page,
+      limit,
+      total: parseInt(countResult.rows[0].total, 10),
+      users: result.rows
+    });
+  } catch (err) {
+    console.error('DB error (GET /users):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 ```
 ## 4. Open Issues
