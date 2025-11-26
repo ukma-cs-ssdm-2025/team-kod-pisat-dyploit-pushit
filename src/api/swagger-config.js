@@ -17,7 +17,7 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
+        url: 'https://team-kod-pisat-dyploit-pushit-production.up.railway.app',
         description: 'Development server'
       }
     ],
