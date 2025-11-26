@@ -17,6 +17,9 @@ import { useAuth } from '../hooks/useAuth';
 import ReviewCard from '../components/ReviewCard';
 import ReviewForm from '../components/ReviewForm';
 import MultiSelect from '../components/MultiSelect';
+import ConfirmModal from '../components/ConfirmModal';
+import AlertModal from '../components/AlertModal';
+import Avatar from '../components/Avatar';
 
 export default function Movie() {
   const { id } = useParams()
@@ -35,6 +38,9 @@ export default function Movie() {
   const [editData, setEditData] = useState(null) 
   const [posterFile, setPosterFile] = useState(null);
 
+  const [confirmModalConfig, setConfirmModalConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+  const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
+
   const fetchData = () => {
     setIsLoading(true);
     Promise.all([
@@ -52,7 +58,8 @@ export default function Movie() {
           setIsLiked(currentUser.liked_movies.includes(Number(id)));
         }
         
-        const options = allPeopleList.map(p => ({
+        const peopleList = allPeopleList.people || allPeopleList;
+        const options = peopleList.map(p => ({
           id: p.id,
           label: `${p.first_name} ${p.last_name} (${p.profession})`
         }));
@@ -70,10 +77,13 @@ export default function Movie() {
 
       const numericId = Number(id);
       
-      const movieReviews = allReviews
+      const reviewsList = allReviews.reviews || allReviews;
+      const usersList = allUsers.users || allUsers;
+
+      const movieReviews = reviewsList
         .filter(review => review.movie_id === numericId)
         .map(review => {
-          const author = allUsers.find(u => u.id === review.user_id);
+          const author = usersList.find(u => u.id === review.user_id);
           return {
             ...review,
             text: review.body || review.text,
@@ -85,7 +95,7 @@ export default function Movie() {
       setReviews(movieReviews);
 
     }).catch(err => {
-      console.error("Помилка завантаження даних:", err);
+      console.error("Error loading data:", err);
       setMovie(null); 
     }).finally(() => {
       setIsLoading(false);
@@ -98,7 +108,7 @@ export default function Movie() {
 
   const handleLikeToggle = async () => {
     if (!isAuthenticated || !currentUser) {
-      alert("Будь ласка, увійдіть в систему щоб додавати фільми до обраних");
+      setAlertConfig({ isOpen: true, title: "Access Denied", message: "Please log in to add movies to your favorites." });
       return;
     }
 
@@ -119,8 +129,8 @@ export default function Movie() {
         currentUser.liked_movies.push(Number(id));
       }
     } catch (err) {
-      console.error("Помилка зміни статусу обраного фільму:", err);
-      alert("Не вдалося змінити статус фільму");
+      console.error("Error toggling like:", err);
+      setAlertConfig({ isOpen: true, title: "Error", message: "Failed to update status" });
     } finally {
       setIsLikeLoading(false);
     }
@@ -156,27 +166,32 @@ export default function Movie() {
         await uploadMovieCover(id, posterFile);
       }
 
-      alert('Фільм оновлено!');
+      setAlertConfig({ isOpen: true, title: "Success", message: "Movie updated successfully!" });
       setIsEditing(false);
       setPosterFile(null);
       fetchData(); 
 
     } catch (err) {
-      console.error("Помилка оновлення:", err);
-      alert(`Помилка: ${err.message || 'Не вдалося оновити'}`);
+      console.error("Update error:", err);
+      setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Update failed'}` });
     }
   };
 
-  const handleDeleteMovie = async () => {
-    if (window.confirm(`Ви впевнені, що хочете видалити фільм "${movie.title}"?`)) {
-      try {
-        await deleteMovie(id);
-        alert('Фільм видалено!');
-        navigate('/movies');
-      } catch (err) {
-        alert(`Помилка: ${err.message || 'Не вдалося видалити'}`);
-      }
-    }
+  const confirmDeleteMovie = () => {
+    setConfirmModalConfig({
+        isOpen: true,
+        title: "Delete Movie?",
+        message: `Are you sure you want to delete "${movie.title}"? This cannot be undone.`,
+        onConfirm: async () => {
+            try {
+                await deleteMovie(id);
+                setAlertConfig({ isOpen: true, title: "Success", message: "Movie deleted!" });
+                setTimeout(() => navigate('/movies'), 1500);
+            } catch (err) {
+                setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Delete failed'}` });
+            }
+        }
+    });
   };
 
   const handleAddReview = async (reviewData) => {
@@ -188,27 +203,33 @@ export default function Movie() {
       await addReview(dataToSend);
       fetchData(); 
     } catch (err) {
-      alert(`Помилка додавання відгуку: ${err.message}`);
+      setAlertConfig({ isOpen: true, title: "Error", message: `Error adding review: ${err.message}` });
     }
   };
 
-  const handleDeleteReview = async (reviewId) => {
-    if (window.confirm("Ви впевнені, що хочете видалити цей відгук?")) {
-      try {
-        await deleteReview(reviewId);
-        fetchData();
-      } catch (err) {
-        alert(`Помилка видалення відгуку: ${err.message}`);
-      }
-    }
+  const confirmDeleteReview = (reviewId) => {
+      setConfirmModalConfig({
+          isOpen: true,
+          title: "Delete Review?",
+          message: "Are you sure you want to delete this review?",
+          onConfirm: async () => {
+              try {
+                  await deleteReview(reviewId);
+                  fetchData();
+              } catch (err) {
+                  setAlertConfig({ isOpen: true, title: "Error", message: `Error deleting review: ${err.message}` });
+              }
+          }
+      });
   };
+
 
   if (isLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400">Завантаження...</div>
+    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400 cursor-wait">Loading...</div>
   }
 
   if (!movie) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-red-400">На жаль, фільм не знайдено.</div>
+    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-red-400">Movie not found.</div>
   }
 
   const directors = people.filter(p => p.profession === 'director');
@@ -218,11 +239,11 @@ export default function Movie() {
   const dbRating = movie.rating ? parseFloat(movie.rating).toFixed(1) : '0.0';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-24 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-8 pb-8">
       <div className="max-w-5xl mx-auto p-4">
         
         {!isEditing ? (
-          <div className="flex flex-col md:flex-row gap-8 card p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-8 bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 shadow-2xl">
             <div className="md:w-1/3">
               <img 
                 src={movie.cover_url || "https://placehold.co/300x450/374151/FFFFFF?text=No+Poster"} 
@@ -231,22 +252,25 @@ export default function Movie() {
               />
             </div>
             <div className="md:w-2/3">
-              <h1 className="text-4xl font-bold text-white mb-2">
+              <h1 className="text-4xl font-bold text-white mb-2 border-b border-gray-700 pb-2">
                 {movie.title}
-                <span className="text-2xl text-blue-400 ml-2">({dbRating} ★)</span>
+                <span className="text-2xl text-blue-400 ml-4 font-normal">({dbRating} ★)</span>
               </h1>
-              <p className="text-lg text-gray-300"><strong className="text-blue-400">Жанр:</strong> {movie.genre || 'N/A'}</p>
+              <p className="text-lg text-gray-300 mb-4"><strong className="text-blue-400 font-semibold">Genre:</strong> {movie.genre || 'N/A'}</p>
               
-              <div className="border-t border-gray-700 pt-4 mt-4 space-y-3">
-                <p className="text-gray-400 text-justify leading-relaxed mt-4">{movie.description || "Опис відсутній."}</p>
+              <div className="pt-4 space-y-4">
+                <p className="text-gray-400 text-justify leading-relaxed">{movie.description || "No description available."}</p>
                 
                 {directors.length > 0 && (
                   <div>
-                    <strong className="text-blue-400">Режисер(и):</strong>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <strong className="text-blue-400 font-semibold block mb-1">Director(s):</strong>
+                    <div className="flex flex-wrap gap-2">
                       {directors.map(person => (
-                        <Link key={person.id} to={`/people/${person.id}`} className="text-gray-300 bg-gray-700 px-3 py-1 rounded-lg hover:bg-gray-600 hover:text-white transition-colors">
-                          {person.first_name} {person.last_name}
+                        <Link key={person.id} to={`/people/${person.id}`} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full transition-colors cursor-pointer group">
+                          <Avatar src={person.avatar_url} alt={`${person.first_name} ${person.last_name}`} size="sm" className="w-6 h-6 text-xs" />
+                          <span className="text-gray-300 group-hover:text-white text-sm">
+                            {person.first_name} {person.last_name}
+                          </span>
                         </Link>
                       ))}
                     </div>
@@ -254,11 +278,14 @@ export default function Movie() {
                 )}
                 {producers.length > 0 && (
                   <div>
-                    <strong className="text-blue-400">Продюсер(и):</strong>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <strong className="text-blue-400 font-semibold block mb-1">Producer(s):</strong>
+                    <div className="flex flex-wrap gap-2">
                       {producers.map(person => (
-                        <Link key={person.id} to={`/people/${person.id}`} className="text-gray-300 bg-gray-700 px-3 py-1 rounded-lg hover:bg-gray-600 hover:text-white transition-colors">
-                          {person.first_name} {person.last_name}
+                        <Link key={person.id} to={`/people/${person.id}`} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full transition-colors cursor-pointer group">
+                           <Avatar src={person.avatar_url} alt={`${person.first_name} ${person.last_name}`} size="sm" className="w-6 h-6 text-xs" />
+                          <span className="text-gray-300 group-hover:text-white text-sm">
+                            {person.first_name} {person.last_name}
+                          </span>
                         </Link>
                       ))}
                     </div>
@@ -266,11 +293,14 @@ export default function Movie() {
                 )}
                 {actors.length > 0 && (
                   <div>
-                    <strong className="text-blue-400">Актори:</strong>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <strong className="text-blue-400 font-semibold block mb-1">Cast:</strong>
+                    <div className="flex flex-wrap gap-2">
                       {actors.map(person => (
-                        <Link key={person.id} to={`/people/${person.id}`} className="text-gray-300 bg-gray-700 px-3 py-1 rounded-lg hover:bg-gray-600 hover:text-white transition-colors">
-                          {person.first_name} {person.last_name}
+                        <Link key={person.id} to={`/people/${person.id}`} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full transition-colors cursor-pointer group">
+                           <Avatar src={person.avatar_url} alt={`${person.first_name} ${person.last_name}`} size="sm" className="w-6 h-6 text-xs" />
+                          <span className="text-gray-300 group-hover:text-white text-sm">
+                            {person.first_name} {person.last_name}
+                          </span>
                         </Link>
                       ))}
                     </div>
@@ -278,63 +308,63 @@ export default function Movie() {
                 )}
 
               </div>
-              <div className="mt-6 flex gap-4 flex-wrap">
+              <div className="mt-8 flex gap-4 flex-wrap">
                 <button 
                   onClick={handleLikeToggle}
                   disabled={isLikeLoading}
-                  className={`${isLiked ? 'btn-danger' : 'btn-primary'} disabled:opacity-50`}
+                  className={`${isLiked ? 'bg-red-600 hover:bg-red-500' : 'bg-blue-600 hover:bg-blue-500'} text-white px-6 py-2 rounded-lg font-medium shadow-lg transition-colors disabled:opacity-50 cursor-pointer`}
                 >
-                  {isLikeLoading ? '...' : isLiked ? 'Видалити з обраних' : 'Додати в обрані'}
+                  {isLikeLoading ? '...' : isLiked ? 'Remove from Favorites' : 'Add to Favorites'}
                 </button>
                 {isAdmin && (
-                  <button onClick={() => setIsEditing(true)} className="btn-secondary">Редагувати</button>
+                  <button onClick={() => setIsEditing(true)} className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium shadow-lg transition-colors cursor-pointer">Edit Movie</button>
                 )}
                 {isAdmin && (
-                  <button onClick={handleDeleteMovie} className="btn-danger">Видалити</button>
+                  <button onClick={confirmDeleteMovie} className="bg-red-900 hover:bg-red-800 text-red-100 px-6 py-2 rounded-lg font-medium shadow-lg transition-colors cursor-pointer">Delete Movie</button>
                 )}
               </div>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleEditSubmit} className="card p-6 mb-8 space-y-4">
-            <h2 className="text-2xl font-bold text-white mb-4">Редагування фільму</h2>
+          <form onSubmit={handleEditSubmit} className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-8 space-y-4 shadow-2xl">
+            <h2 className="text-2xl font-bold text-white mb-4">Edit Movie</h2>
             
             <div>
-              <label className="block text-blue-400 mb-2 font-medium">Назва</label>
-              <input type="text" name="title" value={editData.title} onChange={handleEditChange} className="form-input"/>
+              <label className="block text-blue-400 mb-2 font-medium cursor-default">Title</label>
+              <input type="text" name="title" value={editData.title} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
             </div>
             <div>
-              <label className="block text-blue-400 mb-2 font-medium">Жанр</label>
-              <input type="text" name="genre" value={editData.genre} onChange={handleEditChange} className="form-input"/>
+              <label className="block text-blue-400 mb-2 font-medium cursor-default">Genre</label>
+              <input type="text" name="genre" value={editData.genre} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
             </div>
             
             <MultiSelect 
-              label="Обрати Людей (Актори, Режисери)"
+              label="Select People (Actors, Directors)"
               options={allPeopleOptions}
               selectedIds={editData.people_ids}
               onChange={handlePeopleChange}
-              placeholder="Пошук людини..."
+              placeholder="Search person..."
             />
 
             <div>
-              <label className="block text-blue-400 mb-2 font-medium">Обкладинка (завантажити нову)</label>
-              <input type="file" name="posterFile" onChange={handleFileChange} accept="image/*" className="form-input file:bg-gray-700 file:text-white file:border-0 file:rounded file:px-4 file:py-2"/>
+              <label className="block text-blue-400 mb-2 font-medium cursor-default">Cover Image (Upload new)</label>
+              <input type="file" name="posterFile" onChange={handleFileChange} accept="image/*" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"/>
             </div>
             <div>
-              <label className="block text-blue-400 mb-2 font-medium">Опис</label>
-              <textarea name="description" value={editData.description} onChange={handleEditChange} rows="5" className="form-input"></textarea>
+              <label className="block text-blue-400 mb-2 font-medium cursor-default">Description</label>
+              <textarea name="description" value={editData.description} onChange={handleEditChange} rows="5" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"></textarea>
             </div>
             
-            <div className="flex gap-4">
-              <button type="submit" className="btn-primary">Зберегти</button>
-              <button type="button" onClick={() => { setIsEditing(false); setPosterFile(null); }} className="btn-secondary">Скасувати</button>
+            <div className="flex gap-4 pt-4">
+              <button type="submit" className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer">Save Changes</button>
+              <button type="button" onClick={() => { setIsEditing(false); setPosterFile(null); }} className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer">Cancel</button>
             </div>
           </form>
         )}
 
-        <div className="card p-6">
-          <h2 className="section-title">
-            Відгуки користувачів ({reviews.length})
+        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-2xl">
+          <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+            User Reviews ({reviews.length})
           </h2>
           <div className="space-y-6">
             {reviews.length > 0 ? (
@@ -342,11 +372,11 @@ export default function Movie() {
                 <ReviewCard 
                   key={review.id} 
                   review={review} 
-                  onDelete={() => handleDeleteReview(review.id)} 
+                  onDelete={() => confirmDeleteReview(review.id)} 
                 />
               ))
             ) : (
-              <p className="text-gray-400">Для цього фільму ще немає відгуків.</p>
+              <p className="text-gray-400 italic cursor-default">No reviews yet. Be the first!</p>
             )}
           </div>
         </div>
@@ -355,6 +385,20 @@ export default function Movie() {
           <ReviewForm onSubmit={handleAddReview} />
         )}
       </div>
+
+      <ConfirmModal 
+        isOpen={confirmModalConfig.isOpen}
+        onClose={() => setConfirmModalConfig({ ...confirmModalConfig, isOpen: false })}
+        onConfirm={confirmModalConfig.onConfirm}
+        title={confirmModalConfig.title}
+        message={confirmModalConfig.message}
+      />
+      <AlertModal 
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+        title={alertConfig.title}
+        message={alertConfig.message}
+      />
     </div>
   )
 }
