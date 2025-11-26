@@ -40,9 +40,9 @@ export default function ReviewCard({ review, onDelete }) {
         {canDelete && (
           <button 
             onClick={() => onDelete(review.id)}
-            className="text-red-400 hover:text-red-300 transition-colors text-sm font-medium"
+            className="text-red-400 hover:text-red-300 transition-colors text-sm font-medium cursor-pointer"
           >
-            Видалити
+            Delete
           </button>
         )}
       </div>

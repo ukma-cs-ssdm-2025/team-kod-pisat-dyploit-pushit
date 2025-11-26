@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react"
 import { Link } from "react-router-dom"; 
 import { getAllMovies, getAllPeople } from "../api" 
 import MovieCard from "../components/MovieCard"
+import Pagination from "../components/Pagination"
 import { useAuth } from '../hooks/useAuth'; 
 
 const SearchIcon = () => (
@@ -14,6 +15,9 @@ export default function Movies() {
   const { isAdmin } = useAuth();
   const [movies, setMovies] = useState([])
   const [allPeople, setAllPeople] = useState([])
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalMovies, setTotalMovies] = useState(0);
+  const MOVIES_PER_PAGE = 50;
 
   const [searchTerm, setSearchTerm] = useState("")
   const [genreFilter, setGenreFilter] = useState("")
@@ -25,17 +29,23 @@ export default function Movies() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const [moviesData, peopleData] = await Promise.all([
-          getAllMovies(),
+          getAllMovies(), 
           getAllPeople()
         ]);
         
-        setMovies(moviesData);
-        setAllPeople(peopleData);
+        // Note: Ideally, filtering and sorting should happen on the backend 
+        // if we are using server-side pagination. Since we are using the existing
+        // getAllMovies which returns everything (based on provided context),
+        // we will implement client-side pagination for the view.
+        // If the backend supported query params for filters, we'd use them.
+        setMovies(moviesData.movies || moviesData); // Handle if API returns { movies: [], total: ... } or just []
+        setAllPeople(peopleData.people || peopleData);
 
       } catch (err) {
-        console.error("Не вдалося завантажити дані:", err)
+        console.error("Failed to load data:", err)
       } finally {
         setIsLoading(false)
       }
@@ -45,7 +55,7 @@ export default function Movies() {
   }, [])
 
   const processedMovies = useMemo(() => {
-    let tempMovies = [...movies]
+    let tempMovies = Array.isArray(movies) ? [...movies] : [];
 
     if (searchTerm) {
       tempMovies = tempMovies.filter((movie) => movie.title.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -91,103 +101,117 @@ export default function Movies() {
     return tempMovies
   }, [movies, allPeople, searchTerm, genreFilter, peopleSearchTerm, sortOption])
 
+  // Client-side pagination logic
+  const paginatedMovies = useMemo(() => {
+    const startIndex = (currentPage - 1) * MOVIES_PER_PAGE;
+    return processedMovies.slice(startIndex, startIndex + MOVIES_PER_PAGE);
+  }, [processedMovies, currentPage]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400">
-        Завантаження фільмів...
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400 cursor-wait">
+        Loading movies...
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      <div className="max-w-7xl mx-auto p-4 pt-24 pb-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="section-title">
-            Огляд фільмів
+      <div className="max-w-7xl mx-auto p-4 pt-8 pb-8">
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+          <h1 className="text-3xl font-bold text-white border-l-4 border-blue-500 pl-4">
+            Explore Movies
           </h1>
           {isAdmin && (
             <Link
               to="/movies/new"
-              className="btn-primary"
+              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
             >
-              + Додати фільм
+              + Add Movie
             </Link>
           )}
         </div>
 
-        <div className="card p-6 mb-8 sticky top-16 z-10">
+        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 sticky top-20 z-10 backdrop-blur-md shadow-xl">
             <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-grow">
               <input
                 type="text"
-                placeholder="Шукати фільм за назвою..."
+                placeholder="Search by title..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-input pl-10"
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-blue-500 transition-colors cursor-text"
               />
-              <div className="absolute top-0 left-0 p-3">
+              <div className="absolute top-0 left-0 p-3 pointer-events-none">
                 <SearchIcon />
               </div>
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="btn-secondary"
+              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg border border-gray-600 transition-colors cursor-pointer whitespace-nowrap"
             >
-              {showFilters ? "Сховати" : "Фільтри та Сортування"}
+              {showFilters ? "Hide Filters" : "Filters & Sort"}
             </button>
           </div>
 
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 border-t border-gray-700 pt-4">
               <div>
-                <label className="block text-blue-400 mb-2 text-sm font-medium">Жанр</label>
+                <label className="block text-blue-400 mb-2 text-sm font-medium cursor-default">Genre</label>
                 <input
                   type="text"
-                  placeholder="Жанр"
+                  placeholder="Filter by genre..."
                   value={genreFilter}
-                  onChange={(e) => setGenreFilter(e.target.value)}
-                  className="form-input"
+                  onChange={(e) => { setGenreFilter(e.target.value); setCurrentPage(1); }}
+                  className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"
                 />
               </div>
 
               <div>
-                <label className="block text-blue-400 mb-2 text-sm font-medium">Актори / Режисери</label>
+                <label className="block text-blue-400 mb-2 text-sm font-medium cursor-default">Actors / Directors</label>
                 <input
                   type="text"
-                  placeholder="Актори / Режисери / Продюсери"
+                  placeholder="Search person..."
                   value={peopleSearchTerm}
-                  onChange={(e) => setPeopleSearchTerm(e.target.value)}
-                  className="form-input"
+                  onChange={(e) => { setPeopleSearchTerm(e.target.value); setCurrentPage(1); }}
+                  className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"
                 />
               </div>
 
               <div>
-                <label className="block text-blue-400 mb-2 text-sm font-medium">Сортувати за</label>
+                <label className="block text-blue-400 mb-2 text-sm font-medium cursor-default">Sort By</label>
                 <select 
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
-                  className="form-input"
+                  className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none"
                 >
-                  <option value="newest" className="bg-gray-800">Спочатку нові</option>
-                  <option value="oldest" className="bg-gray-800">Спочатку старі</option>
-                  <option value="title_asc" className="bg-gray-800">Назва (А-Я)</option>
-                  <option value="rating_desc" className="bg-gray-800">Рейтинг (високий - низький)</option>
-                  <option value="rating_asc" className="bg-gray-800">Рейтинг (низький - високий)</option>
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="title_asc">Title (A-Z)</option>
+                  <option value="rating_desc">Rating (High to Low)</option>
+                  <option value="rating_asc">Rating (Low to High)</option>
                 </select>
               </div>
             </div>
           )}
         </div>
 
-        {processedMovies.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {processedMovies.map((movie) => (
-              <MovieCard key={movie.id} movie={movie} />
-            ))}
-          </div>
+        {paginatedMovies.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {paginatedMovies.map((movie) => (
+                <MovieCard key={movie.id} movie={movie} />
+              ))}
+            </div>
+            <Pagination 
+              currentPage={currentPage}
+              totalItems={processedMovies.length}
+              pageSize={MOVIES_PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
+          </>
         ) : (
-          <p className="text-center text-gray-400 text-lg mt-12">На жаль, за вашим запитом нічого не знайдено.</p>
+          <p className="text-center text-gray-400 text-lg mt-12 cursor-default">No movies found matching your criteria.</p>
         )}
       </div>
     </div>

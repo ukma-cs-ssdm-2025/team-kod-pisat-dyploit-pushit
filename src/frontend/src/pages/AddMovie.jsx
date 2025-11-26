@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addMovie, uploadMovieCover, getAllPeople } from '../api'; 
 import MultiSelect from '../components/MultiSelect';
+import AlertModal from '../components/AlertModal';
 
 export default function AddMovie() {
   const [formData, setFormData] = useState({
@@ -13,12 +14,14 @@ export default function AddMovie() {
   const [posterFile, setPosterFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [peopleOptions, setPeopleOptions] = useState([]);
+  const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    getAllPeople().then(people => {
-      const options = people.map(p => ({
+    getAllPeople().then(result => {
+      const peopleList = result.people || result;
+      const options = peopleList.map(p => ({
         id: p.id,
         label: `${p.first_name} ${p.last_name} (${p.profession})`
       }));
@@ -57,71 +60,85 @@ export default function AddMovie() {
       const newMovieId = response.movie?.id;
 
       if (!newMovieId) {
-        throw new Error("Не вдалося отримати ID нового фільму");
+        throw new Error("Failed to get new movie ID");
       }
       
       if (posterFile) {
         await uploadMovieCover(newMovieId, posterFile);
       }
       
-      alert('Фільм успішно створено!');
-      navigate(`/movie/${newMovieId}`);
+      setAlertConfig({
+          isOpen: true,
+          title: "Success",
+          message: "Movie created successfully!"
+      });
+      setTimeout(() => navigate(`/movie/${newMovieId}`), 1500);
 
     } catch (err) {
-      console.error("Помилка створення фільму:", err);
-      alert(`Помилка: ${err.message || 'Не вдалося створити фільм'}`);
+      console.error("Creation error:", err);
+      setAlertConfig({
+          isOpen: true,
+          title: "Error",
+          message: `Error: ${err.message || 'Failed to create movie'}`
+      });
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-24 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-8 pb-8">
       <div className="max-w-2xl mx-auto p-4">
-        <h1 className="section-title">
-          Додати Новий Фільм
+        <h1 className="text-3xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+          Add New Movie
         </h1>
 
-        <form onSubmit={handleSubmit} className="card p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-gray-800 border border-gray-700 rounded-xl p-6 space-y-4 shadow-2xl">
           
           <div>
-            <label className="block text-blue-400 mb-2 font-medium">Назва</label>
-            <input type="text" name="title" onChange={handleChange} required className="form-input"/>
+            <label className="block text-blue-400 mb-2 font-medium cursor-default">Title</label>
+            <input type="text" name="title" onChange={handleChange} required className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
           </div>
 
           <div>
-              <label className="block text-blue-400 mb-2 font-medium">Жанр</label>
-              <input type="text" name="genre" onChange={handleChange} className="form-input"/>
+              <label className="block text-blue-400 mb-2 font-medium cursor-default">Genre</label>
+              <input type="text" name="genre" onChange={handleChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
           </div>
 
           <MultiSelect 
-            label="Прив'язати людей"
+            label="Cast & Crew"
             options={peopleOptions}
             selectedIds={formData.people_ids}
             onChange={handlePeopleChange}
-            placeholder="Пошук актора, режисера..."
+            placeholder="Search person..."
           />
 
           <div>
-            <label className="block text-blue-400 mb-2 font-medium">Обкладинка (файл)</label>
+            <label className="block text-blue-400 mb-2 font-medium cursor-default">Cover Image (File)</label>
             <input 
               type="file" 
               name="posterFile" 
               onChange={handleFileChange} 
               accept="image/*"
-              className="form-input file:bg-gray-700 file:text-white file:border-0 file:rounded file:px-4 file:py-2"
+              className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-blue-400 mb-2 font-medium">Опис</label>
-            <textarea name="description" onChange={handleChange} rows="5" className="form-input"></textarea>
+            <label className="block text-blue-400 mb-2 font-medium cursor-default">Description</label>
+            <textarea name="description" onChange={handleChange} rows="5" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"></textarea>
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-50">
-            {isSubmitting ? 'Збереження...' : 'Додати Фільм'}
+          <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg disabled:opacity-50 cursor-pointer">
+            {isSubmitting ? 'Saving...' : 'Add Movie'}
           </button>
         </form>
       </div>
+      <AlertModal 
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+        title={alertConfig.title}
+        message={alertConfig.message}
+      />
     </div>
   );
 }
