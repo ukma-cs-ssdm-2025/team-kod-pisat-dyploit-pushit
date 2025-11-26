@@ -7,10 +7,10 @@
 | Метрика                     | Значення            |
 |-------------------------------|------------------|
 | **Code Smells**              | 3                |
-| **Maintainability Rating**   | B                |
+| **Maintainability Rating**   | Low                |
 | **Technical Debt (h)**       | 1.5              |
 | **Duplicated Lines (%)**     | 0.8              |
-| **Reliability Rating**       | A                |
+| **Reliability Rating**       | Medium                |
 
 ## Обрані проблеми
 
