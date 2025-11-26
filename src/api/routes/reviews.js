@@ -109,27 +109,48 @@ router.get('/reviews/:id', async (req, res) => {
  */
 router.post('/reviews', async (req, res) => {
   const db = req.app.locals.db;
-  let { title, body, rating, movie_id } = req.body;
+  const client = await db.connect();
+  const { title, body, rating, movie_id } = req.body;
 
   if (!title || !body || !rating || !movie_id)
     return res.status(400).json({ message: 'Всі поля обов’язкові' });
 
   try {
-    const result = await db.query(
+    await client.query('BEGIN');
+
+    const insertResult = await client.query(
       `INSERT INTO reviews (title, body, rating, movie_id, user_id, created_at)
        VALUES ($1, $2, $3, $4, $5, NOW())
        RETURNING *`,
       [title, body, rating, movie_id, req.user.id]
     );
 
-    await updateMovieRating(db, movie_id);
-    
-    res.status(201).json({ message: 'Рецензію створено', review: result.rows[0] });
+    const avgResult = await client.query(
+      `SELECT AVG(rating)::numeric(2,1) as avg_rating
+       FROM reviews
+       WHERE movie_id = $1`,
+      [movie_id]
+    );
+
+    const avgRating = avgResult.rows[0].avg_rating;
+
+    await client.query(
+      `UPDATE movies SET rating = $1 WHERE id = $2`,
+      [avgRating, movie_id]
+    );
+
+    await client.query('COMMIT');
+
+    res.status(201).json({ message: 'Рецензію створено', review: insertResult.rows[0] });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('DB error (POST /reviews):', err);
     res.status(500).json({ error: 'Database error' });
+  } finally {
+    client.release();
   }
 });
+
 
 /**
  * @openapi
