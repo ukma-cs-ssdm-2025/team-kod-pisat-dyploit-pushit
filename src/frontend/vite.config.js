@@ -12,7 +12,7 @@ export default defineConfig({
     host: true, 
     port: 5173, 
     allowedHosts: [
-      'hearty-imagination-production.up.railway.app', 
+      'flickly.up.railway.app', 
       'localhost'
     ]
   }
