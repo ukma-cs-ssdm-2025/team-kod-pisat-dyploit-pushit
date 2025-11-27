@@ -18,6 +18,10 @@ import { useAuth } from '../hooks/useAuth'
 import MovieCard from "../components/MovieCard"
 import ReviewCard from "../components/ReviewCard"  
 import { LikesContext } from "../context/LikesContext";
+import ConfirmModal from '../components/ConfirmModal';
+import AlertModal from '../components/AlertModal';
+import Avatar from '../components/Avatar';
+
 
 export default function Profile() {
   const { username } = useParams();
@@ -54,12 +58,18 @@ export default function Profile() {
   const [showFollowing, setShowFollowing] = useState(false);
   const [showFollowers, setShowFollowers] = useState(false);
 
+  const [confirmModalConfig, setConfirmModalConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+  const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
+
+
   const fetchProfileData = async (targetUsername, isMyProfile) => {
       try {
         const allMoviesData = await getAllMovies();
-        setAllMovies(allMoviesData);
+        const moviesList = allMoviesData.movies || allMoviesData;
+        setAllMovies(moviesList);
 
         const allReviewsData = await getAllReviews();
+        const reviewsList = allReviewsData.reviews || allReviewsData;
 
         let user;
         if (isMyProfile) {
@@ -72,28 +82,28 @@ export default function Profile() {
           setProfileUser(user);
           setEditData(user); 
           
-          const reviews = allReviewsData
+          const reviews = reviewsList
             .filter(r => r.user_id === user.id)
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             
           setUserReviews(reviews);
 
           const selectedIds = user.liked_movies || [];
-          setSelectedMovies(allMoviesData.filter(m => selectedIds.includes(m.id)));
+          setSelectedMovies(moviesList.filter(m => selectedIds.includes(m.id)));
 
           if (isMyProfile) {
             try {
               const requests = await getIncomingFriendRequests(currentUser.id);
               setIncomingRequests(requests.incoming || []);
             } catch (err) {
-              console.error("Помилка завантаження запитів:", err);
+              console.error("Error loading requests:", err);
             }
           }
         } else {
           setProfileUser(null);
         }
       } catch (err) {
-        console.error("Помилка завантаження профілю:", err);
+        console.error("Error loading profile:", err);
         setProfileUser(null);
       }
       setIsLoading(false);
@@ -127,33 +137,38 @@ export default function Profile() {
     try {
       if (action === 'add') {
         await sendFriendRequest(userParam);
-        alert('Запит на дружбу надіслано!');
+        setAlertConfig({ isOpen: true, title: "Success", message: "Friend request sent!" });
       } else if (action === 'remove') {
         await removeFriend(userParam);
-        alert('Дружбу видалено!');
+        setAlertConfig({ isOpen: true, title: "Success", message: "Friend removed!" });
         fetchProfileData(username || currentUser.username, !username);
       } else if (action === 'accept') {
         await acceptFriendRequest(userParam);
-        alert('Запит на дружбу прийнято!');
+        setAlertConfig({ isOpen: true, title: "Success", message: "Friend request accepted!" });
         setIncomingRequests(prev => prev.filter(req => req.requester_id !== parseInt(userParam)));
         fetchProfileData(username || currentUser.username, !username);
       }
     } catch (err) {
-      alert(`Помилка: ${err.message || 'Не вдалося виконати дію'}`);
+      setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Action failed'}` });
     }
   };
 
-  const handleDeleteReview = async (reviewId) => {
-    if (window.confirm("Ви впевнені, що хочете видалити цей відгук?")) {
-      try {
-        await deleteReview(reviewId);
-        setUserReviews(prev => prev.filter(r => r.id !== reviewId));
-        alert("Відгук видалено");
-      } catch (err) {
-        alert(`Помилка видалення відгуку: ${err.message}`);
-      }
-    }
+  const confirmDeleteReview = (reviewId) => {
+      setConfirmModalConfig({
+          isOpen: true,
+          title: "Delete Review?",
+          message: "Are you sure you want to delete this review?",
+          onConfirm: async () => {
+              try {
+                  await deleteReview(reviewId);
+                  setUserReviews(prev => prev.filter(r => r.id !== reviewId));
+              } catch (err) {
+                  setAlertConfig({ isOpen: true, title: "Error", message: `Error deleting review: ${err.message}` });
+              }
+          }
+      });
   };
+
 
   const isMe = currentUser?.id === profileUser?.id;
   const canEdit = isMe || 
@@ -210,7 +225,7 @@ export default function Profile() {
         await uploadAvatar(avatarFile);
       }
       
-      alert("Профіль оновлено!");
+      setAlertConfig({ isOpen: true, title: "Success", message: "Profile updated!" });
       setIsEditing(false);
       setAvatarFile(null);
       setProfileUser({ ...profileUser, ...updatedUser.user });
@@ -220,37 +235,43 @@ export default function Profile() {
       }
 
     } catch (err) {
-      console.error("Помилка оновлення:", err);
-      alert(`Помилка: ${err.message || 'Не вдалося оновити'}`);
+      console.error("Update error:", err);
+      setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Update failed'}` });
     }
   };
 
-  const handleDeleteProfile = async () => {
-    if (window.confirm(`Ви впевнені, що хочете видалити ${profileUser.username}?`)) {
-      try {
-        await deleteUser(profileUser.id);
-        alert('Користувача видалено!');
-        navigate('/users'); 
-      } catch (err) {
-        alert(`Помилка: ${err.message || 'Не вдалося видалити'}`);
-      }
-    }
+  const confirmDeleteProfile = () => {
+    setConfirmModalConfig({
+        isOpen: true,
+        title: "Delete User?",
+        message: `Are you sure you want to delete user "${profileUser.username}"?`,
+        onConfirm: async () => {
+            try {
+                await deleteUser(profileUser.id);
+                setAlertConfig({ isOpen: true, title: "Success", message: "User deleted!" });
+                setTimeout(() => navigate('/users'), 1500);
+            } catch (err) {
+                setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Delete failed'}` });
+            }
+        }
+    });
   };
 
   if (isLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400">Завантаження...</div>;
+    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400 cursor-wait">Loading...</div>;
   }
   if (!profileUser) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-red-400">Користувача не знайдено.</div>;
+    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-red-400">User not found.</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-24 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-8 pb-8">
       <div className="max-w-6xl mx-auto p-4">
         
         {!isEditing ? (
-          <div className="card p-6 mb-8">
+          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 shadow-2xl">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+
               <img
                 src={
                 profileUser.avatar_url || 
@@ -259,52 +280,55 @@ export default function Profile() {
                 alt={profileUser.nickname}
                 className="w-32 h-32 rounded-full border-4 border-blue-600 object-cover shadow-lg"
                 />
+
+              <Avatar src={profileUser.avatar_url} alt={profileUser.nickname} size="lg" className="border-4 border-blue-500" />
+
               <div className="text-center md:text-left flex-1">
                 <h1 className="text-3xl font-bold text-white">{profileUser.nickname}</h1>
                 <p className="text-lg text-gray-300 mb-2">{profileUser.username}</p>
-                <div className="border-t border-gray-700 pt-3">
+                <div className="border-t border-gray-700 pt-3 mt-2">
                   <p className="text-gray-400">Email: {profileUser.email}</p>
-                  <p className="text-gray-400">Роль: {profileUser.role}</p>
-                  <p className="text-gray-400">Друзі: {profileUser.friends?.length || 0}</p>
+                  <p className="text-gray-400 capitalize">Role: {profileUser.role}</p>
+                  <p className="text-gray-400">Friends: {profileUser.friends?.length || 0}</p>
                 </div>
               </div>
               <div className="flex flex-col gap-2">
                 {!isMe && friendStatus === 'not_friend' && (
                   <button 
                     onClick={() => handleFriendAction('add')}
-                    className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded transition-colors"
+                    className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded transition-colors cursor-pointer"
                   >
-                    Додати в друзі
+                    Add Friend
                   </button>
                 )}
 
                 {isMe && incomingRequests.length > 0 && (
                   <button 
                     onClick={() => setShowFriendRequests(!showFriendRequests)}
-                    className="bg-yellow-600 hover:bg-yellow-500 text-white px-4 py-2 rounded transition-colors"
+                    className="bg-yellow-600 hover:bg-yellow-500 text-white px-4 py-2 rounded transition-colors cursor-pointer"
                   >
-                    Запити ({incomingRequests.length})
+                    Friend Requests ({incomingRequests.length})
                   </button>
                 )}
 
                 {canEdit && (
-                  <button onClick={() => setIsEditing(true)} className="btn-secondary">
-                    Редагувати
+                  <button onClick={() => setIsEditing(true)} className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded border border-gray-600 transition-colors cursor-pointer">
+                    Edit Profile
                   </button>
                 )}
                 
                 {!isMe && friendStatus === 'friend' && (
                   <button 
                     onClick={() => handleFriendAction('remove')}
-                    className="btn-danger"
+                    className="bg-red-900 hover:bg-red-800 text-red-200 px-4 py-2 rounded transition-colors cursor-pointer"
                   >
-                    Видалити з друзів
+                    Unfriend
                   </button>
                 )}
 
                 {canDelete && (
-                  <button onClick={handleDeleteProfile} className="btn-danger">
-                    Видалити (забанити)
+                  <button onClick={confirmDeleteProfile} className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded transition-colors cursor-pointer">
+                    Ban User
                   </button>
                 )}
               </div>
@@ -312,28 +336,28 @@ export default function Profile() {
 
             {isMe && showFriendRequests && incomingRequests.length > 0 && (
               <div className="mt-6 border-t border-gray-700 pt-4">
-                <h3 className="text-xl font-bold text-white mb-4">Вхідні запити на дружбу</h3>
+                <h3 className="text-xl font-bold text-white mb-4">Incoming Friend Requests</h3>
                 <div className="space-y-3">
                   {incomingRequests.map(request => (
                     <div key={request.id} className="flex items-center justify-between bg-gray-700/50 p-3 rounded-lg">
                       <div>
-                        <Link to={`/user/${request.username}`} className="text-white font-semibold hover:underline">
+                        <Link to={`/user/${request.username}`} className="text-white font-semibold hover:underline cursor-pointer">
                           {request.nickname}
                         </Link>
-                        <p className="text-gray-400 text-sm">{request.username}</p>
+                        <p className="text-gray-400 text-sm cursor-default">{request.username}</p>
                       </div>
                       <div className="flex gap-2">
                         <button 
                           onClick={() => handleFriendAction('accept', request.requester_id)}
-                          className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm transition-colors"
+                          className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm transition-colors cursor-pointer"
                         >
-                          Прийняти
+                          Accept
                         </button>
                         <button 
                           onClick={() => handleFriendAction('remove', request.requester_id)}
-                          className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm transition-colors"
+                          className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm transition-colors cursor-pointer"
                         >
-                          Відхилити
+                          Decline
                         </button>
                       </div>
                     </div>
@@ -343,26 +367,26 @@ export default function Profile() {
             )}
           </div>
         ) : (
-          <form onSubmit={handleEditSubmit} className="card p-6 mb-8 space-y-4">
-            <h2 className="text-2xl font-bold text-white mb-4">Редагування профілю</h2>
+          <form onSubmit={handleEditSubmit} className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-8 space-y-4 shadow-2xl">
+            <h2 className="text-2xl font-bold text-white mb-4">Edit Profile</h2>
             <div>
-              <label className="block text-blue-400 mb-2 font-medium">Нікнейм</label>
-              <input type="text" name="nickname" value={editData.nickname} onChange={handleEditChange} className="form-input"/>
+              <label className="block text-blue-400 mb-2 font-medium cursor-default">Nickname</label>
+              <input type="text" name="nickname" value={editData.nickname} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
             </div>
             <div>
-              <label className="block text-blue-400 mb-2 font-medium">Email</label>
-              <input type="email" name="email" value={editData.email} onChange={handleEditChange} className="form-input"/>
+              <label className="block text-blue-400 mb-2 font-medium cursor-default">Email</label>
+              <input type="email" name="email" value={editData.email} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
             </div>
             {isMe && (
               <div>
-                <label className="block text-blue-400 mb-2 font-medium">Аватар (завантажити новий)</label>
-                <input type="file" name="avatarFile" onChange={handleFileChange} accept="image/*" className="form-input file:bg-gray-700 file:text-white file:border-0 file:rounded file:px-4 file:py-2"/>
+                <label className="block text-blue-400 mb-2 font-medium cursor-default">Avatar (Upload new)</label>
+                <input type="file" name="avatarFile" onChange={handleFileChange} accept="image/*" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"/>
               </div>
             )}
             {(isAdmin || isModerator) && !isMe && (
               <div>
-                <label className="block text-blue-400 mb-2 font-medium">Роль Користувача (Admin/Mod)</label>
-                <select name="role" value={editData.role} onChange={handleRoleChange} className="form-input">
+                <label className="block text-blue-400 mb-2 font-medium cursor-default">User Role (Admin/Mod)</label>
+                <select name="role" value={editData.role} onChange={handleRoleChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none">
                   <option value="user" className="bg-gray-800">user</option>
                   <option value="moderator" className="bg-gray-800">moderator</option>
                   {isAdmin && profileUser.role !== 'admin' && (
@@ -371,39 +395,35 @@ export default function Profile() {
                 </select>
               </div>
             )}
-            <div className="flex gap-4">
-              <button type="submit" className="btn-primary">Зберегти</button>
-              <button type="button" onClick={() => { setIsEditing(false); setAvatarFile(null); }} className="btn-secondary">Скасувати</button>
+            <div className="flex gap-4 pt-4">
+              <button type="submit" className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer">Save Changes</button>
+              <button type="button" onClick={() => { setIsEditing(false); setAvatarFile(null); }} className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer">Cancel</button>
             </div>
           </form>
         )}
 
         {profileUser.friends && profileUser.friends.length > 0 && (
-          <div className="card p-6 mb-8">
-            <h2 className="section-title">
-              Друзі ({profileUser.friends.length})
+          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 shadow-2xl">
+            <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+              Friends ({profileUser.friends.length})
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {profileUser.friends.map(friend => (
                 <div key={friend.id} className="bg-gray-700/50 rounded-lg p-4 flex items-center gap-3">
-                  <img
-                    src={friend.avatar_url || `https://via.placeholder.com/40/374151/FFFFFF?text=${friend.username[1].toUpperCase()}`}
-                    alt={" "}
-                    className="w-10 h-10 rounded-full"
-                  />
+                  <Avatar src={friend.avatar_url} alt={friend.nickname} size="md" />
                   <div className="flex-1">
-                    <Link to={`/user/${friend.username}`} className="text-white font-semibold hover:underline block">
+                    <Link to={`/user/${friend.username}`} className="text-white font-semibold hover:underline block cursor-pointer">
                       {friend.nickname}
                     </Link>
-                    <p className="text-gray-400 text-sm">{friend.username}</p>
+                    <p className="text-gray-400 text-sm cursor-default">{friend.username}</p>
                   </div>
                   {isMe && (
                     <button 
                       onClick={() => handleFriendAction('remove', friend.id)}
-                      className="text-red-400 hover:text-red-300 text-sm"
-                      title="Видалити з друзів"
+                      className="text-red-400 hover:text-red-300 text-sm font-bold p-2 cursor-pointer"
+                      title="Remove Friend"
                     >
-                      X
+                      ✕
                     </button>
                   )}
                 </div>
@@ -412,9 +432,9 @@ export default function Profile() {
           </div>
         )}
 
-        <div className="card p-6 mb-8">
-          <h2 className="section-title">
-            Обрані фільми
+        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 shadow-2xl">
+          <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+            Favorite Movies
           </h2>
           {selectedMovies.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -423,13 +443,13 @@ export default function Profile() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-400">Список обраних фільмів порожній.</p>
+            <p className="text-gray-400 italic cursor-default">No favorite movies yet.</p>
           )}
         </div>
         
-        <div className="card p-6">
-          <h2 className="section-title">
-            Відгуки
+        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-2xl">
+          <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+            Reviews
           </h2>
           {userReviews.length > 0 ? (
             <div className="space-y-6">
@@ -437,7 +457,7 @@ export default function Profile() {
                 const movie = allMovies.find(m => m.id === review.movie_id);
                 const reviewWithData = {
                   ...review,
-                  movieTitle: movie?.title || "Видалений фільм",
+                  movieTitle: movie?.title || "Unknown Movie",
                   user: { 
                     id: profileUser.id,
                     nickname: profileUser.nickname, 
@@ -451,13 +471,13 @@ export default function Profile() {
                   <ReviewCard 
                     key={review.id} 
                     review={reviewWithData}
-                    onDelete={handleDeleteReview} 
+                    onDelete={() => confirmDeleteReview(review.id)} 
                   />
                 )
               })}
             </div>
           ) : (
-            <p className="text-gray-400">Користувач ще не залишив відгуків.</p>
+            <p className="text-gray-400 italic cursor-default">No reviews yet.</p>
           )}
         </div>
 <div className="card p-6 mb-8 mt-8">
@@ -661,6 +681,20 @@ export default function Profile() {
     </div>
   </div>
 )}
+
+      <ConfirmModal 
+        isOpen={confirmModalConfig.isOpen}
+        onClose={() => setConfirmModalConfig({ ...confirmModalConfig, isOpen: false })}
+        onConfirm={confirmModalConfig.onConfirm}
+        title={confirmModalConfig.title}
+        message={confirmModalConfig.message}
+      />
+      <AlertModal 
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+        title={alertConfig.title}
+        message={alertConfig.message}
+      />
     </div>
   )
 }
