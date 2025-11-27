@@ -13,6 +13,7 @@ const { deleteFileFromR2 } = require('../utils/r2');
  *       200:
  *         description: Список фільмів
  */
+// Додати пагінацію до GET /movies
 router.get('/movies', async (req, res) => {
   const db = req.app.locals.db;
   const page = parseInt(req.query.page) || 1;
@@ -20,19 +21,24 @@ router.get('/movies', async (req, res) => {
   const offset = (page - 1) * limit;
 
   try {
+    const countResult = await db.query('SELECT COUNT(*) AS total FROM movies');
+    const total = parseInt(countResult.rows[0].total, 10);
+
     const result = await db.query(`
       SELECT m.*, 
              COALESCE(ARRAY_AGG(mp.person_id) FILTER (WHERE mp.person_id IS NOT NULL), '{}') as people_ids
       FROM movies m
       LEFT JOIN movie_people mp ON m.id = mp.movie_id
       GROUP BY m.id
-      ORDER BY m.id
+      ORDER BY m.id DESC
       LIMIT $1 OFFSET $2
     `, [limit, offset]);
 
     res.json({
       page,
       limit,
+      total,
+      totalPages: Math.ceil(total / limit),
       movies: result.rows
     });
   } catch (err) {
