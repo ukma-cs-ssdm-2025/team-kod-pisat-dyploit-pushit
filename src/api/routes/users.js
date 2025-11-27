@@ -19,6 +19,7 @@ const SALT_ROUNDS = 10;
  *       200:
  *         description: Список користувачів
  */
+// Додати пагінацію до GET /users
 router.get('/users', async (req, res) => {
   const db = req.app.locals.db;
   const page = parseInt(req.query.page) || 1;
@@ -34,11 +35,13 @@ router.get('/users', async (req, res) => {
     `, [limit, offset]);
 
     const countResult = await db.query('SELECT COUNT(*) AS total FROM users');
+    const total = parseInt(countResult.rows[0].total, 10);
 
     res.json({
       page,
       limit,
-      total: parseInt(countResult.rows[0].total, 10),
+      total,
+      totalPages: Math.ceil(total / limit),
       users: result.rows
     });
   } catch (err) {

@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import ConfirmModal from '../components/ConfirmModal';
 import AlertModal from '../components/AlertModal';
 import Avatar from '../components/Avatar';
+import Pagination from '../components/Pagination';
 
 export default function PeopleList() {
   const { isAdmin, isAuthenticated } = useAuth(); 
@@ -13,23 +14,33 @@ export default function PeopleList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [professionFilter, setProfessionFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPeople, setTotalPeople] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const PEOPLE_PER_PAGE = 15;
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [personToDelete, setPersonToDelete] = useState(null);
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
 
+  // Функція завантаження людей з пагінацією
+  const fetchPeople = async (page = 1) => {
+    setIsLoading(true);
+    try {
+      const data = await getAllPeople(`?page=${page}&limit=${PEOPLE_PER_PAGE}`);
+      setPeople(data.people || data);
+      setTotalPeople(data.total || 0);
+      setTotalPages(data.totalPages || 1);
+    } catch (err) {
+      console.error("Error loading people:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    getAllPeople()
-      .then(data => {
-        setPeople(data.people || data);
-      })
-      .catch(err => {
-        console.error("Error loading people:", err);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, []);
+    fetchPeople(currentPage);
+  }, [currentPage]);
 
   const uniqueProfessions = [...new Set(people.map(person => person.profession))].sort();
 
@@ -52,11 +63,17 @@ export default function PeopleList() {
     if (!personToDelete) return;
     try {
       await deletePerson(personToDelete.id); 
-      setPeople(prevPeople => prevPeople.filter(p => p.id !== personToDelete.id));
+      // Перезавантажити поточну сторінку
+      fetchPeople(currentPage);
       setAlertConfig({ isOpen: true, title: "Success", message: "Person deleted successfully." });
     } catch (err) {
       setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Failed to delete'}` });
     }
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (isLoading) {
@@ -106,7 +123,7 @@ export default function PeopleList() {
               <option value="">All Professions</option>
               {uniqueProfessions.map(profession => (
                 <option key={profession} value={profession} className="bg-gray-800">
-                  {profession}
+                  {profession.charAt(0).toUpperCase() + profession.slice(1)}
                 </option>
               ))}
             </select>
@@ -115,7 +132,7 @@ export default function PeopleList() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center shadow-lg">
-            <div className="text-2xl font-bold text-blue-400 cursor-default">{people.length}</div>
+            <div className="text-2xl font-bold text-blue-400 cursor-default">{totalPeople}</div>
             <div className="text-gray-300 text-sm cursor-default">Total People</div>
           </div>
           <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center shadow-lg">
@@ -139,64 +156,86 @@ export default function PeopleList() {
         </div>
 
         {filteredPeople.length > 0 ? (
-          <div className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden shadow-xl">
-            <table className="w-full text-left">
-              <thead className="bg-gray-800 border-b border-gray-700">
-                <tr>
-                  <th className="p-4 text-blue-400 font-medium cursor-default">Person</th>
-                  <th className="p-4 text-blue-400 font-medium cursor-default">Profession</th>
-                  {isAdmin && (
-                    <th className="p-4 text-blue-400 font-medium cursor-default">Actions</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPeople.map(person => (
-                  <tr key={person.id} className="border-b border-gray-700/50 last:border-b-0 hover:bg-gray-700/30 transition-colors">
-                    <td className="p-4">
-                      <Link to={`/people/${person.id}`} className="flex items-center gap-4 group cursor-pointer">
-                        <Avatar src={person.avatar_url} alt={`${person.first_name} ${person.last_name}`} size="md" />
-                        <div>
-                            <span className="text-white font-semibold text-lg group-hover:text-blue-400 transition-colors block">
-                              {person.first_name} {person.last_name}
-                            </span>
-                            {person.biography && (
-                                <p className="text-gray-400 text-xs mt-1 line-clamp-1 max-w-xs">
-                                {person.biography}
-                                </p>
-                            )}
-                        </div>
-                      </Link>
-                    </td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium capitalize cursor-default ${
-                        person.profession === 'actor' ? 'bg-green-500/20 text-green-300' :
-                        person.profession === 'director' ? 'bg-purple-500/20 text-purple-300' :
-                        person.profession === 'producer' ? 'bg-yellow-500/20 text-yellow-300' :
-                        'bg-blue-500/20 text-blue-300'
-                      }`}>
-                        {person.profession}
-                      </span>
-                    </td>
+          <>
+            <div className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden shadow-xl">
+              <table className="w-full text-left">
+                <thead className="bg-gray-800 border-b border-gray-700">
+                  <tr>
+                    <th className="p-4 text-blue-400 font-medium cursor-default">Person</th>
+                    <th className="p-4 text-blue-400 font-medium cursor-default">Profession</th>
                     {isAdmin && (
-                      <td className="p-4">
-                        <button 
-                          onClick={() => confirmDelete(person)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20 px-3 py-1 rounded transition-colors text-sm font-medium cursor-pointer"
-                        >
-                          Delete
-                        </button>
-                      </td>
+                      <th className="p-4 text-blue-400 font-medium cursor-default">Actions</th>
                     )}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredPeople.map(person => (
+                    <tr key={person.id} className="border-b border-gray-700/50 last:border-b-0 hover:bg-gray-700/30 transition-colors">
+                      <td className="p-4">
+                        <Link to={`/people/${person.id}`} className="flex items-center gap-4 group cursor-pointer">
+                          <Avatar src={person.avatar_url} alt={`${person.first_name} ${person.last_name}`} size="md" />
+                          <div>
+                              <span className="text-white font-semibold text-lg group-hover:text-blue-400 transition-colors block">
+                                {person.first_name} {person.last_name}
+                              </span>
+                              {person.biography && (
+                                  <p className="text-gray-400 text-xs mt-1 line-clamp-1 max-w-xs">
+                                  {person.biography}
+                                  </p>
+                              )}
+                          </div>
+                        </Link>
+                      </td>
+                      <td className="p-4">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium capitalize cursor-default ${
+                          person.profession === 'actor' ? 'bg-green-500/20 text-green-300' :
+                          person.profession === 'director' ? 'bg-purple-500/20 text-purple-300' :
+                          person.profession === 'producer' ? 'bg-yellow-500/20 text-yellow-300' :
+                          'bg-blue-500/20 text-blue-300'
+                        }`}>
+                          {person.profession}
+                        </span>
+                      </td>
+                      {isAdmin && (
+                        <td className="p-4">
+                          <button 
+                            onClick={() => confirmDelete(person)}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 px-3 py-1 rounded transition-colors text-sm font-medium cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Пагінація для відфільтрованих результатів */}
+            {(searchTerm || professionFilter) ? (
+              <div className="mt-4 text-center text-gray-400 cursor-default">
+                Showing {filteredPeople.length} filtered results
+              </div>
+            ) : (
+              <div className="mt-8">
+                <Pagination 
+                  currentPage={currentPage}
+                  totalItems={totalPeople}
+                  pageSize={PEOPLE_PER_PAGE}
+                  onPageChange={handlePageChange}
+                  totalPages={totalPages}
+                />
+              </div>
+            )}
+          </>
         ) : (
           <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-8 text-center">
             <div className="text-gray-400 text-lg mb-4 cursor-default">
-              No people found matching your criteria.
+              {searchTerm || professionFilter 
+                ? "No people found matching your criteria." 
+                : "No people available."
+              }
             </div>
             <button 
               onClick={() => {

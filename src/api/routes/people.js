@@ -30,6 +30,7 @@ const { deleteFileFromR2 } = require('../utils/r2');
  *                   biography:
  *                     type: string
  */
+// Додати пагінацію до GET /people
 router.get('/people', async (req, res) => {
   const db = req.app.locals.db;
   const page = parseInt(req.query.page) || 1;
@@ -43,11 +44,13 @@ router.get('/people', async (req, res) => {
     );
 
     const countResult = await db.query('SELECT COUNT(*) AS total FROM people');
+    const total = parseInt(countResult.rows[0].total, 10);
 
     res.json({
       page,
       limit,
-      total: parseInt(countResult.rows[0].total, 10),
+      total,
+      totalPages: Math.ceil(total / limit),
       people: result.rows
     });
   } catch (err) {
