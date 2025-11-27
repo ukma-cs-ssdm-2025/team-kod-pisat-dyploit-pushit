@@ -272,14 +272,6 @@ export default function Profile() {
           <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 shadow-2xl">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
 
-              <img
-                src={
-                profileUser.avatar_url || 
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(profileUser.nickname || profileUser.username)}&size=150&background=E5E7EB&color=1F2937&bold=true`
-                }
-                alt={profileUser.nickname}
-                className="w-32 h-32 rounded-full border-4 border-blue-600 object-cover shadow-lg"
-                />
 
               <Avatar src={profileUser.avatar_url} alt={profileUser.nickname} size="lg" className="border-4 border-blue-500" />
 

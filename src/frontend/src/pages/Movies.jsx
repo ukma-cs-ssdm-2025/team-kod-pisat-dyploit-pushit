@@ -224,7 +224,7 @@ useEffect(() => {
     )}
   </div>
 </div>
-        <div className="card p-6 mb-8 sticky top-16 z-10">
+        <div className="card p-6 mb-26 sticky top-16 z-10">
             <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-grow">
               <input
