@@ -1,39 +1,75 @@
-import { useState, useEffect } from "react"
-import { useParams, useNavigate, Link } from "react-router-dom" 
-import { 
-  getMovieById, 
-  getAllReviews, 
+import { useState, useEffect, useContext } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { LikesContext } from "../context/LikesContext";
+import { WatchedContext } from "../context/WatchedContext";
+import {
+  getMovieById,
+  getAllReviews,
   getAllUsers,
   getAllPeople,
-  updateMovie, 
-  addReview, 
-  deleteReview, 
+  updateMovie,
+  addReview,
+  deleteReview,
   deleteMovie,
   uploadMovieCover,
   addToLikedMovies,
   removeFromLikedMovies
-} from "../api" 
-import { useAuth } from '../hooks/useAuth';
-import ReviewCard from '../components/ReviewCard';
-import ReviewForm from '../components/ReviewForm';
-import MultiSelect from '../components/MultiSelect';
+} from "../api";
+import { useAuth } from "../hooks/useAuth";
+import ReviewCard from "../components/ReviewCard";
+import ReviewForm from "../components/ReviewForm";
+import MultiSelect from "../components/MultiSelect";
 
 export default function Movie() {
-  const { id } = useParams()
+  const { id } = useParams();
   const navigate = useNavigate();
   const { user: currentUser, isAuthenticated, isAdmin } = useAuth();
 
-  const [movie, setMovie] = useState(null)
-  const [reviews, setReviews] = useState([])
-  const [people, setPeople] = useState([])
-  const [allPeopleOptions, setAllPeopleOptions] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLiked, setIsLiked] = useState(false)
-  const [isLikeLoading, setIsLikeLoading] = useState(false)
-  
-  const [isEditing, setIsEditing] = useState(false)
-  const [editData, setEditData] = useState(null) 
+  const [movie, setMovie] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [people, setPeople] = useState([]);
+  const [allPeopleOptions, setAllPeopleOptions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState(null);
   const [posterFile, setPosterFile] = useState(null);
+
+  const { likedMovies, setLikedMovies } = useContext(LikesContext);
+  const { watchedMovies, addWatchedMovie, removeWatchedMovie } =
+    useContext(WatchedContext);
+
+
+  const isHeartLiked = movie ? likedMovies.includes(movie.id) : false;
+  const isWatched = movie
+    ? watchedMovies.some((m) => m.id === movie.id)
+    : false;
+
+
+  const toggleHeart = () => {
+    if (!movie) return;
+
+    setLikedMovies((prev) =>
+      prev.includes(movie.id)
+        ? prev.filter((id) => id !== movie.id)
+        : [...prev, movie.id]
+    );
+  };
+
+
+  const toggleWatched = () => {
+    if (!movie) return;
+
+    if (isWatched) {
+      removeWatchedMovie(movie.id);
+    } else {
+      addWatchedMovie(movie.id);
+    }
+  };
+
+  
 
   const fetchData = () => {
     setIsLoading(true);
@@ -295,6 +331,57 @@ export default function Movie() {
                 {isAdmin && (
                   <button onClick={handleDeleteMovie} className="btn-danger">Видалити</button>
                 )}
+               <button
+  onClick={toggleHeart}
+  className={`
+    w-11 h-11 rounded-full flex items-center justify-center
+    transition-all duration-300 shadow
+    ${isHeartLiked 
+      ? 'bg-red-600 hover:bg-red-500 scale-110' 
+      : 'bg-gray-700 hover:bg-gray-600'
+    }
+  `}
+>
+  {isHeartLiked ? (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ef4444" className="w-6 h-6">
+      <path d="M12 21.35s9-7.5 9-12.75A4.5 4.5 0 0 0 12 5.25 4.5 4.5 0 0 0 3 8.6c0 5.25 9 12.75 9 12.75z"/>
+    </svg>
+  ) : (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+         strokeWidth="2" stroke="currentColor" className="w-6 h-6 text-gray-300">
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M21 8.25c0 5.25-9 12.75-9 12.75S3 13.5 3 8.25A4.5 4.5 0 0 1 12 5.25a4.5 4.5 0 0 1 9 3Z"
+      />
+    </svg>
+  )}
+</button>
+<button
+  onClick={toggleWatched}
+  className={`
+    w-11 h-11 rounded-full flex items-center justify-center
+    transition-all duration-300 shadow
+    ${isWatched 
+      ? 'bg-green-600 hover:bg-green-500 scale-110' 
+      : 'bg-gray-700 hover:bg-gray-600'
+    }
+  `}
+  title={isWatched ? "Позначено як переглянуте" : "Переглянути"}
+>
+  {isWatched ? (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="#4ade80" viewBox="0 0 24 24" className="w-6 h-6">
+      <path d="M5 12l4 4L19 6" stroke="#4ade80" strokeWidth="2" fill="none"/>
+    </svg>
+  ) : (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+         strokeWidth="2" stroke="currentColor" className="w-6 h-6 text-gray-300">
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M5 13l4 4L19 7"
+      />
+    </svg>
+  )}
+</button>
+
+
               </div>
             </div>
           </div>
@@ -359,5 +446,4 @@ export default function Movie() {
         )}
       </div>
     </div>
-  )
-}
+  )}

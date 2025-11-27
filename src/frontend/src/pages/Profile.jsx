@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useContext } from "react";
+import { WatchedContext } from "../context/WatchedContext";
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { 
   getUserByUsername, 
@@ -16,6 +17,7 @@ import {
 import { useAuth } from '../hooks/useAuth'
 import MovieCard from "../components/MovieCard"
 import ReviewCard from "../components/ReviewCard"  
+import { LikesContext } from "../context/LikesContext";
 
 export default function Profile() {
   const { username } = useParams();
@@ -33,6 +35,24 @@ export default function Profile() {
   const [selectedMovies, setSelectedMovies] = useState([]);
   const [userReviews, setUserReviews] = useState([]);
   const [allMovies, setAllMovies] = useState([]);  
+
+  const [reviews, setReviews] = useState(0);
+  const { likedMovies } = useContext(LikesContext);
+  const liked_movies = likedMovies.length;
+
+  const [following, setFollowing] = useState(0);
+  const [followers, setFollowers] = useState(0);
+  const [watching_movies, setWhatchingMovies] = useState(0);
+  const [recentMovies, setRecentMovies] = useState([]);
+
+  const [showLikedMovies, setShowLikedMovies] = useState(false);
+  const { watchedMovies } = useContext(WatchedContext);
+ 
+  const [showWatchedMovies, setShowWatchedMovies] = useState(false);
+
+
+  const [showFollowing, setShowFollowing] = useState(false);
+  const [showFollowers, setShowFollowers] = useState(false);
 
   const fetchProfileData = async (targetUsername, isMyProfile) => {
       try {
@@ -232,10 +252,13 @@ export default function Profile() {
           <div className="card p-6 mb-8">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
               <img
-                src={profileUser.avatar_url || `https://via.placeholder.com/150/374151/FFFFFF?text=${profileUser.username[1].toUpperCase()}`}
-                //alt={profileUser.nickname}
-                className="w-32 h-32 rounded-full border-4 border-blue-500 object-cover shadow-lg"
-              />
+                src={
+                profileUser.avatar_url || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(profileUser.nickname || profileUser.username)}&size=150&background=E5E7EB&color=1F2937&bold=true`
+                }
+                alt={profileUser.nickname}
+                className="w-32 h-32 rounded-full border-4 border-blue-600 object-cover shadow-lg"
+                />
               <div className="text-center md:text-left flex-1">
                 <h1 className="text-3xl font-bold text-white">{profileUser.nickname}</h1>
                 <p className="text-lg text-gray-300 mb-2">{profileUser.username}</p>
@@ -437,8 +460,207 @@ export default function Profile() {
             <p className="text-gray-400">Користувач ще не залишив відгуків.</p>
           )}
         </div>
+<div className="card p-6 mb-8 mt-8">
+  <h2 className="section-title">Нещодавно переглянуті ({watchedMovies.length})</h2>
+
+  {watchedMovies.length > 0 ? (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+      {watchedMovies.map(watchedItem => {
+        const movieId = watchedItem.id || watchedItem;
+        const movie = allMovies.find(m => m.id === movieId);
+        
+        if (!movie) return null;
+
+        return (
+          <Link
+            to={`/movie/${movie.id}`}
+            key={movie.id}
+            className="rounded-xl overflow-hidden shadow-lg bg-gray-800/50 backdrop-blur-sm hover:scale-105 transition-transform duration-300 block"
+          >
+            <img 
+              src={movie.cover_url || movie.poster_url || "https://placehold.co/300x450"}
+              alt={movie.title}
+              className="w-full h-64 object-cover"
+            />
+          </Link>
+        );
+      })}
+    </div>
+  ) : (
+    <p className="text-gray-400">Останнім часом ви нічого не переглянули.</p>
+  )}
+</div>
 
       </div>
+
+<div className="border-t border-gray-700 flex justify-center pt-4">
+  <div className="flex justify-center w-full max-w-[calc(100vw-100px)]">
+    <button 
+      onClick={() => setShowLikedMovies(prev => !prev)}
+      className="bg-gray-800/70 hover:bg-gray-700/70 px-6 py-3 rounded-lg shadow
+                 flex justify-between items-center gap-6 text-left w-full"
+    >
+      <p className="text-blue-400 font-semibold">Вподобайки</p>
+      <p className="text-white font-bold">{liked_movies}</p>
+    </button>
+  </div>
+</div>
+{showLikedMovies && (
+  <div className="mt-6 flex justify-center">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 
+                    w-full max-w-[calc(100vw-100px)]">
+      
+      {likedMovies.length > 0 ? (
+        likedMovies.map(id => {
+          const movie = allMovies.find(m => m.id === id);
+          if (!movie) return null;
+
+          return (
+            <div 
+              key={movie.id}
+              className="rounded-xl overflow-hidden shadow-lg bg-gray-800/50
+                         backdrop-blur-sm hover:scale-105 transition-transform"
+            >
+              <Link to={`/movie/${movie.id}`}>
+                <img 
+                  src={movie.cover_url}
+                  alt={movie.title}
+                  className="w-full h-64 object-cover"
+                />
+              </Link>
+            </div>
+          );
+        })
+      ) : (
+        <p className="text-gray-400">Немає вподобаних фільмів.</p>
+      )}
+
+    </div>
+  </div>
+)}
+
+
+
+<div className="mt-8 pt-4 flex justify-center">
+  <div className="border-t border-gray-700 flex justify-center pt-4 
+                  w-full max-w-[calc(100vw-100px)]">
+    <button 
+      onClick={() => setShowFollowing(prev => !prev)}
+      className="bg-gray-800/70 hover:bg-gray-700/70 px-6 py-3 rounded-lg shadow
+                 flex justify-between items-center gap-6 text-left 
+                 w-full"
+    >
+      <p className="text-blue-400 font-semibold">Підписки</p>
+      <p className="text-white font-bold">{following}</p>
+    </button>
+  </div>
+</div>
+
+{showFollowing && (
+  <div className="mt-6 flex justify-center">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 
+                    w-full max-w-[calc(100vw-100px)]">
+      
+      {following > 0 ? (
+        <p className="text-gray-400 col-span-full text-center">
+          Функція підписок буде додана пізніше
+        </p>
+      ) : (
+        <p className="text-gray-400 col-span-full text-center">
+          Немає підписок
+        </p>
+      )}
+
+    </div>
+  </div>
+)}
+
+<div className="mt-8 pt-4 flex justify-center">
+  <div className="border-t border-gray-700 flex justify-center pt-4 
+                  w-full max-w-[calc(100vw-100px)]">
+    <button 
+      onClick={() => setShowFollowers(prev => !prev)}
+      className="bg-gray-800/70 hover:bg-gray-700/70 px-6 py-3 rounded-lg shadow
+                 flex justify-between items-center gap-6 text-left 
+                 w-full"
+    >
+      <p className="text-blue-400 font-semibold">Підписники</p>
+      <p className="text-white font-bold">{followers}</p>
+    </button>
+  </div>
+</div>
+
+{showFollowers && (
+  <div className="mt-6 flex justify-center">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 
+                    w-full max-w-[calc(100vw-100px)]">
+      
+      {followers > 0 ? (
+        <p className="text-gray-400 col-span-full text-center">
+          Функція підписників буде додана пізніше
+        </p>
+      ) : (
+        <p className="text-gray-400 col-span-full text-center">
+          Немає підписників
+        </p>
+      )}
+
+    </div>
+  </div>
+)}
+
+
+<div className="mt-8 pt-4 flex justify-center">
+  <div className="border-t border-gray-700 flex justify-center pt-4 
+                  w-full max-w-[calc(100vw-100px)]">
+    <button 
+      onClick={() => setShowWatchedMovies(prev => !prev)}
+      className="bg-gray-800/70 hover:bg-gray-700/70 px-6 py-3 rounded-lg shadow
+                 flex justify-between items-center gap-6 text-left 
+                 w-full"
+    >
+      <p className="text-blue-400 font-semibold">Переглянуті фільми</p>
+      <p className="text-white font-bold">{watchedMovies.length}</p>
+    </button>
+  </div>
+</div>
+
+
+{showWatchedMovies && (
+  <div className="mt-6 flex justify-center">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 
+                    w-full max-w-[calc(100vw-100px)]">
+      
+      {watchedMovies.length > 0 ? (
+        watchedMovies.map(watchedItem => {
+          const movieId = watchedItem.id || watchedItem;
+          const movie = allMovies.find(m => m.id === movieId);
+          
+          if (!movie) return null;
+
+          return (
+            <div 
+              key={movie.id}
+              className="rounded-xl overflow-hidden shadow-lg bg-gray-800/50
+                         backdrop-blur-sm hover:scale-105 transition-transform"
+            >
+              <Link to={`/movie/${movie.id}`}>
+                <img 
+                  src={movie.cover_url || movie.poster_url || "https://placehold.co/300x450"}
+                  alt={movie.title}
+                  className="w-full h-64 object-cover"
+                />
+              </Link>
+            </div>
+          );
+        })
+      ) : (
+        <p className="text-gray-400">Немає переглянутих фільмів.</p>
+      )}
+
+    </div>
+  </div>
+)}
     </div>
   )
 }
