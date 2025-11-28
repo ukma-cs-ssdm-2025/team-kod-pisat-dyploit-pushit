@@ -30,16 +30,35 @@ const { deleteFileFromR2 } = require('../utils/r2');
  *                   biography:
  *                     type: string
  */
+// Додати пагінацію до GET /people
 router.get('/people', async (req, res) => {
   const db = req.app.locals.db;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = (page - 1) * limit;
+
   try {
-    const result = await db.query('SELECT * FROM people ORDER BY id');
-    res.json(result.rows);
+    const result = await db.query(
+      'SELECT * FROM people ORDER BY id LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
+
+    const countResult = await db.query('SELECT COUNT(*) AS total FROM people');
+    const total = parseInt(countResult.rows[0].total, 10);
+
+    res.json({
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      people: result.rows
+    });
   } catch (err) {
     console.error('DB error (GET /people):', err);
     res.status(500).json({ error: 'Database error' });
   }
 });
+
 
 /**
  * @openapi

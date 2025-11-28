@@ -19,11 +19,31 @@ const SALT_ROUNDS = 10;
  *       200:
  *         description: Список користувачів
  */
+// Додати пагінацію до GET /users
 router.get('/users', async (req, res) => {
   const db = req.app.locals.db;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = (page - 1) * limit;
+
   try {
-    const result = await db.query('SELECT * FROM users ORDER BY id');
-    res.json(result.rows);
+    const result = await db.query(`
+      SELECT id, username, role, nickname, email, avatar_url, liked_movies
+      FROM users
+      ORDER BY id
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+
+    const countResult = await db.query('SELECT COUNT(*) AS total FROM users');
+    const total = parseInt(countResult.rows[0].total, 10);
+
+    res.json({
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      users: result.rows
+    });
   } catch (err) {
     console.error('DB error (GET /users):', err);
     res.status(500).json({ error: 'Database error' });
@@ -64,8 +84,12 @@ router.get('/users/:param', async (req, res) => {
 
   try {
     const userQuery = target.column === 'id'
-      ? 'SELECT * FROM users WHERE id = $1'
-      : 'SELECT * FROM users WHERE username = $1';
+      ? `SELECT id, username, role, nickname, email, avatar_url, liked_movies 
+         FROM users 
+         WHERE id = $1`
+      : `SELECT id, username, role, nickname, email, avatar_url, liked_movies 
+         FROM users 
+         WHERE username = $1`;
 
     const { rows } = await db.query(userQuery, [target.value]);
 
@@ -95,6 +119,7 @@ router.get('/users/:param', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
+
 
 /**
  * @openapi

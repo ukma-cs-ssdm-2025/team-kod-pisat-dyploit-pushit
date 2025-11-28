@@ -20,7 +20,7 @@ export default function MovieCard({ movie }) {
         >
           {movie.title}
         </h3>
-        <p className="text-blue-400/80 text-sm mt-1">Рейтинг: {movie.rating || 0} ★</p>
+        <p className="text-blue-400/80 text-sm mt-1">Rating: {movie.rating || 0} ★</p>
       </div>
     </Link>
   )

@@ -11,7 +11,7 @@ export default function StarRating({ rating, onRatingChange }) {
           key={star}
           className={`text-2xl transition-colors duration-200 ${
             (hoverRating || rating) >= star ? 'text-yellow-400' : 'text-gray-600'
-          } hover:text-yellow-300`}
+          } hover:text-yellow-300 cursor-pointer`}
           onClick={() => onRatingChange(star)}
           onMouseEnter={() => setHoverRating(star)}
           onMouseLeave={() => setHoverRating(0)}
