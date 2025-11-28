@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { registerUser } from "../api" 
+import { registerUser } from "../api"
 import { Link } from "react-router-dom"
 
 export default function Register() {
@@ -12,47 +12,193 @@ export default function Register() {
   })
   const [message, setMessage] = useState("")
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     const res = await registerUser(form)
     if (res.user) {
-        setMessage("Користувача створено! Тепер ви можете увійти.")
+      setMessage("Користувача створено! Тепер ви можете увійти.")
     } else {
-        setMessage(res.message || "Помилка реєстрації.")
+      setMessage(res.message || "Помилка реєстрації.")
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-4 py-8">
-      <div className="flex w-full max-w-6xl gap-8 items-center">
-        <div className="hidden lg:flex flex-1 rounded-2xl border-2 border-blue-500/30 bg-gradient-to-br from-gray-800 to-gray-900 p-8 relative overflow-hidden min-h-96 card items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-4xl font-bold text-white mb-4">flick.ly</h2>
-              <p className="text-2xl font-bold text-white">Share your flicks. Feel the vibes.</p>
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ backgroundColor: "#1a1a1a" }} // фон
+    >
+      {/* Головний контейнер двох бордових блоків */}
+      <div className="flex w-full max-w-6xl h-[540px] items-stretch gap-17 relative">
+
+        {/* Лівий бордовий блок */}
+        <div className="hidden lg:flex flex-1 bg-[#6f0e0e] rounded-[15px] items-center justify-center">
+          <div className="flex flex-col items-center justify-center gap-6">
+
+            {/* Відеострічка */}
+            <div
+              className="absolute"
+              style={{
+                top: "50%",
+                left: "15.3%",
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+
+              {/* ВІДЕО */}
+              <video
+                src="/pictures_elements/movietape.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-[250px] rounded-[20px] h-auto object-cover"
+                style={{ objectPosition: "center" }}
+              />
             </div>
+
+                     {/* ТЕКСТ У ВЕРХНЬОМУ ВІКОНЦІ 1 */}
+    <div
+      className="absolute w-full text-center font-extrabold text-black uppercase"
+      style={{
+        top: "21.5%",        // позиція по Y у верхнє вікно
+        left: "15.2%",
+        transform: "translateX(-50%)",
+        fontSize: "24px",  // можеш змінити
+        letterSpacing: "0.07em"
+      }}
+    >
+      FLICK.LY
+    </div>
+
+
+               {/* ТЕКСТ У ВЕРХНЬОМУ ВІКОНЦІ 2 */}
+    <div
+      className="absolute w-full text-center font-extrabold text-black uppercase"
+      style={{
+        top: "43.5%",        // позиція по Y у верхнє вікно
+        left: "15.2%",
+        transform: "translateX(-50%)",
+        fontSize: "24px",  // можеш змінити
+        letterSpacing: "0.07em"
+
+      }}
+    >
+      SHARE <br /> YOUR FLICKS
+    </div>
+
+
+               {/* ТЕКСТ У ВЕРХНЬОМУ ВІКОНЦІ 3*/}
+    <div
+      className="absolute w-full text-center font-extrabold text-black uppercase"
+      style={{
+        top: "69%",        // позиція по Y у верхнє вікно
+        left: "15.2%",
+        transform: "translateX(-50%)",
+        fontSize: "24px",  // можеш змінити
+        letterSpacing: "0.07em"
+      }}
+    >
+      FEEL <br /> THE VIBES
+    </div>
+   
+
+            {/* Текст — запас під майбутні написи */}
+            <div className="text-center">
+              <h2 className="text-4xl font-bold text-white mb-4" />
+              <p className="text-2xl font-bold text-white" />
+            </div>
+          </div>
         </div>
 
-        <div className="flex-1">
-          <form onSubmit={handleSubmit} className="w-full max-w-md card p-8">
-            <h1 className="text-4xl font-bold text-white mb-6">Create an account</h1>
+        {/* Шестерня-око між блоками (як у Login) */}
+        <div
+          className="
+            hidden md:flex
+            absolute inset-y-0 left-1/2 -translate-x-1/2
+            items-center justify-center
+            pointer-events-none
+          "
+        >
+          <img
+            src="/pictures_elements/eye_gear.png"
+            alt="gear"
+            className="w-32 h-32 lg:w-40 lg:h-40 object-contain"
+          />
+        </div>
 
-            <div className="mb-4">
-              <p className="text-sm text-gray-300">
+        {/* Правий бордовий блок */}
+        <div className="flex-1 bg-[#6f0e0e] rounded-[15px] flex items-center justify-center">
+          <form
+            onSubmit={handleSubmit}
+            className="w-full max-w-md px-8 py-6 flex flex-col justify-center"
+          >
+            {/* Заголовок */}
+            <h1
+              className="
+                text-2xl md:text-2xl
+                font-extrabold
+                text-[#d6cecf]
+                uppercase
+                text-center
+                whitespace-nowrap
+                tracking-[0.18em]
+                mb-6
+              "
+              style={{
+               letterSpacing: "0.1em",
+               wordSpacing: "0.17em",
+              }}
+
+
+            >
+              CREATE AN ACCOUNT
+            </h1>
+
+            {/* Already have account */}
+            <div className="mb-6">
+              <p className="text-sm md:text-sm text-[#000000] font-extrabold tracking-[0.2em] uppercase text-center"
+              
+                style={{
+               letterSpacing: "0.05em",
+               wordSpacing: "0.01em",
+              }}
+              
+              >
                 Already have an account?{" "}
-                <Link to="/login" className="text-blue-400 hover:text-blue-300 font-semibold">
-                  Log In
+                <Link
+                  to="/login"
+                  className="underline underline-offset-4 text-[#d6cecf] hover:text-white"
+                >
+                  Log in
                 </Link>
               </p>
             </div>
 
-            <div className="space-y-4 mb-6">
+            {/* Поля вводу */}
+            <div className="space-y-4 mb-6 w-full flex flex-col items-center">
               <input
                 type="text"
                 name="username"
                 placeholder="Username (починайте з @)"
-                className="form-input"
+                className="
+                  w-[80%]
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  placeholder:font-extrabold
+                  placeholder:bold
+                  border-[4px] border-black
+                  rounded-[16px]
+                  py-2.5 px-4
+                  text-sm
+                  tracking-[0.12em]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  outline-none
+                  mx-auto
+                "
                 onChange={handleChange}
                 required
               />
@@ -61,7 +207,22 @@ export default function Register() {
                 type="text"
                 name="nickname"
                 placeholder="Nickname (ваше ім'я)"
-                className="form-input"
+                className="
+                  w-[80%]
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  placeholder:font-extrabold
+                  placeholder:bold
+                  border-[4px] border-black
+                  rounded-[16px]
+                  py-2.5 px-4
+                  text-sm
+                  tracking-[0.12em]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  outline-none
+                  mx-auto
+                "
                 onChange={handleChange}
                 required
               />
@@ -70,7 +231,22 @@ export default function Register() {
                 type="email"
                 name="email"
                 placeholder="Email"
-                className="form-input"
+                className="
+                  w-[80%]
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  placeholder:font-extrabold
+                  placeholder:bold
+                  border-[4px] border-black
+                  rounded-[16px]
+                  py-2.5 px-4
+                  text-sm
+                  tracking-[0.12em]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  outline-none
+                  mx-auto
+                "
                 onChange={handleChange}
                 required
               />
@@ -79,28 +255,98 @@ export default function Register() {
                 type="password"
                 name="password"
                 placeholder="Password"
-                className="form-input"
+                className="
+                  w-[80%]
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  placeholder:font-extrabold
+                  placeholder:bold
+                  border-[4px] border-black
+                  rounded-[16px]
+                  py-2.5 px-4
+                  text-sm
+                  tracking-[0.12em]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  outline-none
+                  mx-auto
+                "
                 onChange={handleChange}
                 required
               />
             </div>
 
-            <div className="flex items-center mb-6 gap-2">
-              <input type="checkbox" id="terms" className="w-5 h-5 cursor-pointer accent-blue-500" required />
-              <label htmlFor="terms" className="text-sm text-gray-300">
-                I agree to the <span className="text-blue-400">Terms & Conditions</span>
+              {/* Чекбокс */}
+            <div className="flex items-center mb-6 gap-4 pl-7">
+              <input
+  type="checkbox"
+  id="terms"
+  className="
+    w-6 h-6
+    border-[3px] border-black
+    bg-[#d6cecf]
+    cursor-pointer
+    appearance-none
+    relative
+    flex items-center justify-center
+
+    checked:bg-[#d6cecf]
+    checked:border-black
+
+    checked:before:content-['✔']
+    checked:before:absolute
+    checked:before:text-black
+    checked:before:text-base
+    checked:before:font-bold
+  "
+/>
+
+              <label
+                htmlFor="terms"
+                className="text-sm md:text-sm text-[#000000] font-extrabold tracking-[0.1em] uppercase"
+
+               style={{
+               letterSpacing: "0.05em",
+               wordSpacing: "0.01em",
+              }}
+
+              >
+                I agree to the{" "}
+                <span className="underline underline-offset-4 text-[#d6cecf]">
+                  Terms & Conditions
+                </span>
               </label>
             </div>
 
+            {/* Кнопка */}
             <button
               type="submit"
-              className="w-full py-3 bg-gray-300 text-gray-900 font-semibold rounded-lg hover:bg-white transition-colors mb-6"
+              className="
+                w-full py-4
+                bg-[#c9c7c7]
+                text-black
+                font-extrabold
+                text-base
+                tracking-[0.25em]
+                uppercase
+                border-[4px] border-black
+                rounded-[20px]
+                hover:bg-[#e0dfdf]
+                transition-colors
+                mb-4
+              "
             >
-              Sign Up
+              REGISTER
             </button>
 
             {message && (
-              <p className={`text-center text-sm ${message.includes('створено') ? 'text-green-400' : 'text-red-400'}`}>
+              <p
+                className={`text-center text-sm ${
+                  message.includes("створено")
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}
+              >
                 {message}
               </p>
             )}
