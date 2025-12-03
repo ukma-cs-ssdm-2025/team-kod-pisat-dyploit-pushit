@@ -38,15 +38,15 @@ export default function Recommendations() {
   }, [user]);
 
   const generateRecommendations = async () => {
-    setIsLoading(true);
+  setIsLoading(true);
     try {
-      const [movies, reviews, allUsers] = await Promise.all([
-        getAllMovies(),
+      const [moviesData, reviews, allUsers] = await Promise.all([
+        getAllMovies(`?page=1&limit=1000`),
         getAllReviews(),
         getAllUsers()
       ]);
 
-      const moviesList = movies.movies || movies;
+      const moviesList = moviesData.movies || moviesData;
       const reviewsList = reviews.reviews || reviews;
       const usersList = allUsers.users || allUsers;
 

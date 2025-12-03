@@ -17,7 +17,8 @@ export default function Movies() {
   const [allPeople, setAllPeople] = useState([])
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMovies, setTotalMovies] = useState(0);
-  const MOVIES_PER_PAGE = 50;
+  const [totalPages, setTotalPages] = useState(1);
+  const MOVIES_PER_PAGE = 20;
 
   const [searchTerm, setSearchTerm] = useState("")
   const [genreFilter, setGenreFilter] = useState("")
@@ -27,42 +28,41 @@ export default function Movies() {
   const [showFilters, setShowFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Функція завантаження даних з пагінацією
+  const fetchMovies = async (page = 1) => {
+    setIsLoading(true);
+    try {
+      const moviesData = await getAllMovies(`?page=${page}&limit=${MOVIES_PER_PAGE}`);
+      const peopleData = await getAllPeople();
+      
+      setMovies(moviesData.movies || moviesData);
+      setTotalMovies(moviesData.total || 0);
+      setTotalPages(moviesData.totalPages || 1);
+      setAllPeople(peopleData.people || peopleData);
+    } catch (err) {
+      console.error("Failed to load data:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [moviesData, peopleData] = await Promise.all([
-          getAllMovies(), 
-          getAllPeople()
-        ]);
-        
-        // Note: Ideally, filtering and sorting should happen on the backend 
-        // if we are using server-side pagination. Since we are using the existing
-        // getAllMovies which returns everything (based on provided context),
-        // we will implement client-side pagination for the view.
-        // If the backend supported query params for filters, we'd use them.
-        setMovies(moviesData.movies || moviesData); // Handle if API returns { movies: [], total: ... } or just []
-        setAllPeople(peopleData.people || peopleData);
-
-      } catch (err) {
-        console.error("Failed to load data:", err)
-      } finally {
-        setIsLoading(false)
-      }
-    };
-
-    fetchData();
-  }, [])
+    fetchMovies(currentPage);
+  }, [currentPage])
 
   const processedMovies = useMemo(() => {
     let tempMovies = Array.isArray(movies) ? [...movies] : [];
 
     if (searchTerm) {
-      tempMovies = tempMovies.filter((movie) => movie.title.toLowerCase().includes(searchTerm.toLowerCase()))
+      tempMovies = tempMovies.filter((movie) => 
+        movie.title.toLowerCase().includes(searchTerm.toLowerCase())
+      )
     }
 
     if (genreFilter) {
-      tempMovies = tempMovies.filter((movie) => movie.genre?.toLowerCase().includes(genreFilter.toLowerCase()))
+      tempMovies = tempMovies.filter((movie) => 
+        movie.genre?.toLowerCase().includes(genreFilter.toLowerCase())
+      )
     }
 
     if (peopleSearchTerm) {
@@ -101,11 +101,18 @@ export default function Movies() {
     return tempMovies
   }, [movies, allPeople, searchTerm, genreFilter, peopleSearchTerm, sortOption])
 
-  // Client-side pagination logic
-  const paginatedMovies = useMemo(() => {
-    const startIndex = (currentPage - 1) * MOVIES_PER_PAGE;
-    return processedMovies.slice(startIndex, startIndex + MOVIES_PER_PAGE);
-  }, [processedMovies, currentPage]);
+  // Обробка зміни сторінки
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    // Прокрутка до верху при зміні сторінки
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Обробка пошуку - скидання на першу сторінку
+  const handleSearchChange = (setter) => (e) => {
+    setter(e.target.value);
+    setCurrentPage(1);
+  };
 
   if (isLoading) {
     return (
@@ -139,7 +146,7 @@ export default function Movies() {
                 type="text"
                 placeholder="Search by title..."
                 value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                onChange={handleSearchChange(setSearchTerm)}
                 className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-blue-500 transition-colors cursor-text"
               />
               <div className="absolute top-0 left-0 p-3 pointer-events-none">
@@ -162,7 +169,7 @@ export default function Movies() {
                   type="text"
                   placeholder="Filter by genre..."
                   value={genreFilter}
-                  onChange={(e) => { setGenreFilter(e.target.value); setCurrentPage(1); }}
+                  onChange={handleSearchChange(setGenreFilter)}
                   className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"
                 />
               </div>
@@ -173,7 +180,7 @@ export default function Movies() {
                   type="text"
                   placeholder="Search person..."
                   value={peopleSearchTerm}
-                  onChange={(e) => { setPeopleSearchTerm(e.target.value); setCurrentPage(1); }}
+                  onChange={handleSearchChange(setPeopleSearchTerm)}
                   className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"
                 />
               </div>
@@ -196,22 +203,36 @@ export default function Movies() {
           )}
         </div>
 
-        {paginatedMovies.length > 0 ? (
+        {processedMovies.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {paginatedMovies.map((movie) => (
+              {processedMovies.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} />
               ))}
             </div>
-            <Pagination 
-              currentPage={currentPage}
-              totalItems={processedMovies.length}
-              pageSize={MOVIES_PER_PAGE}
-              onPageChange={setCurrentPage}
-            />
+            
+            {/* Пагінація для відфільтрованих результатів */}
+            {searchTerm || genreFilter || peopleSearchTerm ? (
+              <div className="mt-8 text-center text-gray-400 cursor-default">
+                Showing {processedMovies.length} filtered results
+              </div>
+            ) : (
+              <Pagination 
+                currentPage={currentPage}
+                totalItems={totalMovies}
+                pageSize={MOVIES_PER_PAGE}
+                onPageChange={handlePageChange}
+                totalPages={totalPages}
+              />
+            )}
           </>
         ) : (
-          <p className="text-center text-gray-400 text-lg mt-12 cursor-default">No movies found matching your criteria.</p>
+          <p className="text-center text-gray-400 text-lg mt-12 cursor-default">
+            {searchTerm || genreFilter || peopleSearchTerm 
+              ? "No movies found matching your criteria." 
+              : "No movies available."
+            }
+          </p>
         )}
       </div>
     </div>
