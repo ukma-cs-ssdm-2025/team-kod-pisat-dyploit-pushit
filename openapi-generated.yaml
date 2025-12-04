@@ -78,11 +78,78 @@ paths:
           description: Авторизація успішна
         '401':
           description: Невірний логін або пароль
-  /api/v1/movies:
+  /api/v1/movies/stats:
     get:
-      summary: Отримати список усіх фільмів
+      summary: Отримати статистику по фільмах
       tags:
         - Movies
+      responses:
+        '200':
+          description: Успішне отримання статистики
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  avgRating:
+                    type: number
+                  genres:
+                    type: array
+                    items:
+                      type: string
+  /api/v1/movies:
+    get:
+      summary: Отримати список усіх фільмів з пошуком та фільтрацією
+      tags:
+        - Movies
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Номер сторінки
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Кількість записів на сторінку
+          schema:
+            type: integer
+            default: 50
+        - name: search
+          in: query
+          required: false
+          description: Пошук по назві або опису
+          schema:
+            type: string
+        - name: genre
+          in: query
+          required: false
+          description: Фільтр по жанру
+          schema:
+            type: string
+        - name: person
+          in: query
+          required: false
+          description: Пошук по імені людини (актор, режисер, продюсер)
+          schema:
+            type: string
+        - name: sort
+          in: query
+          required: false
+          description: Сортування
+          schema:
+            type: string
+            enum:
+              - newest
+              - oldest
+              - title_asc
+              - rating_desc
+              - rating_asc
+            default: newest
       responses:
         '200':
           description: Список фільмів
@@ -120,6 +187,20 @@ paths:
           description: Некоректні дані
         '403':
           description: Недостатньо прав
+  /api/v1/movies/genres:
+    get:
+      summary: Отримати список унікальних жанрів
+      tags:
+        - Movies
+      responses:
+        '200':
+          description: Успішне отримання списку жанрів
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
   /api/v1/movies/{id}:
     get:
       summary: Отримати фільм за ID з усіма людьми
@@ -134,11 +215,11 @@ paths:
           description: ID фільму
       responses:
         '200':
-          description: Інформація про фільм та пов’язаних людей
+          description: Інформація про фільм та пов'язаних людей
         '404':
           description: Фільм не знайдено
     put:
-      summary: Оновити дані фільму та зв’язки з людьми
+      summary: Оновити дані фільму та зв'язки з людьми
       tags:
         - Movies
       security:
@@ -249,31 +330,104 @@ paths:
           description: Користувача або фільм не знайдено
         '500':
           description: Помилка сервера
-  /api/v1/people:
+  /api/v1/people/stats:
     get:
-      summary: Отримати список усіх людей
+      summary: Отримати статистику по людях
       tags:
         - People
+      responses:
+        '200':
+          description: Успішне отримання статистики
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  actors:
+                    type: integer
+                  directors:
+                    type: integer
+                  producers:
+                    type: integer
+  /api/v1/people/professions:
+    get:
+      summary: Отримати список унікальних професій
+      tags:
+        - People
+      responses:
+        '200':
+          description: Успішне отримання списку професій
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /api/v1/people:
+    get:
+      summary: Отримати список усіх людей з пошуком та фільтрацією
+      tags:
+        - People
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Номер сторінки
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Кількість записів на сторінку
+          schema:
+            type: integer
+            default: 50
+        - name: search
+          in: query
+          required: false
+          description: Пошук по імені, прізвищу або біографії
+          schema:
+            type: string
+        - name: profession
+          in: query
+          required: false
+          description: Фільтр по професії
+          schema:
+            type: string
       responses:
         '200':
           description: Успішне отримання списку людей
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    first_name:
-                      type: string
-                    last_name:
-                      type: string
-                    profession:
-                      type: string
-                    biography:
-                      type: string
+                type: object
+                properties:
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+                  total:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  people:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        first_name:
+                          type: string
+                        last_name:
+                          type: string
+                        profession:
+                          type: string
+                        biography:
+                          type: string
     post:
       summary: Додати нову людину
       tags:
@@ -843,11 +997,63 @@ paths:
           description: Недостатньо прав
         '404':
           description: Людину або аватарку не знайдено
-  /api/v1/users:
+  /api/v1/users/stats:
     get:
-      summary: Отримати список усіх користувачів
+      summary: Отримати статистику по користувачах
       tags:
         - Users
+      responses:
+        '200':
+          description: Успішне отримання статистики
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  users:
+                    type: integer
+                  moderators:
+                    type: integer
+                  admins:
+                    type: integer
+  /api/v1/users:
+    get:
+      summary: Отримати список усіх користувачів з пошуком
+      tags:
+        - Users
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Номер сторінки
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Кількість записів на сторінку
+          schema:
+            type: integer
+            default: 50
+        - name: search
+          in: query
+          required: false
+          description: Пошук по username, nickname або email
+          schema:
+            type: string
+        - name: role
+          in: query
+          required: false
+          description: Фільтр по ролі
+          schema:
+            type: string
+            enum:
+              - user
+              - moderator
+              - admin
       responses:
         '200':
           description: Список користувачів
@@ -884,6 +1090,20 @@ paths:
           description: Користувача створено
         '400':
           description: Некоректні вхідні дані
+  /api/v1/users/roles:
+    get:
+      summary: Отримати список унікальних ролей
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Успішне отримання списку ролей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
   /api/v1/users/{param}:
     get:
       summary: Отримати користувача за ID або username
