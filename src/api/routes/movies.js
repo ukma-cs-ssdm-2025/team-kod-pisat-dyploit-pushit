@@ -4,35 +4,192 @@ const { deleteFileFromR2 } = require('../utils/r2');
 
 /**
  * @openapi
- * /api/v1/movies:
+ * /api/v1/movies/stats:
  *   get:
- *     summary: Отримати список усіх фільмів
+ *     summary: Отримати статистику по фільмах
  *     tags:
  *       - Movies
  *     responses:
  *       200:
+ *         description: Успішне отримання статистики
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                 avgRating:
+ *                   type: number
+ *                 genres:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ */
+router.get('/movies/stats', async (req, res) => {
+  const db = req.app.locals.db;
+  
+  try {
+    const [totalResult, avgRatingResult, genresResult] = await Promise.all([
+      db.query('SELECT COUNT(*) AS count FROM movies'),
+      db.query('SELECT AVG(rating) AS avg FROM movies WHERE rating > 0'),
+      db.query('SELECT DISTINCT genre FROM movies WHERE genre IS NOT NULL AND genre != \'\' ORDER BY genre')
+    ]);
+
+    res.json({
+      total: parseInt(totalResult.rows[0].count, 10),
+      avgRating: parseFloat(avgRatingResult.rows[0].avg) || 0,
+      genres: genresResult.rows.map(row => row.genre)
+    });
+  } catch (err) {
+    console.error('DB error (GET /movies/stats):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/movies:
+ *   get:
+ *     summary: Отримати список усіх фільмів з пошуком та фільтрацією
+ *     tags:
+ *       - Movies
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         required: false
+ *         description: Номер сторінки
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Кількість записів на сторінку
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         description: Пошук по назві або опису
+ *         schema:
+ *           type: string
+ *       - name: genre
+ *         in: query
+ *         required: false
+ *         description: Фільтр по жанру
+ *         schema:
+ *           type: string
+ *       - name: person
+ *         in: query
+ *         required: false
+ *         description: Пошук по імені людини (актор, режисер, продюсер)
+ *         schema:
+ *           type: string
+ *       - name: sort
+ *         in: query
+ *         required: false
+ *         description: Сортування
+ *         schema:
+ *           type: string
+ *           enum: [newest, oldest, title_asc, rating_desc, rating_asc]
+ *           default: newest
+ *     responses:
+ *       200:
  *         description: Список фільмів
  */
-// Додати пагінацію до GET /movies
 router.get('/movies', async (req, res) => {
   const db = req.app.locals.db;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
   const offset = (page - 1) * limit;
+  const search = req.query.search || '';
+  const genre = req.query.genre || '';
+  const person = req.query.person || '';
+  const sort = req.query.sort || 'newest';
 
   try {
-    const countResult = await db.query('SELECT COUNT(*) AS total FROM movies');
-    const total = parseInt(countResult.rows[0].total, 10);
-
-    const result = await db.query(`
+    // Базові частини запиту
+    let query = `
       SELECT m.*, 
-             COALESCE(ARRAY_AGG(mp.person_id) FILTER (WHERE mp.person_id IS NOT NULL), '{}') as people_ids
+            COALESCE(ARRAY_AGG(DISTINCT mp.person_id) FILTER (WHERE mp.person_id IS NOT NULL), '{}') as people_ids
       FROM movies m
       LEFT JOIN movie_people mp ON m.id = mp.movie_id
-      GROUP BY m.id
-      ORDER BY m.id DESC
-      LIMIT $1 OFFSET $2
-    `, [limit, offset]);
+    `;
+  
+    let countQuery = 'SELECT COUNT(DISTINCT m.id) AS total FROM movies m';
+    const params = [];
+    const whereConditions = [];
+
+    // Додаємо умови пошуку
+    if (search) {
+      whereConditions.push(
+        `(m.title ILIKE $${params.length + 1} OR m.description ILIKE $${params.length + 1})`
+      );
+      params.push(`%${search}%`);
+    }
+
+    // Додаємо умову фільтрації по жанру
+    if (genre) {
+      whereConditions.push(`m.genre ILIKE $${params.length + 1}`);
+      params.push(`%${genre}%`);
+    }
+
+    // Додаємо умову пошуку по людям
+    if (person) {
+      // Використовуємо EXISTS для перевірки наявності відповідних людей
+      whereConditions.push(
+        `EXISTS (
+          SELECT 1 FROM movie_people mp2
+          JOIN people p2 ON mp2.person_id = p2.id
+          WHERE mp2.movie_id = m.id 
+          AND (p2.first_name ILIKE $${params.length + 1} OR p2.last_name ILIKE $${params.length + 1})
+        )`
+      );
+      params.push(`%${person}%`);
+    }
+
+    // Формуємо WHERE частину
+    if (whereConditions.length > 0) {
+      const whereClause = 'WHERE ' + whereConditions.join(' AND ');
+      query += ' ' + whereClause;
+      countQuery += ' ' + whereClause;
+    }
+
+    // Додаємо GROUP BY
+    query += ' GROUP BY m.id';
+
+    // Додаємо сортування
+    switch (sort) {
+      case 'oldest':
+        query += ' ORDER BY m.id ASC';
+        break;
+      case 'title_asc':
+        query += ' ORDER BY m.title ASC';
+        break;
+      case 'rating_desc':
+        query += ' ORDER BY m.rating DESC NULLS LAST, m.id DESC';
+        break;
+      case 'rating_asc':
+        query += ' ORDER BY m.rating ASC NULLS LAST, m.id DESC';
+        break;
+      case 'newest':
+      default:
+        query += ' ORDER BY m.id DESC';
+        break;
+    }
+
+    // Додаємо пагінацію
+    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
+    // Виконуємо запит за даними
+    const result = await db.query(query, params);
+
+    // Виконуємо запит за загальною кількістю
+    const countResult = await db.query(countQuery, params.slice(0, -2)); // Виключаємо limit і offset
+    const total = parseInt(countResult.rows[0].total, 10);
 
     res.json({
       page,
@@ -43,6 +200,42 @@ router.get('/movies', async (req, res) => {
     });
   } catch (err) {
     console.error('DB error (GET /movies):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+  });
+
+/**
+ * @openapi
+ * /api/v1/movies/genres:
+ *   get:
+ *     summary: Отримати список унікальних жанрів
+ *     tags:
+ *       - Movies
+ *     responses:
+ *       200:
+ *         description: Успішне отримання списку жанрів
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: string
+ */
+router.get('/movies/genres', async (req, res) => {
+  const db = req.app.locals.db;
+  
+  try {
+    const result = await db.query(
+      `SELECT DISTINCT genre 
+       FROM movies 
+       WHERE genre IS NOT NULL AND genre != ''
+       ORDER BY genre`
+    );
+    
+    const genres = result.rows.map(row => row.genre);
+    res.json(genres);
+  } catch (err) {
+    console.error('DB error (GET /movies/genres):', err);
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -63,7 +256,7 @@ router.get('/movies', async (req, res) => {
  *         description: ID фільму
  *     responses:
  *       200:
- *         description: Інформація про фільм та пов’язаних людей
+ *         description: Інформація про фільм та пов'язаних людей
  *       404:
  *         description: Фільм не знайдено
  */
@@ -135,7 +328,7 @@ router.post('/movies', async (req, res) => {
     return res.status(403).json({ message: 'Недостатньо прав для створення фільму' });
   }
 
-  if (!title) return res.status(400).json({ message: 'Назва фільму обов’язкова' });
+  if (!title) return res.status(400).json({ message: 'Назва фільму обов`язкова' });
 
   const client = await db.connect();
   try {
@@ -174,7 +367,7 @@ router.post('/movies', async (req, res) => {
  * @openapi
  * /api/v1/movies/{id}:
  *   put:
- *     summary: Оновити дані фільму та зв’язки з людьми
+ *     summary: Оновити дані фільму та зв'язки з людьми
  *     tags:
  *       - Movies
  *     security:
@@ -466,7 +659,5 @@ router.delete("/movies/:userParam/likes/:movieId", async (req, res) => {
     res.status(500).json({ error: "Помилка сервера" });
   }
 });
-
-
 
 module.exports = router;

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllPeople, deletePerson } from '../api'; 
+import { getAllPeople, deletePerson, getPeopleStats, getPeopleProfessions, getPaginatedPeople } from '../api'; 
 import { useAuth } from '../hooks/useAuth'; 
 import ConfirmModal from '../components/ConfirmModal';
 import AlertModal from '../components/AlertModal';
@@ -11,7 +11,15 @@ export default function PeopleList() {
   const { isAdmin, isAuthenticated } = useAuth(); 
   
   const [people, setPeople] = useState([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    actors: 0,
+    directors: 0,
+    producers: 0
+  });
+  const [professions, setProfessions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [professionFilter, setProfessionFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,36 +31,53 @@ export default function PeopleList() {
   const [personToDelete, setPersonToDelete] = useState(null);
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
 
-  // Функція завантаження людей з пагінацією
-  const fetchPeople = async (page = 1) => {
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm]);
+
+  const fetchPeopleData = useCallback(async (page = 1, search = '', profession = '') => {
     setIsLoading(true);
     try {
-      const data = await getAllPeople(`?page=${page}&limit=${PEOPLE_PER_PAGE}`);
-      setPeople(data.people || data);
-      setTotalPeople(data.total || 0);
-      setTotalPages(data.totalPages || 1);
+      const [statsData, professionsData, peopleData] = await Promise.all([
+        getPeopleStats(),
+        getPeopleProfessions(),
+        getPaginatedPeople(page, PEOPLE_PER_PAGE, search, profession)
+      ]);
+
+      setStats(statsData);
+      setProfessions(professionsData);
+      setPeople(peopleData.people || peopleData);
+      setTotalPeople(peopleData.total || 0);
+      setTotalPages(peopleData.totalPages || 1);
     } catch (err) {
-      console.error("Error loading people:", err);
+      console.error("Error loading people data:", err);
+      setPeople([]);
+      setTotalPeople(0);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [PEOPLE_PER_PAGE]);
 
   useEffect(() => {
-    fetchPeople(currentPage);
-  }, [currentPage]);
+    fetchPeopleData(currentPage, debouncedSearchTerm, professionFilter);
+  }, [currentPage, debouncedSearchTerm, professionFilter, fetchPeopleData]);
 
-  const uniqueProfessions = [...new Set(people.map(person => person.profession))].sort();
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
 
-  const filteredPeople = people.filter(person => {
-    const matchesSearch = person.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          person.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          person.profession.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesProfession = !professionFilter || person.profession === professionFilter;
-    
-    return matchesSearch && matchesProfession;
-  });
+  const handleProfessionChange = (e) => {
+    setProfessionFilter(e.target.value);
+    setCurrentPage(1);
+  };
 
   const confirmDelete = (person) => {
     setPersonToDelete(person);
@@ -62,9 +87,8 @@ export default function PeopleList() {
   const handleDeletePerson = async () => {
     if (!personToDelete) return;
     try {
-      await deletePerson(personToDelete.id); 
-      // Перезавантажити поточну сторінку
-      fetchPeople(currentPage);
+      await deletePerson(personToDelete.id);
+      fetchPeopleData(currentPage, debouncedSearchTerm, professionFilter);
       setAlertConfig({ isOpen: true, title: "Success", message: "Person deleted successfully." });
     } catch (err) {
       setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Failed to delete'}` });
@@ -76,9 +100,17 @@ export default function PeopleList() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setProfessionFilter('');
+    setCurrentPage(1);
+  };
+
   if (isLoading) {
     return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400 cursor-wait">Loading...</div>;
   }
+
+  const isFiltered = debouncedSearchTerm || professionFilter;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-8 pb-8">
@@ -104,12 +136,12 @@ export default function PeopleList() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div>
-            <label className="block text-blue-400 mb-2 font-medium cursor-default">Search by Name or Profession</label>
+            <label className="block text-blue-400 mb-2 font-medium cursor-default">Search by Name or Biography</label>
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search by name or biography..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="w-full bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"
             />
           </div>
@@ -117,11 +149,11 @@ export default function PeopleList() {
             <label className="block text-blue-400 mb-2 font-medium cursor-default">Filter by Profession</label>
             <select
               value={professionFilter}
-              onChange={(e) => setProfessionFilter(e.target.value)}
+              onChange={handleProfessionChange}
               className="w-full bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none"
             >
               <option value="">All Professions</option>
-              {uniqueProfessions.map(profession => (
+              {professions.map(profession => (
                 <option key={profession} value={profession} className="bg-gray-800">
                   {profession.charAt(0).toUpperCase() + profession.slice(1)}
                 </option>
@@ -132,30 +164,30 @@ export default function PeopleList() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center shadow-lg">
-            <div className="text-2xl font-bold text-blue-400 cursor-default">{totalPeople}</div>
+            <div className="text-2xl font-bold text-blue-400 cursor-default">{stats.total}</div>
             <div className="text-gray-300 text-sm cursor-default">Total People</div>
           </div>
           <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center shadow-lg">
             <div className="text-2xl font-bold text-green-400 cursor-default">
-              {people.filter(p => p.profession === 'actor').length}
+              {stats.actors}
             </div>
             <div className="text-gray-300 text-sm cursor-default">Actors</div>
           </div>
           <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center shadow-lg">
             <div className="text-2xl font-bold text-purple-400 cursor-default">
-              {people.filter(p => p.profession === 'director').length}
+              {stats.directors}
             </div>
             <div className="text-gray-300 text-sm cursor-default">Directors</div>
           </div>
           <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center shadow-lg">
             <div className="text-2xl font-bold text-yellow-400 cursor-default">
-              {people.filter(p => p.profession === 'producer').length}
+              {stats.producers}
             </div>
             <div className="text-gray-300 text-sm cursor-default">Producers</div>
           </div>
         </div>
 
-        {filteredPeople.length > 0 ? (
+        {people.length > 0 ? (
           <>
             <div className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden shadow-xl">
               <table className="w-full text-left">
@@ -169,7 +201,7 @@ export default function PeopleList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPeople.map(person => (
+                  {people.map(person => (
                     <tr key={person.id} className="border-b border-gray-700/50 last:border-b-0 hover:bg-gray-700/30 transition-colors">
                       <td className="p-4">
                         <Link to={`/people/${person.id}`} className="flex items-center gap-4 group cursor-pointer">
@@ -212,40 +244,47 @@ export default function PeopleList() {
               </table>
             </div>
 
-            {/* Пагінація для відфільтрованих результатів */}
-            {(searchTerm || professionFilter) ? (
-              <div className="mt-4 text-center text-gray-400 cursor-default">
-                Showing {filteredPeople.length} filtered results
-              </div>
-            ) : (
-              <div className="mt-8">
-                <Pagination 
-                  currentPage={currentPage}
-                  totalItems={totalPeople}
-                  pageSize={PEOPLE_PER_PAGE}
-                  onPageChange={handlePageChange}
-                  totalPages={totalPages}
-                />
+            {isFiltered && (
+              <div className="mt-4 p-4 bg-gray-800/30 border border-gray-700 rounded-lg flex justify-between items-center">
+                <div className="text-gray-300 cursor-default">
+                  Showing {people.length} of {totalPeople} results
+                  {debouncedSearchTerm && ` for "${debouncedSearchTerm}"`}
+                </div>
+                <button 
+                  onClick={resetFilters}
+                  className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 px-3 py-1 rounded transition-colors text-sm font-medium cursor-pointer"
+                >
+                  Reset Filters
+                </button>
               </div>
             )}
+
+            <div className="mt-8">
+              <Pagination 
+                currentPage={currentPage}
+                totalItems={totalPeople}
+                pageSize={PEOPLE_PER_PAGE}
+                onPageChange={handlePageChange}
+                totalPages={totalPages}
+              />
+            </div>
           </>
         ) : (
           <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-8 text-center">
             <div className="text-gray-400 text-lg mb-4 cursor-default">
-              {searchTerm || professionFilter 
+              {isFiltered 
                 ? "No people found matching your criteria." 
                 : "No people available."
               }
             </div>
-            <button 
-              onClick={() => {
-                setSearchTerm('');
-                setProfessionFilter('');
-              }}
-              className="text-blue-400 hover:text-blue-300 underline cursor-pointer"
-            >
-              Reset Filters
-            </button>
+            {isFiltered && (
+              <button 
+                onClick={resetFilters}
+                className="text-blue-400 hover:text-blue-300 underline cursor-pointer"
+              >
+                Reset Filters
+              </button>
+            )}
           </div>
         )}
       </div>

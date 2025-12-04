@@ -4,46 +4,189 @@ const { deleteFileFromR2 } = require('../utils/r2');
 
 /**
  * @openapi
- * /api/v1/people:
+ * /api/v1/people/stats:
  *   get:
- *     summary: Отримати список усіх людей
+ *     summary: Отримати статистику по людях
  *     tags:
  *       - People
+ *     responses:
+ *       200:
+ *         description: Успішне отримання статистики
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                 actors:
+ *                   type: integer
+ *                 directors:
+ *                   type: integer
+ *                 producers:
+ *                   type: integer
+ */
+router.get('/people/stats', async (req, res) => {
+  const db = req.app.locals.db;
+  
+  try {
+    const [totalResult, actorsResult, directorsResult, producersResult] = await Promise.all([
+      db.query('SELECT COUNT(*) AS count FROM people'),
+      db.query('SELECT COUNT(*) AS count FROM people WHERE profession = $1', ['actor']),
+      db.query('SELECT COUNT(*) AS count FROM people WHERE profession = $1', ['director']),
+      db.query('SELECT COUNT(*) AS count FROM people WHERE profession = $1', ['producer'])
+    ]);
+
+    res.json({
+      total: parseInt(totalResult.rows[0].count, 10),
+      actors: parseInt(actorsResult.rows[0].count, 10),
+      directors: parseInt(directorsResult.rows[0].count, 10),
+      producers: parseInt(producersResult.rows[0].count, 10)
+    });
+  } catch (err) {
+    console.error('DB error (GET /people/stats):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/people/professions:
+ *   get:
+ *     summary: Отримати список унікальних професій
+ *     tags:
+ *       - People
+ *     responses:
+ *       200:
+ *         description: Успішне отримання списку професій
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: string
+ */
+router.get('/people/professions', async (req, res) => {
+  const db = req.app.locals.db;
+  
+  try {
+    const result = await db.query(
+      'SELECT DISTINCT profession FROM people ORDER BY profession'
+    );
+    
+    const professions = result.rows.map(row => row.profession);
+    res.json(professions);
+  } catch (err) {
+    console.error('DB error (GET /people/professions):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/people:
+ *   get:
+ *     summary: Отримати список усіх людей з пошуком та фільтрацією
+ *     tags:
+ *       - People
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         required: false
+ *         description: Номер сторінки
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Кількість записів на сторінку
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         description: Пошук по імені, прізвищу або біографії
+ *         schema:
+ *           type: string
+ *       - name: profession
+ *         in: query
+ *         required: false
+ *         description: Фільтр по професії
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Успішне отримання списку людей
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                   first_name:
- *                     type: string
- *                   last_name:
- *                     type: string
- *                   profession:
- *                     type: string
- *                   biography:
- *                     type: string
+ *               type: object
+ *               properties:
+ *                 page:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
+ *                 total:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *                 people:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       first_name:
+ *                         type: string
+ *                       last_name:
+ *                         type: string
+ *                       profession:
+ *                         type: string
+ *                       biography:
+ *                         type: string
  */
-// Додати пагінацію до GET /people
 router.get('/people', async (req, res) => {
   const db = req.app.locals.db;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
   const offset = (page - 1) * limit;
+  const search = req.query.search || '';
+  const profession = req.query.profession || '';
 
   try {
-    const result = await db.query(
-      'SELECT * FROM people ORDER BY id LIMIT $1 OFFSET $2',
-      [limit, offset]
-    );
+    let query = 'SELECT * FROM people';
+    let countQuery = 'SELECT COUNT(*) AS total FROM people';
+    const params = [];
+    const whereConditions = [];
 
-    const countResult = await db.query('SELECT COUNT(*) AS total FROM people');
+    if (search) {
+      whereConditions.push(
+        `(first_name ILIKE $${params.length + 1} OR last_name ILIKE $${params.length + 1} OR biography ILIKE $${params.length + 1})`
+      );
+      params.push(`%${search}%`);
+    }
+
+    if (profession) {
+      whereConditions.push(`profession = $${params.length + 1}`);
+      params.push(profession);
+    }
+
+    if (whereConditions.length > 0) {
+      const whereClause = 'WHERE ' + whereConditions.join(' AND ');
+      query += ' ' + whereClause;
+      countQuery += ' ' + whereClause;
+    }
+
+    query += ' ORDER BY last_name, first_name';
+    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
+    const result = await db.query(query, params);
+
+    const countResult = await db.query(countQuery, params.slice(0, -2));
     const total = parseInt(countResult.rows[0].total, 10);
 
     res.json({
@@ -58,7 +201,6 @@ router.get('/people', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
-
 
 /**
  * @openapi
@@ -381,7 +523,5 @@ router.delete('/people/:id', async (req, res) => {
     client.release();
   }
 });
-
-
 
 module.exports = router;
