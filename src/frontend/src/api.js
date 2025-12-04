@@ -33,10 +33,22 @@ const getAuthHeaders = () => {
  * @returns {Promise<any>}
  */
 const apiFetch = async (endpoint, options = {}) => {
-  const { body, ...restOptions } = options
+  const { body, queryParams, ...restOptions } = options
   const headers = {
     ...getAuthHeaders(),
     ...options.headers,
+  }
+
+  // Додати query параметри до URL
+  let url = `${API_URL}${endpoint}`;
+  if (queryParams) {
+    const searchParams = new URLSearchParams();
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, value.toString());
+      }
+    });
+    url += `?${searchParams.toString()}`;
   }
 
   if (body) {
@@ -44,27 +56,24 @@ const apiFetch = async (endpoint, options = {}) => {
   }
 
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(url, {
       ...restOptions,
       headers,
       body: body ? JSON.stringify(body) : null,
     })
 
     if (response.status === 401) {
-       
       localStorage.removeItem("token")
       window.location.href = '/login'
       return Promise.reject(new Error("Unauthorized"))
     }
 
     if (!response.ok) {
-       
       const errorData = await response.json()
       console.error(`API Error ${response.status}:`, errorData.message || errorData.error)
       return Promise.reject(errorData)
     }
 
-     
     if (response.status === 204 || response.headers.get('content-length') === '0') {
       return Promise.resolve(true)  
     }
@@ -110,10 +119,8 @@ const apiFetchForm = async (endpoint, formData, method = 'POST') => {
   }
 }
 
- 
- 
+// Auth functions
 export async function registerUser(data) {
-   
   const res = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -123,7 +130,6 @@ export async function registerUser(data) {
 }
 
 export async function loginUser(data) {
-   
   const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -132,65 +138,73 @@ export async function loginUser(data) {
   return res.json()
 }
 
- 
 export function getUserDataFromToken(token) {
   const decoded = decodeToken(token)
   if (!decoded || !decoded.username) {
     console.error("Некоректний токен")
     return null
   }
-   
   return apiFetch(`/users/${decoded.username}`)
 }
 
-export const getAllUsers = () => apiFetch('/users')
+// Users functions with pagination and search support
+export const getAllUsers = (query = '') => apiFetch(`/users${query}`)
 export const getUserByUsername = (username) => apiFetch(`/users/${username}`)  
 export const updateUser = (id, data) => apiFetch(`/users/${id}`, { method: 'PUT', body: data })
 export const deleteUser = (id) => apiFetch(`/users/${id}`, { method: 'DELETE' })
 
- 
-export const getAllMovies = () => apiFetch('/movies')
+// New functions for users features
+export const getUsersStats = () => apiFetch('/users/stats')
+export const getUserRoles = () => apiFetch('/users/roles')
+
+// Movies functions with pagination and search support
+export const getAllMovies = (query = '') => apiFetch(`/movies${query}`)
 export const getMovieById = (id) => apiFetch(`/movies/${id}`)
 export const addMovie = (data) => apiFetch('/movies', { method: 'POST', body: data })
 export const updateMovie = (id, data) => apiFetch(`/movies/${id}`, { method: 'PUT', body: data })
 export const deleteMovie = (id) => apiFetch(`/movies/${id}`, { method: 'DELETE' })
 
- 
- 
+// New functions for movies features
+export const getMoviesStats = () => apiFetch('/movies/stats')
+export const getMoviesGenres = () => apiFetch('/movies/genres')
+
+// Reviews functions
 export const getAllReviews = () => apiFetch('/reviews')
 export const addReview = (data) => apiFetch('/reviews', { method: 'POST', body: data })
 export const updateReview = (id, data) => apiFetch(`/reviews/${id}`, { method: 'PUT', body: data })
 export const deleteReview = (id) => apiFetch(`/reviews/${id}`, { method: 'DELETE' })
 
- 
-export const getAllPeople = () => apiFetch('/people')
+// People functions with pagination and search support
+export const getAllPeople = (query = '') => apiFetch(`/people${query}`)
 export const getPersonById = (id) => apiFetch(`/people/${id}`)
 export const addPerson = (data) => apiFetch('/people', { method: 'POST', body: data })
 export const updatePerson = (id, data) => apiFetch(`/people/${id}`, { method: 'PUT', body: data })
 export const deletePerson = (id) => apiFetch(`/people/${id}`, { method: 'DELETE' })
 
- 
- 
+// New functions for people features
+export const getPeopleStats = () => apiFetch('/people/stats')
+export const getPeopleProfessions = () => apiFetch('/people/professions')
+
+// Upload functions
 export const uploadAvatar = (file) => {
   const formData = new FormData()
   formData.append('avatar', file)
   return apiFetchForm('/upload/avatar', formData, 'PUT')  
 }
 
- 
 export const uploadMovieCover = (movieId, file) => {
   const formData = new FormData()
   formData.append('cover', file)
   return apiFetchForm(`/upload/movie-cover/${movieId}`, formData, 'PUT')
 }
 
- 
 export const uploadPersonAvatar = (personId, file) => {
   const formData = new FormData()
   formData.append('avatar', file)
   return apiFetchForm(`/upload/person-avatar/${personId}`, formData, 'PUT')
 }
 
+// Social features
 export const addToLikedMovies = (userParam, movieId) => 
   apiFetch(`/movies/${userParam}/likes/${movieId}`, { method: 'POST' });
 
@@ -208,3 +222,60 @@ export const removeFriend = (userParam) =>
 
 export const getIncomingFriendRequests = (userParam) => 
   apiFetch(`/users/friends/requests/incoming/${userParam}`);
+
+// Utility function for paginated requests with search
+export const getPaginatedMovies = (page = 1, limit = 20, search = '', genre = '', person = '', sort = 'newest') => {
+  const queryParams = {
+    page,
+    limit,
+    sort
+  };
+  
+  if (search) {
+    queryParams.search = search;
+  }
+  
+  if (genre) {
+    queryParams.genre = genre;
+  }
+  
+  if (person) {
+    queryParams.person = person;
+  }
+  
+  return apiFetch('/movies', { queryParams });
+};
+
+export const getPaginatedUsers = (page = 1, limit = 20, search = '', role = '') => {
+  const queryParams = {
+    page,
+    limit
+  };
+  
+  if (search) {
+    queryParams.search = search;
+  }
+  
+  if (role) {
+    queryParams.role = role;
+  }
+  
+  return apiFetch('/users', { queryParams });
+};
+
+export const getPaginatedPeople = (page = 1, limit = 20, search = '', profession = '') => {
+  const queryParams = {
+    page,
+    limit
+  };
+  
+  if (search) {
+    queryParams.search = search;
+  }
+  
+  if (profession) {
+    queryParams.profession = profession;
+  }
+  
+  return apiFetch('/people', { queryParams });
+};

@@ -9,7 +9,7 @@ export default function ReviewForm({ onSubmit }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!text || !title || rating === 0) {
-      alert("Будь ласка, заповніть заголовок, текст та оберіть рейтинг.");
+      alert("Please fill in the title, text and select a rating.");
       return;
     }
     onSubmit({ 
@@ -25,38 +25,42 @@ export default function ReviewForm({ onSubmit }) {
   };
 
   return (
-    <div className="card p-6 mt-8">
-      <h2 className="section-title">
-        Залишити відгук
+    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mt-8">
+      <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+        Leave a Review
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-blue-400 mb-2 font-medium">Ваш рейтинг</label>
-          <StarRating rating={rating} onRatingChange={setRating} />
+          <label className="block text-blue-400 mb-2 font-medium cursor-default">Your Rating</label>
+          <div className="cursor-pointer inline-block">
+             <StarRating rating={rating} onRatingChange={setRating} />
+          </div>
         </div>
         <div>
-          <label className="block text-blue-400 mb-2 font-medium">Заголовок</label>
+          <label className="block text-blue-400 mb-2 font-medium cursor-default">Title</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="form-input"
+            className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors cursor-text"
+            placeholder="Review title..."
           />
         </div>
         <div>
-          <label className="block text-blue-400 mb-2 font-medium">Текст відгуку</label>
+          <label className="block text-blue-400 mb-2 font-medium cursor-default">Review Text</label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows="5"
-            className="form-input"
+            className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors cursor-text"
+            placeholder="Write your thoughts here..."
           ></textarea>
         </div>
         <button
           type="submit"
-          className="btn-primary"
+          className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-lg hover:shadow-blue-500/20 cursor-pointer"
         >
-          Відправити
+          Submit Review
         </button>
       </form>
     </div>
