@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllUsers, deleteUser, sendFriendRequest, removeFriend } from '../api';
+import { getPaginatedUsers, deleteUser, getUsersStats, getUserRoles, sendFriendRequest, removeFriend } from '../api';
 import { useAuth } from '../hooks/useAuth'; 
 import ConfirmModal from '../components/ConfirmModal';
 import AlertModal from '../components/AlertModal';
@@ -11,7 +11,18 @@ export default function UserList() {
   const { user: currentUser, isAdmin, isModerator } = useAuth();
   
   const [users, setUsers] = useState([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    users: 0,
+    moderators: 0,
+    admins: 0
+  });
+  const [allRoles, setAllRoles] = useState([]);
+  
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  
   const [isLoading, setIsLoading] = useState(true);
   const [friendActions, setFriendActions] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,30 +34,54 @@ export default function UserList() {
   const [userToDelete, setUserToDelete] = useState(null);
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
 
-  // Функція завантаження користувачів з пагінацією
-  const fetchUsers = async (page = 1) => {
+  // Debounce для пошуку
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm]);
+
+  const fetchUsersData = useCallback(async (page = 1, search = '', role = '') => {
     setIsLoading(true);
     try {
-      const data = await getAllUsers(`?page=${page}&limit=${USERS_PER_PAGE}`);
-      setUsers(data.users || data);
-      setTotalUsers(data.total || 0);
-      setTotalPages(data.totalPages || 1);
+      const [statsData, rolesData, usersData] = await Promise.all([
+        getUsersStats(),
+        getUserRoles(),
+        getPaginatedUsers(page, USERS_PER_PAGE, search, role)
+      ]);
+
+      setStats(statsData);
+      setAllRoles(rolesData);
+      setUsers(usersData.users || usersData);
+      setTotalUsers(usersData.total || 0);
+      setTotalPages(usersData.totalPages || 1);
     } catch (err) {
       console.error("Error loading users:", err);
+      setUsers([]);
+      setTotalUsers(0);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [USERS_PER_PAGE]);
 
   useEffect(() => {
-    fetchUsers(currentPage);
-  }, [currentPage]);
+    fetchUsersData(currentPage, debouncedSearchTerm, roleFilter);
+  }, [currentPage, debouncedSearchTerm, roleFilter, fetchUsersData]);
 
-  const filteredUsers = users.filter(user => 
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleRoleChange = (e) => {
+    setRoleFilter(e.target.value);
+    setCurrentPage(1);
+  };
 
   const confirmDelete = (user) => {
     setUserToDelete(user);
@@ -57,8 +92,7 @@ export default function UserList() {
     if (!userToDelete) return;
     try {
       await deleteUser(userToDelete.id); 
-      // Перезавантажити поточну сторінку після видалення
-      fetchUsers(currentPage);
+      fetchUsersData(currentPage, debouncedSearchTerm, roleFilter);
       setAlertConfig({ isOpen: true, title: "Success", message: "User banned!" });
     } catch (err) {
       setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Failed to delete'}` });
@@ -98,6 +132,14 @@ export default function UserList() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setRoleFilter('');
+    setCurrentPage(1);
+  };
+
+  const isFiltered = debouncedSearchTerm || roleFilter;
+
   if (isLoading) {
     return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400 cursor-wait">Loading...</div>;
   }
@@ -109,38 +151,74 @@ export default function UserList() {
           Community Users
         </h1>
 
-        <input
-          type="text"
-          placeholder="Search by username, nickname, email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-3 mb-8 focus:outline-none focus:border-blue-500 transition-colors cursor-text shadow-lg"
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div>
+            <label className="block text-blue-400 mb-2 font-medium cursor-default">Search by username, nickname, email...</label>
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="w-full bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors cursor-text shadow-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-blue-400 mb-2 font-medium cursor-default">Filter by Role</label>
+            <select
+              value={roleFilter}
+              onChange={handleRoleChange}
+              className="w-full bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none"
+            >
+              <option value="">All Roles</option>
+              {allRoles.map(role => (
+                <option key={role} value={role} className="bg-gray-800">
+                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center">
-            <div className="text-2xl font-bold text-blue-400 cursor-default">{totalUsers}</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center shadow-lg">
+            <div className="text-2xl font-bold text-blue-400 cursor-default">{stats.total}</div>
             <div className="text-gray-300 text-sm cursor-default">Total Users</div>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center">
+          <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center shadow-lg">
             <div className="text-2xl font-bold text-green-400 cursor-default">
-              {users.filter(u => u.role === 'user').length}
+              {stats.users}
             </div>
             <div className="text-gray-300 text-sm cursor-default">Regular Users</div>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center">
+          <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center shadow-lg">
             <div className="text-2xl font-bold text-yellow-400 cursor-default">
-              {users.filter(u => u.role === 'moderator').length}
+              {stats.moderators}
             </div>
             <div className="text-gray-300 text-sm cursor-default">Moderators</div>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center">
+          <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg text-center shadow-lg">
             <div className="text-2xl font-bold text-red-400 cursor-default">
-              {users.filter(u => u.role === 'admin').length}
+              {stats.admins}
             </div>
             <div className="text-gray-300 text-sm cursor-default">Admins</div>
           </div>
         </div>
+
+        {isFiltered && (
+          <div className="mb-6 p-4 bg-gray-800/30 border border-gray-700 rounded-lg flex justify-between items-center">
+            <div className="text-gray-300 cursor-default">
+              Showing {users.length} of {totalUsers} results
+              {debouncedSearchTerm && ` for "${debouncedSearchTerm}"`}
+              {roleFilter && ` in ${roleFilter}`}
+            </div>
+            <button 
+              onClick={resetFilters}
+              className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 px-3 py-1 rounded transition-colors text-sm font-medium cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
 
         <div className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
@@ -155,8 +233,8 @@ export default function UserList() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map(user => {
+                {users.length > 0 ? (
+                  users.map(user => {
                     const isMyOwnProfile = currentUser?.id === user.id;
                     const friendStatus = getFriendStatus(user);
                     const isLoadingAction = friendActions[user.id] === 'loading';
@@ -229,7 +307,7 @@ export default function UserList() {
                 ) : (
                   <tr>
                     <td colSpan="5" className="p-8 text-center text-gray-400 cursor-default">
-                      {searchTerm ? 'No users found matching your search.' : 'No users available.'}
+                      {isFiltered ? 'No users found matching your search.' : 'No users available.'}
                     </td>
                   </tr>
                 )}
@@ -238,23 +316,15 @@ export default function UserList() {
           </div>
         </div>
 
-        {!searchTerm && totalPages > 1 && (
-          <div className="mt-8">
-            <Pagination 
-              currentPage={currentPage}
-              totalItems={totalUsers}
-              pageSize={USERS_PER_PAGE}
-              onPageChange={handlePageChange}
-              totalPages={totalPages}
-            />
-          </div>
-        )}
-
-        {searchTerm && filteredUsers.length > 0 && (
-          <div className="mt-4 text-center text-gray-400 text-sm cursor-default">
-            Showing {filteredUsers.length} filtered results
-          </div>
-        )}
+        <div className="mt-8">
+          <Pagination 
+            currentPage={currentPage}
+            totalItems={totalUsers}
+            pageSize={USERS_PER_PAGE}
+            onPageChange={handlePageChange}
+            totalPages={totalPages}
+          />
+        </div>
       </div>
 
       <ConfirmModal 

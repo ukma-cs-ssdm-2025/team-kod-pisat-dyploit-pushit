@@ -147,18 +147,26 @@ export function getUserDataFromToken(token) {
   return apiFetch(`/users/${decoded.username}`)
 }
 
-// Users functions with pagination support
+// Users functions with pagination and search support
 export const getAllUsers = (query = '') => apiFetch(`/users${query}`)
 export const getUserByUsername = (username) => apiFetch(`/users/${username}`)  
 export const updateUser = (id, data) => apiFetch(`/users/${id}`, { method: 'PUT', body: data })
 export const deleteUser = (id) => apiFetch(`/users/${id}`, { method: 'DELETE' })
 
-// Movies functions with pagination support
+// New functions for users features
+export const getUsersStats = () => apiFetch('/users/stats')
+export const getUserRoles = () => apiFetch('/users/roles')
+
+// Movies functions with pagination and search support
 export const getAllMovies = (query = '') => apiFetch(`/movies${query}`)
 export const getMovieById = (id) => apiFetch(`/movies/${id}`)
 export const addMovie = (data) => apiFetch('/movies', { method: 'POST', body: data })
 export const updateMovie = (id, data) => apiFetch(`/movies/${id}`, { method: 'PUT', body: data })
 export const deleteMovie = (id) => apiFetch(`/movies/${id}`, { method: 'DELETE' })
+
+// New functions for movies features
+export const getMoviesStats = () => apiFetch('/movies/stats')
+export const getMoviesGenres = () => apiFetch('/movies/genres')
 
 // Reviews functions
 export const getAllReviews = () => apiFetch('/reviews')
@@ -166,12 +174,16 @@ export const addReview = (data) => apiFetch('/reviews', { method: 'POST', body: 
 export const updateReview = (id, data) => apiFetch(`/reviews/${id}`, { method: 'PUT', body: data })
 export const deleteReview = (id) => apiFetch(`/reviews/${id}`, { method: 'DELETE' })
 
-// People functions with pagination support
+// People functions with pagination and search support
 export const getAllPeople = (query = '') => apiFetch(`/people${query}`)
 export const getPersonById = (id) => apiFetch(`/people/${id}`)
 export const addPerson = (data) => apiFetch('/people', { method: 'POST', body: data })
 export const updatePerson = (id, data) => apiFetch(`/people/${id}`, { method: 'PUT', body: data })
 export const deletePerson = (id) => apiFetch(`/people/${id}`, { method: 'DELETE' })
+
+// New functions for people features
+export const getPeopleStats = () => apiFetch('/people/stats')
+export const getPeopleProfessions = () => apiFetch('/people/professions')
 
 // Upload functions
 export const uploadAvatar = (file) => {
@@ -211,12 +223,59 @@ export const removeFriend = (userParam) =>
 export const getIncomingFriendRequests = (userParam) => 
   apiFetch(`/users/friends/requests/incoming/${userParam}`);
 
-// Utility function for paginated requests
-export const getPaginatedData = (endpoint, page = 1, limit = 20) => {
-  return apiFetch(endpoint, {
-    queryParams: {
-      page,
-      limit
-    }
-  });
+// Utility function for paginated requests with search
+export const getPaginatedMovies = (page = 1, limit = 20, search = '', genre = '', person = '', sort = 'newest') => {
+  const queryParams = {
+    page,
+    limit,
+    sort
+  };
+  
+  if (search) {
+    queryParams.search = search;
+  }
+  
+  if (genre) {
+    queryParams.genre = genre;
+  }
+  
+  if (person) {
+    queryParams.person = person;
+  }
+  
+  return apiFetch('/movies', { queryParams });
+};
+
+export const getPaginatedUsers = (page = 1, limit = 20, search = '', role = '') => {
+  const queryParams = {
+    page,
+    limit
+  };
+  
+  if (search) {
+    queryParams.search = search;
+  }
+  
+  if (role) {
+    queryParams.role = role;
+  }
+  
+  return apiFetch('/users', { queryParams });
+};
+
+export const getPaginatedPeople = (page = 1, limit = 20, search = '', profession = '') => {
+  const queryParams = {
+    page,
+    limit
+  };
+  
+  if (search) {
+    queryParams.search = search;
+  }
+  
+  if (profession) {
+    queryParams.profession = profession;
+  }
+  
+  return apiFetch('/people', { queryParams });
 };
