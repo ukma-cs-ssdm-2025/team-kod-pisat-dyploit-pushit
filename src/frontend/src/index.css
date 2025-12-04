@@ -5,11 +5,27 @@
     scroll-behavior: smooth;
   }
   
-  body {
-    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 font-sans antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-    overflow-x: hidden;
-  }
+body {
+  /* 1) Зірочки (твоє PNG) + 2) синій градієнт під ними */
+  background-image:
+    url("/pictures_elements/stars_opacity.png"),
+    linear-gradient(to bottom right, #052288, #0b1743, #000000);
+
+  background-repeat: repeat, no-repeat;
+  background-size: 310px auto, cover;
+
+  /* 3) Tailwind-текст та згладжування */
+  @apply text-gray-100 font-sans antialiased;
+
+  /* 4) Стандартні системні шрифти */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+
+  overflow-x: hidden;
+  margin: 0;
+}
+
+
 
   *,
   *::before,
@@ -76,27 +92,6 @@
   .rating-stars {
     @apply text-yellow-400 text-lg tracking-wider;
   }
-
-  /* Стилі для слайдерів */
-  input[type="range"].slider {
-    @apply w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer;
-  }
-
-  input[type="range"].slider::-webkit-slider-thumb {
-    @apply appearance-none h-5 w-5 rounded-full bg-blue-500 cursor-pointer border-2 border-blue-400;
-  }
-
-  input[type="range"].slider::-moz-range-thumb {
-    @apply h-5 w-5 rounded-full bg-blue-500 cursor-pointer border-2 border-blue-400 border-none;
-  }
-
-  input[type="range"].slider::-webkit-slider-track {
-    @apply bg-gray-700 rounded-lg;
-  }
-
-  input[type="range"].slider::-moz-range-track {
-    @apply bg-gray-700 rounded-lg border-none;
-  }
 }
 
 @layer utilities {
@@ -104,3 +99,9 @@
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   }
 }
+
+
+/* ---- Колір повзунків (thumb + трек), без зміни розміру ---- */
+input[type="range"] {
+  accent-color: #d6cecf; /* тут можна поставити будь-який колір */
+}  

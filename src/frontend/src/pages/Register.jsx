@@ -34,7 +34,7 @@ export default function Register() {
       <div className="flex w-full max-w-6xl h-[540px] items-stretch gap-17 relative">
 
         {/* Лівий бордовий блок */}
-        <div className="hidden lg:flex flex-1 bg-[#6f0e0e] rounded-[15px] items-center justify-center">
+        <div className="hidden lg:flex flex-1 bg-[#052288] rounded-[15px] items-center justify-center">
           <div className="flex flex-col items-center justify-center gap-6">
 
             {/* Відеострічка */}
@@ -130,7 +130,7 @@ export default function Register() {
         </div>
 
         {/* Правий бордовий блок */}
-        <div className="flex-1 bg-[#6f0e0e] rounded-[15px] flex items-center justify-center">
+        <div className="flex-1 bg-[#052288] rounded-[15px] flex items-center justify-center">
           <form
             onSubmit={handleSubmit}
             className="w-full max-w-md px-8 py-6 flex flex-col justify-center"
