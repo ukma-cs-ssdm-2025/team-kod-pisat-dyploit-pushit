@@ -39,3 +39,33 @@ svg {
   max-width: 100%;
 }
 */
+
+
+/* ------------------------- */
+/* 🎬 POPCORN BOUNCE EFFECT  */
+/* ------------------------- */
+
+.popcorn {
+  cursor: pointer;
+}
+
+/* анімація вмикається ТІЛЬКИ коли є клас .active */
+.popcorn.active {
+  animation: popcorn-bounce 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes popcorn-bounce {
+  0%   { transform: translateY(0); }
+
+  20%  { transform: translateY(-70px); }  /* перший високий стрибок */
+  35%  { transform: translateY(0); }
+
+  50%  { transform: translateY(-40px); }  /* другий нижчий */
+  65%  { transform: translateY(0); }
+
+  78%  { transform: translateY(-20px); }  /* третій ще нижчий */
+  88%  { transform: translateY(0); }
+
+  100% { transform: translateY(0); }
+}
+

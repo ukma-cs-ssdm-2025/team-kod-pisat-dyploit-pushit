@@ -13,6 +13,10 @@ import AddPerson from "./pages/AddPerson"
 import Person from "./pages/Person"
 import Recommendations from "./pages/Recommendations"
 
+
+// 🪄 наш глобальний ефект мишки
+import MagicMouse from "./components/MagicMouse" // або "./components/MagicMouse" якщо файл з великої літери
+
 function AppContent() {
   const { pathname } = useLocation()
   const hideHeader = pathname === "/login" || pathname === "/register"
@@ -24,12 +28,15 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Movies />} />
           <Route path="/movies" element={<Movies />} />
-          
-          <Route path="/recommendations" element={
-            <ProtectedRoute>
-              <Recommendations />
-            </ProtectedRoute>
-          } />
+
+          <Route
+            path="/recommendations"
+            element={
+              <ProtectedRoute>
+                <Recommendations />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -39,51 +46,58 @@ function AppContent() {
           <Route path="/user/:username" element={<Profile />} />
 
           <Route
-            path="/users" 
+            path="/users"
             element={
               <ProtectedRoute>
                 <UserList />
               </ProtectedRoute>
-            } 
+            }
           />
-          
-          <Route 
-            path="/movies/new" 
+
+          <Route
+            path="/movies/new"
             element={
               <ProtectedRoute adminOnly={true}>
                 <AddMovie />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/people" 
+          <Route
+            path="/people"
             element={
               <ProtectedRoute>
                 <PeopleList />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/people/new" 
+          <Route
+            path="/people/new"
             element={
               <ProtectedRoute adminOnly={true}>
                 <AddPerson />
               </ProtectedRoute>
-            } 
+            }
           />
-
         </Routes>
       </main>
     </>
   )
 }
 
+
 export default function App() {
   return (
     <BrowserRouter>
+
+      {/* глобальний ефект — працює поверх фону */}
+      <MagicMouse />
+
+      {/* увесь твій сайт */}
       <AppContent />
+
     </BrowserRouter>
-  )
+  );
 }
+

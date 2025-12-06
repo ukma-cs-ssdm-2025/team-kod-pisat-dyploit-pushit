@@ -41,50 +41,50 @@ export default function Profile() {
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
 
   const fetchProfileData = async (targetUsername, isMyProfile) => {
-      try {
-        const allMoviesData = await getAllMovies();
-        const moviesList = allMoviesData.movies || allMoviesData;
-        setAllMovies(moviesList);
+    try {
+      const allMoviesData = await getAllMovies();
+      const moviesList = allMoviesData.movies || allMoviesData;
+      setAllMovies(moviesList);
 
-        const allReviewsData = await getAllReviews();
-        const reviewsList = allReviewsData.reviews || allReviewsData;
+      const allReviewsData = await getAllReviews();
+      const reviewsList = allReviewsData.reviews || allReviewsData;
 
-        let user;
-        if (isMyProfile) {
-          user = currentUser;
-        } else {
-          user = await getUserByUsername(targetUsername);
-        }
+      let user;
+      if (isMyProfile) {
+        user = currentUser;
+      } else {
+        user = await getUserByUsername(targetUsername);
+      }
 
-        if (user) {
-          setProfileUser(user);
-          setEditData(user); 
+      if (user) {
+        setProfileUser(user);
+        setEditData(user); 
+        
+        const reviews = reviewsList
+          .filter(r => r.user_id === user.id)
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
           
-          const reviews = reviewsList
-            .filter(r => r.user_id === user.id)
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            
-          setUserReviews(reviews);
+        setUserReviews(reviews);
 
-          const selectedIds = user.liked_movies || [];
-          setSelectedMovies(moviesList.filter(m => selectedIds.includes(m.id)));
+        const selectedIds = user.liked_movies || [];
+        setSelectedMovies(moviesList.filter(m => selectedIds.includes(m.id)));
 
-          if (isMyProfile) {
-            try {
-              const requests = await getIncomingFriendRequests(currentUser.id);
-              setIncomingRequests(requests.incoming || []);
-            } catch (err) {
-              console.error("Error loading requests:", err);
-            }
+        if (isMyProfile) {
+          try {
+            const requests = await getIncomingFriendRequests(currentUser.id);
+            setIncomingRequests(requests.incoming || []);
+          } catch (err) {
+            console.error("Error loading requests:", err);
           }
-        } else {
-          setProfileUser(null);
         }
-      } catch (err) {
-        console.error("Error loading profile:", err);
+      } else {
         setProfileUser(null);
       }
-      setIsLoading(false);
+    } catch (err) {
+      console.error("Error loading profile:", err);
+      setProfileUser(null);
+    }
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -132,21 +132,20 @@ export default function Profile() {
   };
 
   const confirmDeleteReview = (reviewId) => {
-      setConfirmModalConfig({
-          isOpen: true,
-          title: "Delete Review?",
-          message: "Are you sure you want to delete this review?",
-          onConfirm: async () => {
-              try {
-                  await deleteReview(reviewId);
-                  setUserReviews(prev => prev.filter(r => r.id !== reviewId));
-              } catch (err) {
-                  setAlertConfig({ isOpen: true, title: "Error", message: `Error deleting review: ${err.message}` });
-              }
-          }
-      });
+    setConfirmModalConfig({
+      isOpen: true,
+      title: "Delete Review?",
+      message: "Are you sure you want to delete this review?",
+      onConfirm: async () => {
+        try {
+          await deleteReview(reviewId);
+          setUserReviews(prev => prev.filter(r => r.id !== reviewId));
+        } catch (err) {
+          setAlertConfig({ isOpen: true, title: "Error", message: `Error deleting review: ${err.message}` });
+        }
+      }
+    });
   };
-
 
   const isMe = currentUser?.id === profileUser?.id;
   const canEdit = isMe || 
@@ -220,50 +219,130 @@ export default function Profile() {
 
   const confirmDeleteProfile = () => {
     setConfirmModalConfig({
-        isOpen: true,
-        title: "Delete User?",
-        message: `Are you sure you want to delete user "${profileUser.username}"?`,
-        onConfirm: async () => {
-            try {
-                await deleteUser(profileUser.id);
-                setAlertConfig({ isOpen: true, title: "Success", message: "User deleted!" });
-                setTimeout(() => navigate('/users'), 1500);
-            } catch (err) {
-                setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Delete failed'}` });
-            }
+      isOpen: true,
+      title: "Delete User?",
+      message: `Are you sure you want to delete user "${profileUser.username}"?`,
+      onConfirm: async () => {
+        try {
+          await deleteUser(profileUser.id);
+          setAlertConfig({ isOpen: true, title: "Success", message: "User deleted!" });
+          setTimeout(() => navigate('/users'), 1500);
+        } catch (err) {
+          setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Delete failed'}` });
         }
+      }
     });
   };
 
   if (isLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400 cursor-wait">Loading...</div>;
-  }
-  if (!profileUser) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-red-400">User not found.</div>;
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ backgroundColor: "#1a1a1a" }}
+      >
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf] uppercase">
+          Loading...
+        </div>
+      </div>
+    );
   }
 
+  if (!profileUser) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ backgroundColor: "#1a1a1a" }}
+      >
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-red-400 uppercase">
+          User not found.
+        </div>
+      </div>
+    );
+  }
+
+// РЕТУРН
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-8 pb-8">
-      <div className="max-w-6xl mx-auto p-4">
-        
+    <div
+      className="min-h-screen px-4 py-8 flex justify-center"
+      style={{ backgroundColor: "#1a1a1a" }}
+    >
+      <div className="w-full max-w-6xl">
+
+        {/* ВЕРХНІЙ БЛОК ПРОФІЛЮ */}
         {!isEditing ? (
-          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 shadow-2xl">
+          <div className="bg-[#052288] border-black rounded-[15px] p-6 mb-8 shadow-2xl">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              <Avatar src={profileUser.avatar_url} alt={profileUser.nickname} size="lg" className="border-4 border-blue-500" />
+              <Avatar
+                src={profileUser.avatar_url}
+                alt={profileUser.nickname}
+                size="lg"
+                className="border-[4px] border-black bg-[#2b2727]"
+              />
+
               <div className="text-center md:text-left flex-1">
-                <h1 className="text-3xl font-bold text-white">{profileUser.nickname}</h1>
-                <p className="text-lg text-gray-300 mb-2">{profileUser.username}</p>
-                <div className="border-t border-gray-700 pt-3 mt-2">
-                  <p className="text-gray-400">Email: {profileUser.email}</p>
-                  <p className="text-gray-400 capitalize">Role: {profileUser.role}</p>
-                  <p className="text-gray-400">Friends: {profileUser.friends?.length || 0}</p>
+                <h1
+                  className="
+                    text-2xl md:text-3xl
+                    font-extrabold
+                    text-[#d6cecf]
+                    uppercase
+                    tracking-[0.18em]
+                    mb-2
+                  "
+                  style={{
+                    letterSpacing: "0.12em",
+                    wordSpacing: "0.12em",
+                  }}
+                >
+                  {profileUser.nickname || profileUser.username}
+                </h1>
+
+                <p className="text-sm md:text-base text-black font-extrabold tracking-[0.12em] uppercase mb-3">
+                  @{profileUser.username}
+                </p>
+
+                <div className="border-t-[3px] border-black pt-3 mt-2 space-y-1">
+                  <p className="text-sm md:text-sm text-[#d6cecf] uppercase font-semibold tracking-[0.06em]">
+                    Email:{" "}
+                    <span className="font-extrabold text-black">
+                      {profileUser.email}
+                    </span>
+                  </p>
+                  <p className="text-sm md:text-sm text-[#d6cecf] uppercase font-semibold tracking-[0.06em]">
+                    Role:{" "}
+                    <span className="font-extrabold text-black uppercase">
+                      {profileUser.role}
+                    </span>
+                  </p>
+                  <p className="text-sm md:text-sm text-[#d6cecf] uppercase font-semibold tracking-[0.06em]">
+                    Friends:{" "}
+                    <span className="font-extrabold text-black">
+                      {profileUser.friends?.length || 0}
+                    </span>
+                  </p>
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
+
+              {/* КНОПКИ ДІЙ */}
+              <div className="flex flex-col gap-2 w-full md:w-auto">
                 {!isMe && friendStatus === 'not_friend' && (
                   <button 
                     onClick={() => handleFriendAction('add')}
-                    className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded transition-colors cursor-pointer"
+                    className="
+                      bg-[#c9c7c7]
+                      text-black
+                      font-extrabold
+                      text-xs md:text-sm
+                      tracking-[0.14em]
+                      uppercase
+                      border-[3px] border-black
+                      rounded-[12px]
+                      px-4 py-2
+                      hover:bg-[#e0dfdf]
+                      transition-colors
+                      cursor-pointer
+                    "
                   >
                     Add Friend
                   </button>
@@ -272,14 +351,43 @@ export default function Profile() {
                 {isMe && incomingRequests.length > 0 && (
                   <button 
                     onClick={() => setShowFriendRequests(!showFriendRequests)}
-                    className="bg-yellow-600 hover:bg-yellow-500 text-white px-4 py-2 rounded transition-colors cursor-pointer"
+                    className="
+                      bg-[#c9c7c7]
+                      text-black
+                      font-extrabold
+                      text-xs md:text-sm
+                      tracking-[0.14em]
+                      uppercase
+                      border-[3px] border-black
+                      rounded-[12px]
+                      px-4 py-2
+                      hover:bg-[#e0dfdf]
+                      transition-colors
+                      cursor-pointer
+                    "
                   >
                     Friend Requests ({incomingRequests.length})
                   </button>
                 )}
 
                 {canEdit && (
-                  <button onClick={() => setIsEditing(true)} className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded border border-gray-600 transition-colors cursor-pointer">
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="
+                      bg-[#2b2727]
+                      text-[#d6cecf]
+                      font-extrabold
+                      text-xs md:text-sm
+                      tracking-[0.16em]
+                      uppercase
+                      border-[3px] border-black
+                      rounded-[12px]
+                      px-4 py-2
+                      hover:bg-black
+                      transition-colors
+                      cursor-pointer
+                    "
+                  >
                     Edit Profile
                   </button>
                 )}
@@ -287,42 +395,108 @@ export default function Profile() {
                 {!isMe && friendStatus === 'friend' && (
                   <button 
                     onClick={() => handleFriendAction('remove')}
-                    className="bg-red-900 hover:bg-red-800 text-red-200 px-4 py-2 rounded transition-colors cursor-pointer"
+                    className="
+                      bg-[#2b2727]
+                      text-[#d6cecf]
+                      font-extrabold
+                      text-xs md:text-sm
+                      tracking-[0.16em]
+                      uppercase
+                      border-[3px] border-black
+                      rounded-[12px]
+                      px-4 py-2
+                      hover:bg-black
+                      transition-colors
+                      cursor-pointer
+                    "
                   >
                     Unfriend
                   </button>
                 )}
 
                 {canDelete && (
-                  <button onClick={confirmDeleteProfile} className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded transition-colors cursor-pointer">
+                  <button
+                    onClick={confirmDeleteProfile}
+                    className="
+                      bg-[#c0392b]
+                      text-[#d6cecf]
+                      font-extrabold
+                      text-xs md:text-sm
+                      tracking-[0.16em]
+                      uppercase
+                      border-[3px] border-black
+                      rounded-[12px]
+                      px-4 py-2
+                      hover:bg-[#e74c3c]
+                      transition-colors
+                      cursor-pointer
+                    "
+                  >
                     Ban User
                   </button>
                 )}
               </div>
             </div>
 
+            {/* Вхідні запити в друзі */}
             {isMe && showFriendRequests && incomingRequests.length > 0 && (
-              <div className="mt-6 border-t border-gray-700 pt-4">
-                <h3 className="text-xl font-bold text-white mb-4">Incoming Friend Requests</h3>
+              <div className="mt-6 border-t-[3px] border-black pt-4">
+                <h3 className="text-lg md:text-xl font-extrabold text-[#d6cecf] uppercase tracking-[0.16em] mb-4">
+                  Incoming Friend Requests
+                </h3>
                 <div className="space-y-3">
                   {incomingRequests.map(request => (
-                    <div key={request.id} className="flex items-center justify-between bg-gray-700/50 p-3 rounded-lg">
+                    <div
+                      key={request.id}
+                      className="flex items-center justify-between bg-[#2b2727] border-[3px] border-black rounded-[12px] p-3"
+                    >
                       <div>
-                        <Link to={`/user/${request.username}`} className="text-white font-semibold hover:underline cursor-pointer">
+                        <Link
+                          to={`/user/${request.username}`}
+                          className="text-[#d6cecf] font-extrabold hover:underline cursor-pointer"
+                        >
                           {request.nickname}
                         </Link>
-                        <p className="text-gray-400 text-sm cursor-default">{request.username}</p>
+                        <p className="text-[#c9c7c7] text-xs cursor-default">
+                          @{request.username}
+                        </p>
                       </div>
                       <div className="flex gap-2">
                         <button 
                           onClick={() => handleFriendAction('accept', request.requester_id)}
-                          className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm transition-colors cursor-pointer"
+                          className="
+                            bg-[#c9c7c7]
+                            text-black
+                            font-extrabold
+                            text-xs
+                            tracking-[0.14em]
+                            uppercase
+                            border-[3px] border-black
+                            rounded-[10px]
+                            px-3 py-1
+                            hover:bg-[#e0dfdf]
+                            transition-colors
+                            cursor-pointer
+                          "
                         >
                           Accept
                         </button>
                         <button 
                           onClick={() => handleFriendAction('remove', request.requester_id)}
-                          className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm transition-colors cursor-pointer"
+                          className="
+                            bg-[#2b2727]
+                            text-[#d6cecf]
+                            font-extrabold
+                            text-xs
+                            tracking-[0.14em]
+                            uppercase
+                            border-[3px] border-black
+                            rounded-[10px]
+                            px-3 py-1
+                            hover:bg-black
+                            transition-colors
+                            cursor-pointer
+                          "
                         >
                           Decline
                         </button>
@@ -334,60 +508,214 @@ export default function Profile() {
             )}
           </div>
         ) : (
-          <form onSubmit={handleEditSubmit} className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-8 space-y-4 shadow-2xl">
-            <h2 className="text-2xl font-bold text-white mb-4">Edit Profile</h2>
+          /* ФОРМА РЕДАГУВАННЯ */
+          <form
+            onSubmit={handleEditSubmit}
+            className="
+              bg-[#052288]
+              rounded-[15px]
+              p-6 mb-8
+              shadow-2xl
+              space-y-4
+            "
+          >
+            <h2
+              className="
+                text-2xl font-extrabold
+                text-[#d6cecf]
+                uppercase
+                tracking-[0.18em]
+                mb-2
+              "
+              style={{
+                letterSpacing: "0.12em",
+              }}
+            >
+              Edit Profile
+            </h2>
+
             <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Nickname</label>
-              <input type="text" name="nickname" value={editData.nickname} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Nickname
+              </label>
+              <input
+                type="text"
+                name="nickname"
+                value={editData.nickname}
+                onChange={handleEditChange}
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  cursor-text
+                "
+              />
             </div>
+
             <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Email</label>
-              <input type="email" name="email" value={editData.email} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={editData.email}
+                onChange={handleEditChange}
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  cursor-text
+                "
+              />
             </div>
+
             {isMe && (
               <div>
-                <label className="block text-blue-400 mb-2 font-medium cursor-default">Avatar (Upload new)</label>
-                <input type="file" name="avatarFile" onChange={handleFileChange} accept="image/*" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"/>
+                <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                  Avatar (Upload new)
+                </label>
+                <input
+                  type="file"
+                  name="avatarFile"
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="
+                    w-full
+                    bg-[#2b2727]
+                    text-[#d6cecf]
+                    border-[3px] border-black
+                    rounded-[16px]
+                    px-4 py-2
+                    cursor-pointer
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-[10px] file:border-0
+                    file:text-xs file:font-extrabold
+                    file:uppercase file:tracking-[0.14em]
+                    file:bg-[#c9c7c7] file:text-black
+                    hover:file:bg-[#e0dfdf]
+                  "
+                />
               </div>
             )}
+
             {(isAdmin || isModerator) && !isMe && (
               <div>
-                <label className="block text-blue-400 mb-2 font-medium cursor-default">User Role (Admin/Mod)</label>
-                <select name="role" value={editData.role} onChange={handleRoleChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none">
-                  <option value="user" className="bg-gray-800">user</option>
-                  <option value="moderator" className="bg-gray-800">moderator</option>
+                <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                  User Role (Admin/Mod)
+                </label>
+                <select
+                  name="role"
+                  value={editData.role}
+                  onChange={handleRoleChange}
+                  className="
+                    w-full
+                    bg-[#2b2727]
+                    text-[#d6cecf]
+                    border-[3px] border-black
+                    rounded-[16px]
+                    px-4 py-2
+                    focus:outline-none
+                    focus:border-[#d6cecf]
+                    cursor-pointer
+                    appearance-none
+                  "
+                >
+                  <option value="user" className="bg-[#2b2727]">user</option>
+                  <option value="moderator" className="bg-[#2b2727]">moderator</option>
                   {isAdmin && profileUser.role !== 'admin' && (
-                    <option value="admin" className="bg-gray-800">admin</option>
+                    <option value="admin" className="bg-[#2b2727]">admin</option>
                   )}
                 </select>
               </div>
             )}
-            <div className="flex gap-4 pt-4">
-              <button type="submit" className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer">Save Changes</button>
-              <button type="button" onClick={() => { setIsEditing(false); setAvatarFile(null); }} className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer">Cancel</button>
+
+            <div className="flex flex-wrap gap-4 pt-4">
+              <button
+                type="submit"
+                className="
+                  bg-[#c9c7c7]
+                  text-black
+                  font-extrabold
+                  text-xs md:text-sm
+                  tracking-[0.18em]
+                  uppercase
+                  border-[3px] border-black
+                  rounded-[14px]
+                  px-6 py-2
+                  hover:bg-[#e0dfdf]
+                  transition-colors
+                  cursor-pointer
+                "
+              >
+                Save Changes
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIsEditing(false); setAvatarFile(null); }}
+                className="
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  font-extrabold
+                  text-xs md:text-sm
+                  tracking-[0.18em]
+                  uppercase
+                  border-[3px] border-black
+                  rounded-[14px]
+                  px-6 py-2
+                  hover:bg-black
+                  transition-colors
+                  cursor-pointer
+                "
+              >
+                Cancel
+              </button>
             </div>
           </form>
         )}
 
+        {/* ДРУЗІ */}
         {profileUser.friends && profileUser.friends.length > 0 && (
-          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 shadow-2xl">
-            <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+          <div className="bg-[#052288] rounded-[15px] p-6 mb-8 shadow-2xl">
+            <h2 className="text-2xl font-extrabold text-[#d6cecf] mb-6 uppercase tracking-[0.16em]">
               Friends ({profileUser.friends.length})
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {profileUser.friends.map(friend => (
-                <div key={friend.id} className="bg-gray-700/50 rounded-lg p-4 flex items-center gap-3">
+                <div
+                  key={friend.id}
+                  className="bg-[#1a1a1a] border-[4px] border-black rounded-[12px] p-4 flex items-center gap-3"
+                >
                   <Avatar src={friend.avatar_url} alt={friend.nickname} size="md" />
                   <div className="flex-1">
-                    <Link to={`/user/${friend.username}`} className="text-white font-semibold hover:underline block cursor-pointer">
+                    <Link
+                      to={`/user/${friend.username}`}
+                      className="text-[#d6cecf] font-extrabold hover:underline block cursor-pointer"
+                    >
                       {friend.nickname}
                     </Link>
-                    <p className="text-gray-400 text-sm cursor-default">{friend.username}</p>
+                    <p className="text-[#c9c7c7] text-xs cursor-default">
+                      @{friend.username}
+                    </p>
                   </div>
                   {isMe && (
                     <button 
                       onClick={() => handleFriendAction('remove', friend.id)}
-                      className="text-red-400 hover:text-red-300 text-sm font-bold p-2 cursor-pointer"
+                      className="text-[#c0392b] hover:text-[#e74c3c] text-sm font-bold p-2 cursor-pointer"
                       title="Remove Friend"
                     >
                       ✕
@@ -399,8 +727,9 @@ export default function Profile() {
           </div>
         )}
 
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 shadow-2xl">
-          <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+        {/* УЛЮБЛЕНІ ФІЛЬМИ */}
+        <div className="bg-[#052288]  border-black rounded-[15px] p-6 mb-8 shadow-2xl">
+          <h2 className="text-2xl font-extrabold text-[#d6cecf] mb-6 uppercase tracking-[0.16em]">
             Favorite Movies
           </h2>
           {selectedMovies.length > 0 ? (
@@ -410,12 +739,15 @@ export default function Profile() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 italic cursor-default">No favorite movies yet.</p>
+            <p className="text-[#1a1a1a] uppercase font-extrabold">
+              No favorite movies yet
+            </p>
           )}
         </div>
         
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-2xl">
-          <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+        {/* РЕВʼЮ */}
+        <div className="bg-[#052288] border-black rounded-[15px] p-6 shadow-2xl">
+          <h2 className="text-2xl font-extrabold text-[#d6cecf] mb-6 uppercase tracking-[0.16em]">
             Reviews
           </h2>
           {userReviews.length > 0 ? (
@@ -430,7 +762,7 @@ export default function Profile() {
                     nickname: profileUser.nickname, 
                     username: profileUser.username 
                   },
-                  text: review.body,  
+                  text: review.body,
                   date: review.created_at
                 };
 
@@ -444,11 +776,26 @@ export default function Profile() {
               })}
             </div>
           ) : (
-            <p className="text-gray-400 italic cursor-default">No reviews yet.</p>
+            <p className="text-[#1a1a1a] uppercase font-extrabold">
+              No reviews yet
+            </p>
           )}
         </div>
 
       </div>
+
+  {/* POPCORN DECORATION */}
+      <img
+        src="/pictures_elements/popcorn_gray.png"
+        className="popcorn fixed right-6 bottom-6 w-[70px] z-20"
+        alt="Popcorn"
+
+        onClick={(e) => {
+         e.target.classList.remove("active");      // скинути попередню анімацію
+         void e.target.offsetWidth;                // магічний трюк для рестарту
+         e.target.classList.add("active");         // увімкнути знову
+       }}
+      />
 
       <ConfirmModal 
         isOpen={confirmModalConfig.isOpen}
