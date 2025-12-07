@@ -19,6 +19,8 @@ import ReviewCard from "../components/ReviewCard"
 import ConfirmModal from '../components/ConfirmModal';
 import AlertModal from '../components/AlertModal';
 import Avatar from '../components/Avatar';
+import TVAvatar from "../components/TVAvatar"; // якщо файл у src/components
+
 
 export default function Profile() {
   const { username } = useParams();
@@ -273,13 +275,11 @@ export default function Profile() {
         {!isEditing ? (
           <div className="bg-[#052288] border-black rounded-[15px] p-6 mb-8 shadow-2xl">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              <Avatar
-                src={profileUser.avatar_url}
-                alt={profileUser.nickname}
-                size="lg"
-                className="border-[4px] border-black bg-[#2b2727]"
-              />
-
+              
+              <TVAvatar
+  src={profileUser.avatar_url}
+  alt={profileUser.nickname}
+/>
               <div className="text-center md:text-left flex-1">
                 <h1
                   className="
@@ -696,6 +696,7 @@ export default function Profile() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {profileUser.friends.map(friend => (
+
                 <div
                   key={friend.id}
                   className="bg-[#1a1a1a] border-[4px] border-black rounded-[12px] p-4 flex items-center gap-3"
@@ -712,6 +713,7 @@ export default function Profile() {
                       @{friend.username}
                     </p>
                   </div>
+                  
                   {isMe && (
                     <button 
                       onClick={() => handleFriendAction('remove', friend.id)}
