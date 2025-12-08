@@ -86,7 +86,7 @@ export default function AddMovie() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-8 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#33364c] via-[#292d3d] to-[#606aa2] pt-8 pb-8">
       <div className="max-w-2xl mx-auto p-4">
         <h1 className="text-3xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
           Add New Movie

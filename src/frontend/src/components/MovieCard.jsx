@@ -13,7 +13,7 @@ export default function MovieCard({ movie }) {
           className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105 group-hover:brightness-110"
         />
       </div>
-      <div className="p-4 bg-gradient-to-t from-gray-900 to-gray-800/40">
+      <div className="p-4 bg-[#2f3036]">
         <h3
           className="text-base font-semibold text-white truncate group-hover:text-blue-300 transition-colors duration-200"
           title={movie.title}

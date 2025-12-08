@@ -6,7 +6,7 @@ import Pagination from "../components/Pagination";
 import { useAuth } from "../hooks/useAuth";
 
 const SearchIcon = () => (
-  <svg className="w-5 h-5 text-[#052288]" fill="currentColor" viewBox="0 0 20 20">
+  <svg className="w-5 h-5 text-[#606aa2]" fill="currentColor" viewBox="0 0 20 20">
     <path
       fillRule="evenodd"
       d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
@@ -155,7 +155,7 @@ export default function Movies() {
         {/* HEADER */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white border-l-4 border-[#052288] pl-4">
+            <h1 className="text-3xl font-bold text-white border-l-4 border-[#606aa2] pl-4">
               Explore Movies
             </h1>
             <p className="text-gray-400 mt-2 pl-5 cursor-default">
@@ -165,7 +165,7 @@ export default function Movies() {
           {isAdmin && (
             <Link
               to="/movies/new"
-              className="bg-[#052288] hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
+              className="bg-[#606aa2] hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
             >
               + Add Movie
             </Link>
@@ -173,7 +173,7 @@ export default function Movies() {
         </div>
 
         {/* SEARCH PANEL (outer = blue, як просила) */}
-        <div className="bg-[#052288] rounded-[15px] p-6 mb-8 sticky top-6 z-10">
+        <div className="bg-[#606aa2] rounded-[15px] p-6 mb-8 sticky top-6 z-10">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-grow">
               <input

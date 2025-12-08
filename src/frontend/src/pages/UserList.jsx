@@ -187,7 +187,7 @@ export default function UserList() {
 
   return (
     <div className="min-h-screen pt-8 pb-8" style={{ backgroundColor: '#1a1a1a' }}>
-      <div className="w-full max-w-6xl mx-auto bg-[#052288] rounded-[15px] p-8 ">
+      <div className="w-full max-w-6xl mx-auto bg-[#606aa2] rounded-[15px] p-8 ">
         <h1 className="text-3xl font-bold text-[#d6cecf] mb-6 uppercase tracking-[0.12em]">
           Community Users
         </h1>

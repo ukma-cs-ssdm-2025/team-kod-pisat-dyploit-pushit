@@ -24,10 +24,10 @@ export default function Header() {
           to={isAuthenticated ? "/movies" : "/login"}
           className="
             text-2xl font-extrabold 
-            bg-gradient-to-r from-[#d6cecf] to-[#052288]
+            bg-gradient-to-r from-[#d6cecf] to-[#606aa2]
             uppercase 
             bg-clip-text text-transparent
-            hover:from-[#052288] hover:to-[#d6cecf]
+            hover:from-[#606aa2] hover:to-[#d6cecf]
             transition-all duration-300
             cursor-pointer tracking-[0.05em]
           "

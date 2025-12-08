@@ -273,7 +273,7 @@ export default function Profile() {
 
         {/* ВЕРХНІЙ БЛОК ПРОФІЛЮ */}
         {!isEditing ? (
-          <div className="bg-[#052288] border-black rounded-[15px] p-6 mb-8 shadow-2xl">
+          <div className="bg-[#606aa2] border-black rounded-[15px] p-6 mb-8 shadow-2xl">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
               
               <TVAvatar
@@ -299,7 +299,7 @@ export default function Profile() {
                 </h1>
 
                 <p className="text-sm md:text-base text-black font-extrabold tracking-[0.12em] uppercase mb-3">
-                  @{profileUser.username}
+                  {profileUser.username}
                 </p>
 
                 <div className="border-t-[3px] border-black pt-3 mt-2 space-y-1">
@@ -458,7 +458,7 @@ export default function Profile() {
                           {request.nickname}
                         </Link>
                         <p className="text-[#c9c7c7] text-xs cursor-default">
-                          @{request.username}
+                          {request.username}
                         </p>
                       </div>
                       <div className="flex gap-2">
@@ -512,7 +512,7 @@ export default function Profile() {
           <form
             onSubmit={handleEditSubmit}
             className="
-              bg-[#052288]
+              bg-[#606aa2]
               rounded-[15px]
               p-6 mb-8
               shadow-2xl
@@ -690,7 +690,7 @@ export default function Profile() {
 
         {/* ДРУЗІ */}
         {profileUser.friends && profileUser.friends.length > 0 && (
-          <div className="bg-[#052288] rounded-[15px] p-6 mb-8 shadow-2xl">
+          <div className="bg-[#606aa2] rounded-[15px] p-6 mb-8 shadow-2xl">
             <h2 className="text-2xl font-extrabold text-[#d6cecf] mb-6 uppercase tracking-[0.16em]">
               Friends ({profileUser.friends.length})
             </h2>
@@ -710,7 +710,7 @@ export default function Profile() {
                       {friend.nickname}
                     </Link>
                     <p className="text-[#c9c7c7] text-xs cursor-default">
-                      @{friend.username}
+                      {friend.username}
                     </p>
                   </div>
                   
@@ -730,7 +730,7 @@ export default function Profile() {
         )}
 
         {/* УЛЮБЛЕНІ ФІЛЬМИ */}
-        <div className="bg-[#052288]  border-black rounded-[15px] p-6 mb-8 shadow-2xl">
+        <div className="bg-[#606aa2]  border-black rounded-[15px] p-6 mb-8 shadow-2xl">
           <h2 className="text-2xl font-extrabold text-[#d6cecf] mb-6 uppercase tracking-[0.16em]">
             Favorite Movies
           </h2>
@@ -748,7 +748,7 @@ export default function Profile() {
         </div>
         
         {/* РЕВʼЮ */}
-        <div className="bg-[#052288] border-black rounded-[15px] p-6 shadow-2xl">
+        <div className="bg-[#606aa2] border-black rounded-[15px] p-6 shadow-2xl">
           <h2 className="text-2xl font-extrabold text-[#d6cecf] mb-6 uppercase tracking-[0.16em]">
             Reviews
           </h2>

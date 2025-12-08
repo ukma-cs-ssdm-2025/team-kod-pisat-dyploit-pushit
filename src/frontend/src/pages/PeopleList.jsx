@@ -164,7 +164,7 @@ export default function PeopleList() {
   // -----------------------------------------------------
   return (
     <div className="min-h-screen pt-8 pb-8" style={{ backgroundColor: '#1a1a1a' }}>
-      <div className="w-full max-w-6xl mx-auto bg-[#052288] rounded-[15px] p-8">
+      <div className="w-full max-w-6xl mx-auto bg-[#606aa2] rounded-[15px] p-8">
         {/* Header */}
         <div className="flex justify-between items-center gap-4 mb-8 flex-wrap">
           <div>

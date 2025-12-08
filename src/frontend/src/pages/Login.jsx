@@ -29,7 +29,7 @@ export default function Login() {
       <div className="flex w-full max-w-6xl h-[540px] items-stretch gap-17 relative">
 
         {/* Лівий бордовий блок */}
-        <div className="hidden lg:flex flex-1 bg-[#052288] rounded-[15px] items-center justify-center">
+        <div className="hidden lg:flex flex-1 bg-[#606aa2] rounded-[15px] items-center justify-center">
           <div className="flex flex-col items-center justify-center gap-6">
 
             {/* Відеострічка */}
@@ -131,7 +131,7 @@ export default function Login() {
         </div>
 
         {/* Правий бордовий блок */}
-        <div className="flex-1 bg-[#052288] rounded-[15px] flex items-center justify-center h-full">
+        <div className="flex-1 bg-[#606aa2] rounded-[15px] flex items-center justify-center h-full">
           <form
             onSubmit={handleSubmit}
             className="w-full max-w-md px-8 h-full flex flex-col justify-center"
@@ -270,21 +270,38 @@ export default function Login() {
               </label>
             </div>
 
-            {/* Кнопка */}
-            <button
-              type="submit"
-              className="w-full
-               py-4 bg-[#c9c7c7] 
-               text-black font-extrabold
-                text-lg tracking-[0.25em] 
-                uppercase border-[4px] 
-                border-black rounded-[20px] 
-                hover:bg-[#e0dfdf]
-                transition-colors
-                mb-6"
-            >
-              Login
-            </button>
+
+{/* Кнопка */}
+<button
+  type="submit"
+  className="w-full
+    py-4 bg-[#c9c7c7] 
+    text-black font-extrabold
+    text-lg tracking-[0.25em] 
+    uppercase border-[4px] 
+    border-black rounded-[20px] 
+    hover:bg-[#e0dfdf]
+    mb-6
+  "
+  onClick={(e) => {
+    const btn = e.currentTarget;
+
+    // додаємо анімацію прямо інлайном
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    // повертаємо назад через 150ms
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+>
+  Login
+</button>
+
+
+
+
 
             {message && (
               <p className="text-center text-sm text-red-400">{message}</p>

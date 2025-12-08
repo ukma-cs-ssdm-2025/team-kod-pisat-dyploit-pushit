@@ -289,7 +289,7 @@ export default function Recommendations() {
         className="min-h-screen flex items-center justify-center px-4"
         style={{ backgroundColor: "#1a1a1a" }}
       >
-        <div className="w-full max-w-xl bg-[#052288] rounded-[15px] py-10 px-8 text-center border-[4px] border-black">
+        <div className="w-full max-w-xl bg-[#606aa2] rounded-[15px] py-10 px-8 text-center border-[4px] border-black">
           <p
             className="
               text-base md:text-lg
@@ -312,7 +312,7 @@ export default function Recommendations() {
       style={{ backgroundColor: "#1a1a1a" }}
     >
 
-      <div className="w-full max-w-6xl bg-[#052288] rounded-[15px] py-8 px-6 md:px-10">
+      <div className="w-full max-w-6xl bg-[#606aa2] rounded-[15px] py-8 px-6 md:px-10">
         {/* Верхній блок з заголовком і кнопкою Settings */}
         <div className="flex justify-between items-start mb-8 flex-wrap gap-4">
           <div>
