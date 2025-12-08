@@ -282,15 +282,17 @@ export default function Login() {
     border-black rounded-[20px] 
     hover:bg-[#e0dfdf]
     mb-6
+
+    transition-transform  // додає плавність
+    hover:scale-[0.95]    // ефект ховера
   "
   onClick={(e) => {
     const btn = e.currentTarget;
 
-    // додаємо анімацію прямо інлайном
+    // Ефект кліку — сильніше стискаємо
     btn.style.transition = "transform 0.15s ease";
     btn.style.transform = "scale(0.85)";
 
-    // повертаємо назад через 150ms
     setTimeout(() => {
       btn.style.transform = "scale(1)";
     }, 150);
@@ -298,6 +300,7 @@ export default function Login() {
 >
   Login
 </button>
+
 
 
 

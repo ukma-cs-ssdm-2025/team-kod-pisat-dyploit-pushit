@@ -321,25 +321,37 @@ export default function Register() {
               </div>
 
               {/* Кнопка */}
-              <button
-                type="submit"
-                className="
-                  w-full py-4
-                  bg-[#c9c7c7]
-                  text-black
-                  font-extrabold
-                  text-base
-                  tracking-[0.25em]
-                  uppercase
-                  border-[4px] border-black
-                  rounded-[20px]
-                  hover:bg-[#e0dfdf]
-                  transition-colors
-                  mb-4
-                "
-              >
-                REGISTER
-              </button>
+<button
+  type="submit"
+  className="w-full
+    py-4 bg-[#c9c7c7] 
+    text-black font-extrabold
+    text-lg tracking-[0.25em] 
+    uppercase border-[4px] 
+    border-black rounded-[20px] 
+    hover:bg-[#e0dfdf]
+    mb-6
+
+    transition-transform  // додає плавність
+    hover:scale-[0.95]    // ефект ховера
+  "
+  onClick={(e) => {
+    const btn = e.currentTarget;
+
+    // Ефект кліку — сильніше стискаємо
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+>
+  Register
+</button>
+
+
+
             </form>
           </div>
         </div>

@@ -177,24 +177,37 @@ export default function PeopleList() {
           </div>
 
           {isAdmin && (
-            <Link
-              to="/people/new"
-              className="
-                bg-[#c9c7c7] 
-                text-black 
-                border-[3px] border-black 
-                px-4 py-2 
-                rounded-[12px] 
-                font-extrabold 
-                uppercase 
-                tracking-[0.12em] 
-                text-xs
-                hover:bg-white
-                transition-colors
-              "
-            >
-              + Add Person
-            </Link>
+
+           <Link
+  to="/people/new"
+  className="
+    bg-black
+    text-white
+    font-extrabold
+    text-xs md:text-sm
+    tracking-[0.16em]
+    uppercase
+    border-[3px] border-black
+    rounded-[12px]
+    px-4 py-2
+    transition-all duration-300
+    cursor-pointer
+    inline-block
+
+    hover:bg-black
+    hover:translate-x-[-4px]
+    hover:translate-y-[-4px]
+    hover:shadow-[4px_4px_0px_white]
+
+    active:translate-x-0
+    active:translate-y-0
+    active:shadow-none
+  "
+>
+  + Add Person
+</Link>
+
+
           )}
         </div>
 
@@ -349,24 +362,43 @@ export default function PeopleList() {
                       </td>
 
                       {isAdmin && (
-                        <td className="p-4">
-                          <button
-                            onClick={() => confirmDelete(person)}
-                            className="
-                              bg-[#1a1818] 
-                              text-[#d6cecf] 
-                              border-[3px] border-black 
-                              px-3 py-1 
-                              rounded-[10px] 
-                              font-extrabold 
-                              uppercase 
-                              text-xs
-                              hover:bg-black
-                              transition-colors
-                            "
-                          >
-                            Delete
-                          </button>
+                        <td className="py-2 px-4">
+
+<button
+  onClick={(e) => {
+    const btn = e.currentTarget;
+
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+    setTimeout(() => (btn.style.transform = "scale(1)"), 150);
+
+    confirmDelete(person);
+  }}
+  className="
+    bg-[#c0392b]
+    text-[#d6cecf]
+    border-[2px] border-black
+    px-3 py-1
+    rounded-[6px]
+
+    text-[10px]
+    uppercase
+    font-extrabold
+    tracking-[0.08em]
+
+    hover:bg-[#922b21]
+    transition-colors
+    cursor-pointer
+
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  Delete
+</button>
+
+
+
                         </td>
                       )}
                     </tr>

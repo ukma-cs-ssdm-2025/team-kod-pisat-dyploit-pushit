@@ -53,24 +53,47 @@ export default function Header() {
                 <Avatar src={user?.avatar_url} alt={user?.nickname} size="sm" />
               </Link>
 
+
+
+
               {/* --- світліша кнопка Logout --- */}
-              <button
-                onClick={logout}
-                className="
-                  bg-[#2e2e2e] 
-                  hover:bg-[#3a3a3a]
-                  text-[#d6cecf]
-                  uppercase
-                  px-4 py-2 
-                  rounded-lg 
-                  text-sm font-medium 
-                  transition-colors 
-                  border border-black
-                  cursor-pointer
-                "
-              >
-                Logout
-              </button>
+
+<button
+  onClick={(e) => {
+    logout();
+
+    // Анімація кліку
+    const btn = e.currentTarget;
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+  className="
+    bg-white
+    hover:bg-white
+    text-black
+    uppercase
+    px-4 py-2 
+    rounded-lg 
+    text-sm font-bold 
+    transition-colors 
+    border border-black
+    cursor-pointer
+
+    transition-transform    /* Плавність */
+    hover:scale-[0.95]       /* Стискання при наведенні */
+  "
+>
+  Logout
+</button>
+
+
+
+
+
+
             </>
           ) : (
             <>

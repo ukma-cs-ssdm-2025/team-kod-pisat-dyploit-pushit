@@ -130,7 +130,7 @@ export default function AddPerson() {
                 required
                 className="
                   w-full
-                  bg-[#2b2727]
+                  bg-[#1a1a1a]
                   text-[#d6cecf]
                   border-[3px] border-black
                   rounded-[16px]
@@ -154,7 +154,7 @@ export default function AddPerson() {
                 required
                 className="
                   w-full
-                  bg-[#2b2727]
+                  bg-[#1a1a1a]
                   text-[#d6cecf]
                   border-[3px] border-black
                   rounded-[16px]
@@ -180,7 +180,7 @@ export default function AddPerson() {
               onChange={handleChange}
               className="
                 w-full
-                bg-[#2b2727]
+                bg-[#1a1a1a]
                 text-[#d6cecf]
                 border-[3px] border-black
                 rounded-[16px]
@@ -191,9 +191,9 @@ export default function AddPerson() {
                 appearance-none
               "
             >
-              <option value="actor" className="bg-[#2b2727]">Actor</option>
-              <option value="producer" className="bg-[#2b2727]">Producer</option>
-              <option value="director" className="bg-[#2b2727]">Director</option>
+              <option value="actor" className="bg-[#1a1a1a]">Actor</option>
+              <option value="producer" className="bg-[#1a1a1a]">Producer</option>
+              <option value="director" className="bg-[#1a1a1a]">Director</option>
             </select>
           </div>
 
@@ -202,7 +202,7 @@ export default function AddPerson() {
             <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
               Filmography (Select movies)
             </label>
-            <div className="bg-[#2b2727] border-[3px] border-black rounded-[16px] px-3 py-2">
+            <div className="bg-[#1a1a1a] border-[3px] border-black rounded-[16px] px-3 py-2">
               <MultiSelect 
                 label=""
                 options={movieOptions}
@@ -218,27 +218,66 @@ export default function AddPerson() {
             <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
               Avatar (File)
             </label>
-            <input
-              type="file"
-              name="avatarFile"
-              onChange={handleFileChange}
-              accept="image/*"
+
+            <div
               className="
                 w-full
-                bg-[#2b2727]
+                bg-[#1a1a1a]
                 text-[#d6cecf]
                 border-[3px] border-black
                 rounded-[16px]
                 px-4 py-2
-                cursor-pointer
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-[10px] file:border-0
-                file:text-xs file:font-extrabold
-                file:uppercase file:tracking-[0.14em]
-                file:bg-[#c9c7c7] file:text-black
-                hover:file:bg-[#e0dfdf]
+                flex items-center gap-4
               "
-            />
+            >
+              {/* Кнопка ВИБІР ФАЙЛУ */}
+              <label
+                htmlFor="avatarFileInput"
+                onClick={(e) => {
+                  const btn = e.currentTarget;
+                  btn.style.transition = "transform 0.15s ease";
+                  btn.style.transform = "scale(0.85)";
+                  setTimeout(() => {
+                    btn.style.transform = "scale(1)";
+                  }, 150);
+                }}
+                className="
+                  bg-[#c9c7c7]
+                  text-black
+                  font-extrabold
+                  text-xs md:text-sm
+                  tracking-[0.18em]
+                  uppercase
+                  rounded-[14px]
+                  px-6 py-2
+                  
+                  cursor-pointer
+                  whitespace-nowrap
+
+                  hover:bg-[#deb70b]
+                  transition-colors
+                  transition-transform
+                  hover:scale-[0.95]
+                "
+              >
+                Choose a file
+              </label>
+
+              {/* Текст з назвою файлу */}
+              <span className="text-sm md:text-base text-[#d6cecf] truncate">
+                {avatarFile ? avatarFile.name : 'File is not chosen'}
+              </span>
+
+              {/* Реальний input, схований */}
+              <input
+                id="avatarFileInput"
+                type="file"
+                name="avatarFile"
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
           </div>
 
           {/* Biography */}
@@ -252,7 +291,7 @@ export default function AddPerson() {
               onChange={handleChange}
               className="
                 w-full
-                bg-[#2b2727]
+                bg-[#1a1a1a]
                 text-[#d6cecf]
                 border-[3px] border-black
                 rounded-[16px]
@@ -271,6 +310,14 @@ export default function AddPerson() {
           <button
             type="submit"
             disabled={isSubmitting}
+            onClick={(e) => {
+              const btn = e.currentTarget;
+              btn.style.transition = "transform 0.15s ease";
+              btn.style.transform = "scale(0.85)";
+              setTimeout(() => {
+                btn.style.transform = "scale(1)";
+              }, 150);
+            }}
             className="
               w-full
               bg-[#c9c7c7]
@@ -279,17 +326,22 @@ export default function AddPerson() {
               text-xs md:text-sm
               tracking-[0.18em]
               uppercase
-              border-[3px] border-black
+              
               rounded-[14px]
               px-6 py-3
-              hover:bg-[#e0dfdf]
+
+              hover:bg-[#deb70b]
               transition-colors
               cursor-pointer
               disabled:opacity-60
+
+              transition-transform
+              hover:scale-[0.95]
             "
           >
             {isSubmitting ? 'Saving...' : 'Add Person'}
           </button>
+          
         </form>
       </div>
 

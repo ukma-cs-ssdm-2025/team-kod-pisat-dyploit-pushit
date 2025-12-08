@@ -311,7 +311,6 @@ export default function Recommendations() {
       className="min-h-screen flex items-center justify-center px-4 py-10"
       style={{ backgroundColor: "#1a1a1a" }}
     >
-
       <div className="w-full max-w-6xl bg-[#606aa2] rounded-[15px] py-8 px-6 md:px-10">
         {/* Верхній блок з заголовком і кнопкою Settings */}
         <div className="flex justify-between items-start mb-8 flex-wrap gap-4">
@@ -346,57 +345,77 @@ export default function Recommendations() {
               Personalized picks based on your taste, friends, and favorites.
             </p>
           </div>
-        <div className="flex gap-2 items-center">
-  {shouldRegenerate && (
-    <button
-      disabled
-      className="
-        px-4 py-2 rounded-[16px]
-        bg-[#7c7f8d]
-        text-black
-        font-extrabold
-        uppercase
-        border-[3px] border-black
-        tracking-[0.12em]
-        cursor-default
-      "
-    >
-      Settings changed
-    </button>
-  )}
 
-  <button
-    onClick={() => {
-    // переключаємо відкритість Settings
-    setShowSettings(!showSettings)
+          <div className="flex gap-2 items-center">
+            {shouldRegenerate && (
+              <button
+                disabled
+                className="
+                  px-4 py-2 rounded-[16px]
+                  bg-[#7c7f8d]
+                  text-black
+                  font-extrabold
+                  uppercase
+                  border-[3px] border-black
+                  tracking-[0.12em]
+                  cursor-default
+                "
+              >
+                Settings changed
+              </button>
+            )}
 
-    // якщо зараз Settings ВІДКРИТІ → значить натиснули Hide Settings
-    if (showSettings) {
-      setShouldRegenerate(false)
-    }
-  }}
-    className="
-      px-4 py-2 rounded-[16px]
-      bg-[#c9c7c7]
-      text-black
-      font-extrabold
-      uppercase
-      border-[3px] border-black
-      tracking-[0.12em]
-      hover:bg-[#e0dfdf]
-      transition-colors
-      cursor-pointer
-    "
-  >
-    {showSettings ? "Hide Settings" : "Settings"}
-  </button>
-</div>
+            {/* NEW SETTINGS BUTTON IN EDIT PROFILE STYLE */}
+            <button
+              type="button"
+              onClick={(e) => {
+                setShowSettings(!showSettings);
 
+                if (showSettings) {
+                  setShouldRegenerate(false);
+                }
+
+                const btn = e.currentTarget;
+                btn.style.transition = "transform 0.15s ease";
+                btn.style.transform = "scale(0.85)";
+
+                setTimeout(() => {
+                  btn.style.transform = "scale(1)";
+                }, 150);
+              }}
+              className="
+                bg-black
+                text-white
+                font-extrabold
+                text-xs md:text-sm
+                tracking-[0.16em]
+                uppercase
+                border-[3px] border-black
+                rounded-[12px]
+                px-4 py-2
+                transition-all duration-300
+                cursor-pointer
+
+                hover:bg-black
+                hover:translate-x-[-4px]
+                hover:translate-y-[-4px]
+                hover:rounded-[12px]
+                hover:shadow-[4px_4px_0px_white]
+
+                active:translate-x-0
+                active:translate-y-0
+                active:shadow-none
+                active:rounded-[12px]
+              "
+            >
+              {showSettings ? "Hide Settings" : "Settings"}
+            </button>
+          </div>
         </div>
 
         {/* Панель налаштувань */}
         {showSettings && (
-          <div className="bg-[#292929] rounded-[16px] p-6 mb-8 shadow-xl">
+          <div className="bg-[#1a1a1a] rounded-[16px] p-6 mb-8 shadow-xl">
             <h3 className="text-xl font-extrabold text-[#d6cecf] mb-4 tracking-[0.12em] uppercase">
               Algorithm Settings
             </h3>
@@ -492,10 +511,10 @@ export default function Recommendations() {
                     onChange={(e) =>
                       handleWeightChange("ratingWeight", e.target.value)
                     }
-                    className="w-full h-2 bg-[#1a1a1a] rounded-lg appearance-none cursor-pointer rating-slider"
+                    className="w-full h-2 bg-black rounded-lg appearance-none cursor-pointer rating-slider"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-[#d6cecf] uppercase text-xs mb-1">
                     Genres: {settings.genreWeight}
@@ -508,7 +527,7 @@ export default function Recommendations() {
                     onChange={(e) =>
                       handleWeightChange("genreWeight", e.target.value)
                     }
-                    className="w-full h-2 bg-[#1a1a1a] rounded-lg appearance-none cursor-pointer rating-slider"
+                    className="w-full h-2 bg-black rounded-lg appearance-none cursor-pointer rating-slider"
                   />
                 </div>
 
@@ -524,7 +543,7 @@ export default function Recommendations() {
                     onChange={(e) =>
                       handleWeightChange("peopleWeight", e.target.value)
                     }
-                    className="w-full h-2 bg-[#1a1a1a] rounded-lg appearance-none cursor-pointer rating-slider"
+                    className="w-full h-2 bg-black rounded-lg appearance-none cursor-pointer rating-slider"
                   />
                 </div>
 
@@ -543,7 +562,7 @@ export default function Recommendations() {
                         e.target.value
                       )
                     }
-                    className="w-full h-2 bg-[#1a1a1a] rounded-lg appearance-none cursor-pointer rating-slider"
+                    className="w-full h-2 bg-black rounded-lg appearance-none cursor-pointer rating-slider"
                   />
                 </div>
 
@@ -559,7 +578,7 @@ export default function Recommendations() {
                     onChange={(e) =>
                       handleWeightChange("friendsWeight", e.target.value)
                     }
-                    className="w-full h-2 bg-[#1a1a1a] rounded-lg appearance-none cursor-pointer rating-slider"
+                    className="w-full h-2 bg-black rounded-lg appearance-none cursor-pointer rating-slider"
                   />
                 </div>
               </div>
@@ -584,7 +603,7 @@ export default function Recommendations() {
                           parseInt(e.target.value)
                         )
                       }
-                      className="w-full h-2 bg-[#1a1a1a] rounded-lg appearance-none cursor-pointer rating-slider"
+                      className="w-full h-2 bg-black rounded-lg appearance-none cursor-pointer rating-slider"
                     />
                   </div>
                   <p className="text-[#d6cecf] text-xs uppercase">
@@ -608,42 +627,73 @@ export default function Recommendations() {
 
             <div className="mt-6 flex gap-4">
               <button
-                onClick={generateRecommendations}
+                type="button"
+                disabled={!shouldRegenerate}
+                onClick={(e) => {
+                  if (!shouldRegenerate) return;
+
+                  generateRecommendations();
+
+                  const btn = e.currentTarget;
+                  btn.style.transition = "transform 0.15s ease";
+                  btn.style.transform = "scale(0.85)";
+
+                  setTimeout(() => {
+                    btn.style.transform = "scale(1)";
+                  }, 150);
+                }}
                 className="
-                py-3 px-6
                   bg-[#c9c7c7]
                   text-black
                   font-extrabold
-                  text-sm
+                  text-xs md:text-sm
                   tracking-[0.18em]
                   uppercase
-                  border-[4px]
-                  border-black
-                  rounded-[20px]
-                  hover:bg-[#e0dfdf]
+
+                  rounded-[14px]
+                  px-6 py-2
+
+                  hover:bg-[#deb70b]
                   transition-colors
                   cursor-pointer
+
+                  transition-transform
+                  hover:scale-[0.95]
                 "
-                disabled={!shouldRegenerate}
               >
                 Apply Changes
               </button>
+
               <button
-                onClick={resetToDefault}
+                type="button"
+                onClick={(e) => {
+                  resetToDefault();
+
+                  const btn = e.currentTarget;
+                  btn.style.transition = "transform 0.15s ease";
+                  btn.style.transform = "scale(0.85)";
+
+                  setTimeout(() => {
+                    btn.style.transform = "scale(1)";
+                  }, 150);
+                }}
                 className="
-                   py-3 px-6
-                  bg-[#1a1818]
+                  bg-black
                   text-[#d6cecf]
                   font-extrabold
-                  text-sm
+                  text-xs md:text-sm
                   tracking-[0.18em]
                   uppercase
-                  border-[4px]
-                  border-black
-                  rounded-[20px]
-                  hover:bg-[#1f1b1b]
+
+                  rounded-[14px]
+                  px-6 py-2
+
+                  hover:bg-[#830707]
                   transition-colors
                   cursor-pointer
+
+                  transition-transform
+                  hover:scale-[0.95]
                 "
               >
                 Reset Defaults
@@ -684,7 +734,9 @@ export default function Recommendations() {
                           </h4>
                           <div className="space-y-1 text-[11px]">
                             <div className="flex justify-between">
-                              <span className="text-[#d6cecf] uppercase">Rating:</span>
+                              <span className="text-[#d6cecf] uppercase">
+                                Rating:
+                              </span>
                               <span className="text-[#d6cecf]">
                                 +{movie.breakdown.rating.toFixed(1)}
                               </span>
@@ -845,17 +897,16 @@ export default function Recommendations() {
         )}
       </div>
 
-        {/* POPCORN DECORATION */}
+      {/* POPCORN DECORATION */}
       <img
         src="/pictures_elements/popcorn_gray.png"
         className="popcorn fixed right-6 bottom-6 w-[70px] z-20"
         alt="Popcorn"
-
         onClick={(e) => {
-         e.target.classList.remove("active");      // скинути попередню анімацію
-         void e.target.offsetWidth;                // магічний трюк для рестарту
-         e.target.classList.add("active");         // увімкнути знову
-       }}
+          e.target.classList.remove("active");
+          void e.target.offsetWidth;
+          e.target.classList.add("active");
+        }}
       />
 
       <AlertModal

@@ -240,7 +240,7 @@ export default function Profile() {
     return (
       <div
         className="min-h-screen flex items-center justify-center px-4"
-        style={{ backgroundColor: "#1a1a1a" }}
+        style={{ backgroundColor: "#1a1a1aff" }}
       >
         <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf] uppercase">
           Loading...
@@ -370,27 +370,40 @@ export default function Profile() {
                   </button>
                 )}
 
-                {canEdit && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="
-                      bg-[#2b2727]
-                      text-[#d6cecf]
-                      font-extrabold
-                      text-xs md:text-sm
-                      tracking-[0.16em]
-                      uppercase
-                      border-[3px] border-black
-                      rounded-[12px]
-                      px-4 py-2
-                      hover:bg-black
-                      transition-colors
-                      cursor-pointer
-                    "
-                  >
-                    Edit Profile
-                  </button>
-                )}
+           {canEdit && (
+
+  <button
+    onClick={() => setIsEditing(true)}
+    className="
+      bg-black
+      text-white
+      font-extrabold
+      text-xs md:text-sm
+      tracking-[0.16em]
+      uppercase
+      border-[3px] border-black
+      rounded-[12px]
+      px-4 py-2
+      transition-all duration-300
+      cursor-pointer
+
+      hover:bg-black
+      hover:translate-x-[-4px]
+      hover:translate-y-[-4px]
+      hover:rounded-[12px]
+      hover:shadow-[4px_4px_0px_white]
+
+      active:translate-x-0
+      active:translate-y-0
+      active:shadow-none
+      active:rounded-[12px]
+    "
+  >
+    Edit Profile
+  </button>
+
+)}
+
                 
                 {!isMe && friendStatus === 'friend' && (
                   <button 
@@ -545,7 +558,7 @@ export default function Profile() {
                 onChange={handleEditChange}
                 className="
                   w-full
-                  bg-[#2b2727]
+                  bg-[#1a1a1a]
                   text-[#d6cecf]
                   border-[3px] border-black
                   rounded-[16px]
@@ -570,7 +583,7 @@ export default function Profile() {
                 onChange={handleEditChange}
                 className="
                   w-full
-                  bg-[#2b2727]
+                  bg-[#1a1a1a]
                   text-[#d6cecf]
                   border-[3px] border-black
                   rounded-[16px]
@@ -596,7 +609,7 @@ export default function Profile() {
                   accept="image/*"
                   className="
                     w-full
-                    bg-[#2b2727]
+                    bg-[#1a1a1a]
                     text-[#d6cecf]
                     border-[3px] border-black
                     rounded-[16px]
@@ -645,45 +658,84 @@ export default function Profile() {
             )}
 
             <div className="flex flex-wrap gap-4 pt-4">
-              <button
-                type="submit"
-                className="
-                  bg-[#c9c7c7]
-                  text-black
-                  font-extrabold
-                  text-xs md:text-sm
-                  tracking-[0.18em]
-                  uppercase
-                  border-[3px] border-black
-                  rounded-[14px]
-                  px-6 py-2
-                  hover:bg-[#e0dfdf]
-                  transition-colors
-                  cursor-pointer
-                "
-              >
-                Save Changes
-              </button>
-              <button
-                type="button"
-                onClick={() => { setIsEditing(false); setAvatarFile(null); }}
-                className="
-                  bg-[#2b2727]
-                  text-[#d6cecf]
-                  font-extrabold
-                  text-xs md:text-sm
-                  tracking-[0.18em]
-                  uppercase
-                  border-[3px] border-black
-                  rounded-[14px]
-                  px-6 py-2
-                  hover:bg-black
-                  transition-colors
-                  cursor-pointer
-                "
-              >
-                Cancel
-              </button>
+
+            
+
+<button
+  type="submit"
+  onClick={(e) => {
+    const btn = e.currentTarget;
+
+    // Анімація кліку (сильніше стискання)
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+  className="
+    bg-[#c9c7c7]
+    text-black
+    font-extrabold
+    text-xs md:text-sm
+    tracking-[0.18em]
+    uppercase
+
+    rounded-[14px]
+    px-6 py-2
+
+    hover:bg-[#deb70b]
+    transition-colors
+    cursor-pointer
+
+    transition-transform
+    hover:scale-[0.95]     /* легке стискання при наведенні */
+  "
+>
+  Save Changes
+</button>
+
+<button
+  type="button"
+  onClick={(e) => {
+    setIsEditing(false);
+    setAvatarFile(null);
+
+    const btn = e.currentTarget;
+
+    // Анімація кліку (сильніше стискання)
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+  className="
+    bg-black
+    text-[#d6cecf]
+    font-extrabold
+    text-xs md:text-sm
+    tracking-[0.18em]
+    uppercase
+
+    rounded-[14px]
+    px-6 py-2
+
+    hover:bg-[#830707]
+    transition-colors
+    cursor-pointer
+
+    transition-transform
+    hover:scale-[0.95]     /* легке стискання при наведенні */
+  "
+>
+  Cancel
+</button>
+
+
+
             </div>
           </form>
         )}
@@ -717,7 +769,7 @@ export default function Profile() {
                   {isMe && (
                     <button 
                       onClick={() => handleFriendAction('remove', friend.id)}
-                      className="text-[#c0392b] hover:text-[#e74c3c] text-sm font-bold p-2 cursor-pointer"
+                      className="text-[#830707] hover:text-[#900909] text-sm font-bold p-2 cursor-pointer"
                       title="Remove Friend"
                     >
                       ✕

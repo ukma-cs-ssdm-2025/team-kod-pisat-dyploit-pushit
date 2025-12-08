@@ -19,7 +19,7 @@ export default function UserList() {
 
   const [users, setUsers] = useState([]);
 
-  // NEW — server stats (instead of counting locally)
+  // server stats
   const [stats, setStats] = useState({
     total: 0,
     users: 0,
@@ -27,13 +27,13 @@ export default function UserList() {
     admins: 0,
   });
 
-  // NEW — list of roles for filter
+  // list of roles for filter
   const [allRoles, setAllRoles] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
-  // NEW — role filter
+  // role filter
   const [roleFilter, setRoleFilter] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +51,7 @@ export default function UserList() {
     message: '',
   });
 
-  // --- NEW: debounce search ---
+  // debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -61,7 +61,7 @@ export default function UserList() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // --- NEW fetch logic (instead of getAllUsers) ---
+  // fetch logic
   const fetchUsersData = useCallback(
     async (page = 1, search = '', role = '') => {
       setIsLoading(true);
@@ -192,7 +192,7 @@ export default function UserList() {
           Community Users
         </h1>
 
-        {/* --- SEARCH + ROLE FILTER --- */}
+        {/* SEARCH + ROLE FILTER */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {/* Search */}
           <div>
@@ -228,7 +228,7 @@ export default function UserList() {
           </div>
         </div>
 
-        {/* --- STATS BLOCKS --- */}
+        {/* STATS BLOCKS */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-[#1a1a1a] border-[3px] border-black p-4 rounded-[12px] text-center">
             <div className="text-2xl font-extrabold text-[#b70000]">{stats.total}</div>
@@ -251,7 +251,7 @@ export default function UserList() {
           </div>
         </div>
 
-        {/* --- FILTER RESULT INFO (NEW) --- */}
+        {/* FILTER RESULT INFO */}
         {isFiltered && (
           <div className="mb-6 p-4 bg-[#1a1a1a] border-[3px] border-black rounded-[12px] flex justify-between items-center">
             <div className="text-[#c9c7c7] text-sm tracking-wide">
@@ -269,7 +269,7 @@ export default function UserList() {
           </div>
         )}
 
-        {/* --- TABLE --- */}
+        {/* TABLE */}
         <div className="bg-[#1a1a1a] border-[4px] border-black rounded-[15px] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left min-w-[600px]">
@@ -319,7 +319,7 @@ export default function UserList() {
                         <td className="p-4 text-[#c9c7c7]">{user.username}</td>
                         <td className="p-4 text-[#c9c7c7]">{user.email}</td>
 
-                        {/* Role Badge (your style kept) */}
+                        {/* Role Badge */}
                         <td className="p-4">
                           <span
                             className={`
@@ -341,6 +341,7 @@ export default function UserList() {
 
                         <td className="p-4">
                           <div className="flex gap-2">
+                            {/* ADD FRIEND */}
                             {!isMyOwnProfile &&
                               friendStatus === 'not_friend' && (
                                 <button
@@ -354,17 +355,48 @@ export default function UserList() {
                                 </button>
                               )}
 
+                            {/* UNFRIEND – стиль як Cancel */}
                             {!isMyOwnProfile &&
                               friendStatus === 'friend' && (
-                                <button
-                                  onClick={() =>
-                                    handleFriendAction(user.id, 'remove')
-                                  }
-                                  disabled={isLoadingAction}
-                                  className="bg-[#c9c7c7] text-black border-[3px] border-black px-3 py-1 rounded-[10px] font-extrabold uppercase text-xs"
-                                >
-                                  {isLoadingAction ? '...' : 'Unfriend'}
-                                </button>
+                                
+                               <button
+  onClick={(e) => {
+    if (isLoadingAction) return;
+
+    // спочатку анімація стискання
+    const btn = e.currentTarget;
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+
+    // потім уже дія
+    handleFriendAction(user.id, "remove");
+  }}
+  disabled={isLoadingAction}
+  className="
+    bg-black
+    text-[#d6cecf]
+    font-extrabold
+    uppercase
+    text-xs md:text-sm
+    tracking-[0.18em]
+    rounded-[10px]
+    px-3 py-1
+
+    hover:bg-[#830707]
+    transition-colors
+    cursor-pointer
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  {isLoadingAction ? "..." : "Unfriend"}
+</button>
+
+
                               )}
 
                             {isMyOwnProfile && (
@@ -373,13 +405,40 @@ export default function UserList() {
                               </span>
                             )}
 
+                            {/* BAN – теж як Cancel */}
                             {canDelete && (
                               <button
-                                onClick={() => confirmDelete(user)}
-                                className="bg-[#1a1818] text-[#d6cecf] border-[3px] border-black px-3 py-1 rounded-[10px] font-extrabold uppercase text-xs"
-                              >
-                                Ban
-                              </button>
+  onClick={(e) => {
+    const btn = e.currentTarget;
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+
+    confirmDelete(user);
+  }}
+  className="
+    bg-black
+    text-[#d6cecf]
+    font-extrabold
+    uppercase
+    text-xs md:text-sm
+    tracking-[0.18em]
+    rounded-[10px]
+    px-3 py-1
+    
+    hover:bg-[#830707]
+    transition-colors
+    cursor-pointer
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  Ban
+</button>
+
                             )}
                           </div>
                         </td>
@@ -403,7 +462,7 @@ export default function UserList() {
           </div>
         </div>
 
-        {/* Pagination always visible, including filters */}
+        {/* Pagination */}
         <div className="mt-8">
           <Pagination
             currentPage={currentPage}
