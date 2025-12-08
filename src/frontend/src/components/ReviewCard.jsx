@@ -52,7 +52,9 @@ export default function ReviewCard({ review, onDelete }) {
             <div
               className="
                 inline-flex items-center
+
                 bg-[#1a1a1a]
+
                 border-[3px] border-black
                 rounded-[999px]
                 px-3 py-1
