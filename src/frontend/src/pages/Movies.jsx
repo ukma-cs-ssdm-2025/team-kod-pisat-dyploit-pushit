@@ -165,7 +165,7 @@ export default function Movies() {
           {isAdmin && (
             <Link
               to="/movies/new"
-              className="bg-[#606aa2] hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
+              className="bg-[#606aa2] hover:bg-[#000000] text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
             >
               + Add Movie
             </Link>

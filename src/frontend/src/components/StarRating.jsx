@@ -5,20 +5,29 @@ export default function StarRating({ rating, onRatingChange }) {
 
   return (
     <div className="flex items-center">
-      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
-        <button
-          type="button" 
-          key={star}
-          className={`text-2xl transition-colors duration-200 ${
-            (hoverRating || rating) >= star ? 'text-yellow-400' : 'text-gray-600'
-          } hover:text-yellow-300 cursor-pointer`}
-          onClick={() => onRatingChange(star)}
-          onMouseEnter={() => setHoverRating(star)}
-          onMouseLeave={() => setHoverRating(0)}
-        >
-          ★
-        </button>
-      ))}
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => {
+        const isActive = (hoverRating || rating) >= star;
+
+        return (
+          <button
+            type="button"
+            key={star}
+            className={`
+              text-2xl font-extrabold
+              transition-colors duration-200
+              cursor-pointer
+            `}
+            style={{
+              color: isActive ? '#e6e1e2' : '#4b4b4b',        // активна / неактивна
+            }}
+            onMouseEnter={() => setHoverRating(star)}
+            onMouseLeave={() => setHoverRating(0)}
+            onClick={() => onRatingChange(star)}
+          >
+            ★
+          </button>
+        );
+      })}
     </div>
   );
 }

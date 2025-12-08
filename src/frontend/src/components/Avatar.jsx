@@ -27,7 +27,7 @@ export default function Avatar({ src, alt, size = "md", className = "" }) {
 
   return (
     <div
-      className={`${currentSize} rounded-full bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center text-white font-bold border-2 border-gray-700 shadow-lg ${className}`}
+      className={`${currentSize} rounded-full bg-[#606aa2] flex items-center justify-center text-white font-bold border-2 border-gray-700 shadow-lg ${className}`}
       title={alt}
     >
       {getInitials(alt)}
