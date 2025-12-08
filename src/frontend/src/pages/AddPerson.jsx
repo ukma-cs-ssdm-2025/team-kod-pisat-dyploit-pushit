@@ -87,63 +87,212 @@ export default function AddPerson() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-8 pb-8">
-      <div className="max-w-2xl mx-auto p-4">
-        <h1 className="text-3xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+    <div
+      className="min-h-screen px-4 py-8 flex justify-center"
+      style={{ backgroundColor: "#1a1a1a" }}
+    >
+      <div className="w-full max-w-3xl">
+        <h1
+          className="
+            text-2xl md:text-3xl
+            font-extrabold
+            text-[#d6cecf]
+            uppercase
+            tracking-[0.18em]
+            mb-6
+          "
+          style={{ letterSpacing: "0.12em" }}
+        >
           Add New Person
         </h1>
 
-        <form onSubmit={handleSubmit} className="bg-gray-800 border border-gray-700 rounded-xl p-6 space-y-4 shadow-2xl">
-          
-          <div className="grid grid-cols-2 gap-4">
+        <form
+          onSubmit={handleSubmit}
+          className="
+            bg-[#606aa2]
+            rounded-[15px]
+            p-6 mb-8
+            shadow-2xl
+            space-y-4
+            border-black
+          "
+        >
+          {/* First / Last name */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">First Name</label>
-              <input type="text" name="first_name" onChange={handleChange} required className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                First Name
+              </label>
+              <input
+                type="text"
+                name="first_name"
+                onChange={handleChange}
+                required
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  cursor-text
+                "
+              />
             </div>
             <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Last Name</label>
-              <input type="text" name="last_name" onChange={handleChange} required className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Last Name
+              </label>
+              <input
+                type="text"
+                name="last_name"
+                onChange={handleChange}
+                required
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  cursor-text
+                "
+              />
             </div>
           </div>
 
+          {/* Profession */}
           <div>
-            <label className="block text-blue-400 mb-2 font-medium cursor-default">Profession</label>
-            <select name="profession" value={formData.profession} onChange={handleChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none">
-                <option value="actor" className="bg-gray-800">Actor</option>
-                <option value="producer" className="bg-gray-800">Producer</option>
-                <option value="director" className="bg-gray-800">Director</option>
+            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+              Profession
+            </label>
+            <select
+              name="profession"
+              value={formData.profession}
+              onChange={handleChange}
+              className="
+                w-full
+                bg-[#2b2727]
+                text-[#d6cecf]
+                border-[3px] border-black
+                rounded-[16px]
+                px-4 py-2
+                focus:outline-none
+                focus:border-[#d6cecf]
+                cursor-pointer
+                appearance-none
+              "
+            >
+              <option value="actor" className="bg-[#2b2727]">Actor</option>
+              <option value="producer" className="bg-[#2b2727]">Producer</option>
+              <option value="director" className="bg-[#2b2727]">Director</option>
             </select>
           </div>
 
-          <MultiSelect 
-            label="Filmography (Select movies)"
-            options={movieOptions}
-            selectedIds={formData.movie_ids}
-            onChange={handleMoviesChange}
-            placeholder="Search movie..."
-          />
-
+          {/* Filmography */}
           <div>
-            <label className="block text-blue-400 mb-2 font-medium cursor-default">Avatar (File)</label>
-            <input 
-              type="file" 
-              name="avatarFile" 
-              onChange={handleFileChange} 
+            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+              Filmography (Select movies)
+            </label>
+            <div className="bg-[#2b2727] border-[3px] border-black rounded-[16px] px-3 py-2">
+              <MultiSelect 
+                label=""
+                options={movieOptions}
+                selectedIds={formData.movie_ids}
+                onChange={handleMoviesChange}
+                placeholder="Search movie..."
+              />
+            </div>
+          </div>
+
+          {/* Avatar */}
+          <div>
+            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+              Avatar (File)
+            </label>
+            <input
+              type="file"
+              name="avatarFile"
+              onChange={handleFileChange}
               accept="image/*"
-              className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"
+              className="
+                w-full
+                bg-[#2b2727]
+                text-[#d6cecf]
+                border-[3px] border-black
+                rounded-[16px]
+                px-4 py-2
+                cursor-pointer
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-[10px] file:border-0
+                file:text-xs file:font-extrabold
+                file:uppercase file:tracking-[0.14em]
+                file:bg-[#c9c7c7] file:text-black
+                hover:file:bg-[#e0dfdf]
+              "
             />
           </div>
 
+          {/* Biography */}
           <div>
-            <label className="block text-blue-400 mb-2 font-medium cursor-default">Biography</label>
-            <textarea name="biography" onChange={handleChange} rows="5" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"></textarea>
+            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+              Biography
+            </label>
+            <textarea
+              name="biography"
+              rows="5"
+              onChange={handleChange}
+              className="
+                w-full
+                bg-[#2b2727]
+                text-[#d6cecf]
+                border-[3px] border-black
+                rounded-[16px]
+                px-4 py-2
+                focus:outline-none
+                focus:border-[#d6cecf]
+                placeholder:uppercase
+                placeholder:tracking-[0.12em]
+                cursor-text
+                resize-none
+              "
+            />
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg disabled:opacity-50 cursor-pointer">
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="
+              w-full
+              bg-[#c9c7c7]
+              text-black
+              font-extrabold
+              text-xs md:text-sm
+              tracking-[0.18em]
+              uppercase
+              border-[3px] border-black
+              rounded-[14px]
+              px-6 py-3
+              hover:bg-[#e0dfdf]
+              transition-colors
+              cursor-pointer
+              disabled:opacity-60
+            "
+          >
             {isSubmitting ? 'Saving...' : 'Add Person'}
           </button>
         </form>
       </div>
+
       <AlertModal 
         isOpen={alertConfig.isOpen}
         onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}

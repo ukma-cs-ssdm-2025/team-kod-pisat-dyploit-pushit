@@ -68,71 +68,201 @@ export default function AddMovie() {
       }
       
       setAlertConfig({
-          isOpen: true,
-          title: "Success",
-          message: "Movie created successfully!"
+        isOpen: true,
+        title: "Success",
+        message: "Movie created successfully!"
       });
       setTimeout(() => navigate(`/movie/${newMovieId}`), 1500);
 
     } catch (err) {
       console.error("Creation error:", err);
       setAlertConfig({
-          isOpen: true,
-          title: "Error",
-          message: `Error: ${err.message || 'Failed to create movie'}`
+        isOpen: true,
+        title: "Error",
+        message: `Error: ${err.message || 'Failed to create movie'}`
       });
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#33364c] via-[#292d3d] to-[#606aa2] pt-8 pb-8">
-      <div className="max-w-2xl mx-auto p-4">
-        <h1 className="text-3xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+    <div
+      className="min-h-screen px-4 py-8 flex justify-center"
+      style={{ backgroundColor: "#1a1a1a" }}
+    >
+      <div className="w-full max-w-3xl">
+        <h1
+          className="
+            text-2xl md:text-3xl
+            font-extrabold
+            text-[#d6cecf]
+            uppercase
+            tracking-[0.18em]
+            mb-6
+          "
+          style={{ letterSpacing: "0.12em" }}
+        >
           Add New Movie
         </h1>
 
-        <form onSubmit={handleSubmit} className="bg-gray-800 border border-gray-700 rounded-xl p-6 space-y-4 shadow-2xl">
-          
+        <form
+          onSubmit={handleSubmit}
+          className="
+            bg-[#606aa2]
+            rounded-[15px]
+            p-6 mb-8
+            shadow-2xl
+            space-y-4
+            border-black
+          "
+        >
+          {/* Title */}
           <div>
-            <label className="block text-blue-400 mb-2 font-medium cursor-default">Title</label>
-            <input type="text" name="title" onChange={handleChange} required className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
+            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+              Title
+            </label>
+            <input
+              type="text"
+              name="title"
+              onChange={handleChange}
+              required
+              className="
+                w-full
+                bg-[#2b2727]
+                text-[#d6cecf]
+                border-[3px] border-black
+                rounded-[16px]
+                px-4 py-2
+                focus:outline-none
+                focus:border-[#d6cecf]
+                placeholder:uppercase
+                placeholder:tracking-[0.12em]
+                cursor-text
+              "
+            />
           </div>
 
+          {/* Genre */}
           <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Genre</label>
-              <input type="text" name="genre" onChange={handleChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
+            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+              Genre
+            </label>
+            <input
+              type="text"
+              name="genre"
+              onChange={handleChange}
+              className="
+                w-full
+                bg-[#2b2727]
+                text-[#d6cecf]
+                border-[3px] border-black
+                rounded-[16px]
+                px-4 py-2
+                focus:outline-none
+                focus:border-[#d6cecf]
+                placeholder:uppercase
+                placeholder:tracking-[0.12em]
+                cursor-text
+              "
+            />
           </div>
 
-          <MultiSelect 
-            label="Cast & Crew"
-            options={peopleOptions}
-            selectedIds={formData.people_ids}
-            onChange={handlePeopleChange}
-            placeholder="Search person..."
-          />
-
+          {/* Cast & Crew */}
           <div>
-            <label className="block text-blue-400 mb-2 font-medium cursor-default">Cover Image (File)</label>
+            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+              Cast & Crew
+            </label>
+            <div className="bg-[#2b2727] border-[3px] border-black rounded-[16px] px-3 py-2">
+              <MultiSelect
+                label=""
+                options={peopleOptions}
+                selectedIds={formData.people_ids}
+                onChange={handlePeopleChange}
+                placeholder="Search person..."
+              />
+            </div>
+          </div>
+
+          {/* Poster file */}
+          <div>
+            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+              Cover Image (File)
+            </label>
             <input 
               type="file" 
               name="posterFile" 
               onChange={handleFileChange} 
               accept="image/*"
-              className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"
+              className="
+                w-full
+                bg-[#2b2727]
+                text-[#d6cecf]
+                border-[3px] border-black
+                rounded-[16px]
+                px-4 py-2
+                cursor-pointer
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-[10px] file:border-0
+                file:text-xs file:font-extrabold
+                file:uppercase file:tracking-[0.14em]
+                file:bg-[#c9c7c7] file:text-black
+                hover:file:bg-[#e0dfdf]
+              "
             />
           </div>
 
+          {/* Description */}
           <div>
-            <label className="block text-blue-400 mb-2 font-medium cursor-default">Description</label>
-            <textarea name="description" onChange={handleChange} rows="5" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"></textarea>
+            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+              Description
+            </label>
+            <textarea
+              name="description"
+              onChange={handleChange}
+              rows="5"
+              className="
+                w-full
+                bg-[#2b2727]
+                text-[#d6cecf]
+                border-[3px] border-black
+                rounded-[16px]
+                px-4 py-2
+                focus:outline-none
+                focus:border-[#d6cecf]
+                placeholder:uppercase
+                placeholder:tracking-[0.12em]
+                cursor-text
+                resize-none
+              "
+            />
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg disabled:opacity-50 cursor-pointer">
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="
+              w-full
+              bg-[#c9c7c7]
+              text-black
+              font-extrabold
+              text-xs md:text-sm
+              tracking-[0.18em]
+              uppercase
+              border-[3px] border-black
+              rounded-[14px]
+              px-6 py-3
+              hover:bg-[#e0dfdf]
+              transition-colors
+              cursor-pointer
+              disabled:opacity-60
+            "
+          >
             {isSubmitting ? 'Saving...' : 'Add Movie'}
           </button>
         </form>
       </div>
+
       <AlertModal 
         isOpen={alertConfig.isOpen}
         onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
