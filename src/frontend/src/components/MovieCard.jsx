@@ -19,19 +19,20 @@ export default function MovieCard({ movie }) {
       "
     >
       {/* POSTER WRAPPER */}
-      <div className="bg-[#1a1a1a] border-b-[3px] border-black p-3">
-        <div className="w-full h-[260px] rounded-[12px] overflow-hidden border-[3px] border-black">
-          <img
-            src={movie.cover_url || 'https://placehold.co/300x450/1a1a1a/FFFFFF?text=No+Poster'}
-            alt={movie.title}
-            className="
-              w-full h-full object-cover
-              transition-transform duration-300
-              group-hover:scale-105
-            "
-          />
-        </div>
-      </div>
+<div className="bg-[#606aa2] p-3">
+  <div className="w-full h-[260px] rounded-[12px] overflow-hidden border-[3px] border-black">
+    <img
+      src={movie.cover_url || 'https://placehold.co/300x450/1a1a1a/FFFFFF?text=No+Poster'}
+      alt={movie.title}
+      className="
+        w-full h-full object-cover
+        transition-transform duration-300
+        group-hover:scale-105
+      "
+    />
+  </div>
+</div>
+
 
       {/* CONTENT */}
       <div className="p-4 text-center">

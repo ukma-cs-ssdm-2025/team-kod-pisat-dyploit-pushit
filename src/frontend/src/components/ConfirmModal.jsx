@@ -2,23 +2,66 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 max-w-sm w-full shadow-2xl transform transition-all scale-100">
-        <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-        <p className="text-gray-300 mb-6">{message}</p>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div
+        className="
+          bg-[#606aa2]
+          border-[3px] border-black
+          rounded-[15px]
+          p-6
+          max-w-sm w-full
+          shadow-2xl
+          text-[#d6cecf]
+        "
+      >
+        <h3 className="text-xl font-extrabold tracking-[0.12em] uppercase mb-3">
+          {title}
+        </h3>
+
+        <p className="text-sm mb-6 leading-relaxed whitespace-pre-wrap">
+          {message}
+        </p>
+
         <div className="flex justify-end gap-3">
+          {/* CANCEL BUTTON */}
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition-colors cursor-pointer"
+            className="
+              bg-[#2b2727]
+              text-[#d6cecf]
+              font-extrabold
+              tracking-[0.12em]
+              uppercase
+              border-[3px] border-black
+              rounded-[12px]
+              px-5 py-2
+              hover:bg-black
+              transition-colors
+              cursor-pointer
+            "
           >
             Cancel
           </button>
+
+          {/* DELETE BUTTON */}
           <button
             onClick={() => {
               onConfirm();
               onClose();
             }}
-            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition-colors font-medium cursor-pointer"
+            className="
+              bg-[#c0392b]
+              text-[#d6cecf]
+              font-extrabold
+              tracking-[0.12em]
+              uppercase
+              border-[3px] border-black
+              rounded-[12px]
+              px-5 py-2
+              hover:bg-[#e74c3c]
+              transition-colors
+              cursor-pointer
+            "
           >
             Delete
           </button>
