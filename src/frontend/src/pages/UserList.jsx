@@ -237,7 +237,9 @@ export default function UserList() {
         className="min-h-screen flex items-center justify-center text-lg text-blue-400"
         style={{ backgroundColor: '#1a1a1a' }}
       >
-        Loading...
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf]">
+          Loading users...
+        </div>
       </div>
     );
   }
