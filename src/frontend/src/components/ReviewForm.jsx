@@ -117,26 +117,42 @@ export default function ReviewForm({ onSubmit }) {
         </div>
 
         {/* BUTTON */}
-        <button
-          type="submit"
-          className="
-            bg-[#c9c7c7]
-            text-black
-            font-extrabold
-            text-xs md:text-sm
-            tracking-[0.18em]
-            uppercase
-            border-[3px] border-black
-            rounded-[14px]
-            px-6 py-3
-            hover:bg-[#e0dfdf]
-            transition-colors
-            cursor-pointer
-            w-full md:w-auto
-          "
-        >
-          Submit Review
-        </button>
+        
+              <button
+  type="submit"
+  onClick={(e) => {
+    const btn = e.currentTarget;
+
+    // Анімація кліку (сильніше стискання)
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+  className="
+    bg-[#c9c7c7]
+    text-black
+    font-extrabold
+    text-xs md:text-sm
+    tracking-[0.18em]
+    uppercase
+    
+    rounded-[14px]
+    px-6 py-2
+
+    hover:bg-[#deb70b]
+    transition-colors
+    cursor-pointer
+
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  Submit Review
+</button>
+
       </form>
     </div>
   );

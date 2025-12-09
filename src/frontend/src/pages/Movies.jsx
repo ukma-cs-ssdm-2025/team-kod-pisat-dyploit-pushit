@@ -141,7 +141,7 @@ export default function Movies() {
   if (isLoading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center text-lg text-[#052288]"
+        className="min-h-screen flex items-center justify-center text-lg text-[#606aa2]"
         style={{ backgroundColor: "#1a1a1a" }}
       >
         Loading movies...
@@ -152,6 +152,7 @@ export default function Movies() {
   return (
     <div className="min-h-screen pt-8 pb-8" style={{ backgroundColor: "#1a1a1a" }}>
       <div className="w-full max-w-7xl mx-auto px-4">
+
         {/* HEADER */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <div>
@@ -164,32 +165,89 @@ export default function Movies() {
           </div>
           {isAdmin && (
             <Link
-              to="/movies/new"
-              className="bg-[#606aa2] hover:bg-[#000000] text-white px-4 py-2 rounded-lg transition-colors cursor-pointer"
-            >
-              + Add Movie
-            </Link>
+  to="/movies/new"
+  className="
+    bg-black
+    text-white
+    font-extrabold
+    text-xs md:text-sm
+    tracking-[0.16em]
+    uppercase
+    border-[3px] border-black
+    rounded-[12px]
+    px-4 py-2
+    transition-all duration-300
+    cursor-pointer
+    inline-block
+
+    hover:bg-black
+    hover:translate-x-[-4px]
+    hover:translate-y-[-4px]
+    hover:shadow-[4px_4px_0px_white]
+
+    active:translate-x-0
+    active:translate-y-0
+    active:shadow-none
+  "
+>
+  + Add Movie
+</Link>
+
           )}
         </div>
 
-        {/* SEARCH PANEL (outer = blue, як просила) */}
+        {/* SEARCH PANEL */}
         <div className="bg-[#606aa2] rounded-[15px] p-6 mb-8 sticky top-6 z-10">
           <div className="flex flex-col md:flex-row gap-4">
+            {/* search field */}
             <div className="relative flex-grow">
               <input
                 type="text"
                 placeholder="Search by title or description..."
                 value={searchTerm}
                 onChange={handleSearchChange(setSearchTerm)}
-                className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-blue-400 transition-colors cursor-text"
+                className="
+                  w-full
+                  bg-[#1a1a1a]
+                  text-white
+                  border border-black
+                  rounded-lg
+                  pl-10 pr-4 py-2
+                  focus:outline-none
+                  focus:border-black
+                  transition-colors
+                  cursor-text
+                "
               />
               <div className="absolute top-0 left-0 p-3 pointer-events-none">
                 <SearchIcon />
               </div>
             </div>
+
+            {/* Filters & Sort button – black with press effect */}
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg border border-black transition-colors cursor-pointer whitespace-nowrap"
+              onClick={(e) => {
+                setShowFilters((prev) => !prev);
+                const btn = e.currentTarget;
+                btn.style.transition = "transform 0.12s ease";
+                btn.style.transform = "scale(0.9)";
+                setTimeout(() => {
+                  btn.style.transform = "scale(1)";
+                }, 120);
+              }}
+              className="
+                bg-black
+                text-white
+                px-4 py-2
+                rounded-lg
+                border border-black
+                transition-colors
+                transition-transform
+                hover:bg-[#181818]
+                active:scale-95
+                cursor-pointer
+                whitespace-nowrap
+              "
             >
               {showFilters ? "Hide Filters" : "Filters & Sort"}
             </button>
@@ -197,26 +255,45 @@ export default function Movies() {
 
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 border-t border-black pt-4">
+              {/* Genre */}
               <div>
-                <label className="block text-blue-200 mb-2 text-sm font-medium cursor-default">
+                <label className="block text-white mb-2 text-sm font-medium cursor-default">
                   Genre
                 </label>
                 <select
                   value={genreFilter}
                   onChange={handleGenreChange}
-                  className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-400 cursor-pointer appearance-none"
+                  className="
+                    w-full
+                    bg-[#1a1a1a]
+                    text-white
+                    border border-black
+                    rounded-lg
+                    px-4 py-2
+                    focus:outline-none
+                    focus:border-black
+                    cursor-pointer
+                    appearance-none
+                  "
                 >
-                  <option value="">All Genres</option>
+                  <option value="" className="bg-[#1a1a1a] text-white">
+                    All Genres
+                  </option>
                   {allGenres.map((genre) => (
-                    <option key={genre} value={genre} className="bg-gray-900">
+                    <option
+                      key={genre}
+                      value={genre}
+                      className="bg-[#1a1a1a] text-white"
+                    >
                       {genre}
                     </option>
                   ))}
                 </select>
               </div>
 
+              {/* People */}
               <div>
-                <label className="block text-blue-200 mb-2 text-sm font-medium cursor-default">
+                <label className="block text-white mb-2 text-sm font-medium cursor-default">
                   Actors / Directors
                 </label>
                 <input
@@ -224,24 +301,56 @@ export default function Movies() {
                   placeholder="Search person..."
                   value={peopleSearchTerm}
                   onChange={handleSearchChange(setPeopleSearchTerm)}
-                  className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-400 cursor-text"
+                  className="
+                    w-full
+                    bg-[#1a1a1a]
+                    text-white
+                    border border-black
+                    rounded-lg
+                    px-4 py-2
+                    focus:outline-none
+                    focus:border-black
+                    cursor-text
+                  "
                 />
               </div>
 
+              {/* Sort */}
               <div>
-                <label className="block text-blue-200 mb-2 text-sm font-medium cursor-default">
+                <label className="block text-white mb-2 text-sm font-medium cursor-default">
                   Sort By
                 </label>
                 <select
                   value={sortOption}
                   onChange={handleSortChange}
-                  className="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-400 cursor-pointer appearance-none"
+                  className="
+                    w-full
+                    bg-[#1a1a1a]
+                    text-white
+                    border border-black
+                    rounded-lg
+                    px-4 py-2
+                    focus:outline-none
+                    focus:border-black
+                    cursor-pointer
+                    appearance-none
+                  "
                 >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="title_asc">Title (A-Z)</option>
-                  <option value="rating_desc">Rating (High to Low)</option>
-                  <option value="rating_asc">Rating (Low to High)</option>
+                  <option value="newest" className="bg-[#1a1a1a] text-white">
+                    Newest First
+                  </option>
+                  <option value="oldest" className="bg-[#1a1a1a] text-white">
+                    Oldest First
+                  </option>
+                  <option value="title_asc" className="bg-[#1a1a1a] text-white">
+                    Title (A-Z)
+                  </option>
+                  <option value="rating_desc" className="bg-[#1a1a1a] text-white">
+                    Rating (High to Low)
+                  </option>
+                  <option value="rating_asc" className="bg-[#1a1a1a] text-white">
+                    Rating (Low to High)
+                  </option>
                 </select>
               </div>
             </div>
@@ -267,7 +376,17 @@ export default function Movies() {
                 </div>
                 <button
                   onClick={resetFilters}
-                  className="text-blue-300 hover:text-blue-200 hover:bg-blue-900/30 px-3 py-1 rounded transition-colors text-sm font-medium cursor-pointer"
+                  className="
+                    text-[#e5e5e5]
+                    hover:text-white
+                    hover:bg-black/30
+                    px-3 py-1
+                    rounded
+                    transition-colors
+                    text-sm
+                    font-medium
+                    cursor-pointer
+                  "
                 >
                   Reset Filters
                 </button>
@@ -294,7 +413,7 @@ export default function Movies() {
             {isFiltered && (
               <button
                 onClick={resetFilters}
-                className="text-blue-300 hover:text-blue-200 underline cursor-pointer"
+                className="text-[#e5e5e5] hover:text-white underline cursor-pointer"
               >
                 Reset Filters
               </button>

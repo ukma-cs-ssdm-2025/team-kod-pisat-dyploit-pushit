@@ -26,17 +26,21 @@ export default function AlertModal({ isOpen, onClose, title, message }) {
           <button
             onClick={onClose}
             className="
-              bg-[#e6e1e2]
-              text-black
+              bg-[#830707]
+              text-[#f5f0f0]
               font-extrabold
-              tracking-[0.12em]
+              tracking-[0.18em]
               uppercase
-              border-[3px] border-black
-              rounded-[12px]
+              rounded-[14px]
               px-6 py-2
-              hover:bg-[#cfcaca]
-              transition-colors
+
+              hover:bg-[#a90a0a]
               cursor-pointer
+
+              transition-colors
+              transition-transform
+              hover:scale-[0.97]
+              active:scale-90
             "
           >
             OK

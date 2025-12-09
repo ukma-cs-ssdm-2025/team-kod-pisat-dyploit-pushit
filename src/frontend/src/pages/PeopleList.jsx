@@ -375,21 +375,18 @@ export default function PeopleList() {
     confirmDelete(person);
   }}
   className="
-    bg-[#c0392b]
+    bg-black
     text-[#d6cecf]
-    border-[2px] border-black
-    px-3 py-1
-    rounded-[6px]
-
-    text-[10px]
-    uppercase
     font-extrabold
-    tracking-[0.08em]
-
-    hover:bg-[#922b21]
+    uppercase
+    text-xs md:text-sm
+    tracking-[0.18em]
+    rounded-[10px]
+    px-3 py-1
+    
+    hover:bg-[#830707]
     transition-colors
     cursor-pointer
-
     transition-transform
     hover:scale-[0.95]
   "

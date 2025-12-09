@@ -30,14 +30,18 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
               bg-[#2b2727]
               text-[#d6cecf]
               font-extrabold
-              tracking-[0.12em]
+              tracking-[0.18em]
               uppercase
-              border-[3px] border-black
-              rounded-[12px]
+              rounded-[14px]
               px-5 py-2
+
               hover:bg-black
-              transition-colors
               cursor-pointer
+
+              transition-colors
+              transition-transform
+              hover:scale-[0.97]
+              active:scale-90
             "
           >
             Cancel
@@ -50,17 +54,21 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
               onClose();
             }}
             className="
-              bg-[#c0392b]
-              text-[#d6cecf]
+              bg-[#830707]
+              text-[#f5f0f0]
               font-extrabold
-              tracking-[0.12em]
+              tracking-[0.18em]
               uppercase
-              border-[3px] border-black
-              rounded-[12px]
+              rounded-[14px]
               px-5 py-2
-              hover:bg-[#e74c3c]
-              transition-colors
+
+              hover:bg-[#a90a0a]
               cursor-pointer
+
+              transition-colors
+              transition-transform
+              hover:scale-[0.97]
+              active:scale-90
             "
           >
             Delete

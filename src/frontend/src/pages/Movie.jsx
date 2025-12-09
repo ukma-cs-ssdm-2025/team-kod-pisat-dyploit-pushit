@@ -41,6 +41,22 @@ export default function Movie() {
   const [confirmModalConfig, setConfirmModalConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
 
+  // 🔹 універсальна анімація для кліку по кнопці
+  const handleAnimatedClick = (e, action) => {
+    const btn = e.currentTarget;
+
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+
+    if (typeof action === "function") {
+      action();
+    }
+  };
+
   const fetchData = () => {
     setIsLoading(true);
     Promise.all([
@@ -223,7 +239,7 @@ export default function Movie() {
     });
   };
 
-  // LOADING / NOT FOUND – той самий стиль
+  // LOADING / NOT FOUND
   if (isLoading) {
     return (
       <div
@@ -364,7 +380,7 @@ export default function Movie() {
                           >
                             <Avatar
                               src={person.avatar_url}
-                              alt={`${person.first_name} ${person.last_name}`}
+                              alt={`${person.first_name} {person.last_name}`}
                               size="sm"
                               className="w-6 h-6 text-xs"
                             />
@@ -417,22 +433,25 @@ export default function Movie() {
 
                 {/* BUTTONS */}
                 <div className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
+                  {/* ADD / REMOVE FAVORITES */}
                   <button 
-                    onClick={handleLikeToggle}
+                    onClick={(e) => handleAnimatedClick(e, handleLikeToggle)}
                     disabled={isLikeLoading}
                     className={`
                       font-extrabold
                       text-xs md:text-sm
                       tracking-[0.16em]
                       uppercase
-                      border-[3px] border-black
+                      
                       rounded-[12px]
                       px-6 py-2
                       transition-colors
+                      transition-transform
+                      hover:scale-[0.95]
                       cursor-pointer
                       ${isLiked
-                        ? "bg-[#c0392b] text-[#d6cecf] hover:bg-[#e74c3c]"
-                        : "bg-[#c9c7c7] text-black hover:bg-[#e0dfdf]"
+                        ? "bg-white text-black hover:bg-[#cf7fc9]"
+                        : "bg-white text-black hover:bg-[#deb70b]"
                       }
                       disabled:opacity-60
                     `}
@@ -440,21 +459,24 @@ export default function Movie() {
                     {isLikeLoading ? '...' : isLiked ? 'Remove from Favorites' : 'Add to Favorites'}
                   </button>
 
+                  {/* EDIT MOVIE */}
                   {isAdmin && (
                     <button
-                      onClick={() => setIsEditing(true)}
+                      onClick={(e) => handleAnimatedClick(e, () => setIsEditing(true))}
                       className="
-                        bg-[#2b2727]
+                        bg-black
                         text-[#d6cecf]
                         font-extrabold
                         text-xs md:text-sm
                         tracking-[0.16em]
                         uppercase
-                        border-[3px] border-black
+                        
                         rounded-[12px]
                         px-6 py-2
                         hover:bg-black
                         transition-colors
+                        transition-transform
+                        hover:scale-[0.95]
                         cursor-pointer
                       "
                     >
@@ -462,21 +484,24 @@ export default function Movie() {
                     </button>
                   )}
 
+                  {/* DELETE MOVIE */}
                   {isAdmin && (
                     <button
-                      onClick={confirmDeleteMovie}
+                      onClick={(e) => handleAnimatedClick(e, confirmDeleteMovie)}
                       className="
-                        bg-[#c0392b]
+                        bg-[#830707]
                         text-[#d6cecf]
                         font-extrabold
                         text-xs md:text-sm
                         tracking-[0.16em]
                         uppercase
-                        border-[3px] border-black
+                        
                         rounded-[12px]
                         px-6 py-2
-                        hover:bg-[#e74c3c]
+                        hover:bg-[#830707]
                         transition-colors
+                        transition-transform
+                        hover:scale-[0.95]
                         cursor-pointer
                       "
                     >
@@ -631,46 +656,85 @@ export default function Movie() {
               />
             </div>
 
+
             <div className="flex flex-wrap gap-4 pt-4">
+
+
               <button
-                type="submit"
-                className="
-                  bg-[#c9c7c7]
-                  text-black
-                  font-extrabold
-                  text-xs md:text-sm
-                  tracking-[0.18em]
-                  uppercase
-                  border-[3px] border-black
-                  rounded-[14px]
-                  px-6 py-2
-                  hover:bg-[#e0dfdf]
-                  transition-colors
-                  cursor-pointer
-                "
-              >
-                Save Changes
-              </button>
-              <button
-                type="button"
-                onClick={() => { setIsEditing(false); setPosterFile(null); }}
-                className="
-                  bg-[#2b2727]
-                  text-[#d6cecf]
-                  font-extrabold
-                  text-xs md:text-sm
-                  tracking-[0.18em]
-                  uppercase
-                  border-[3px] border-black
-                  rounded-[14px]
-                  px-6 py-2
-                  hover:bg-black
-                  transition-colors
-                  cursor-pointer
-                "
-              >
-                Cancel
-              </button>
+  type="submit"
+  onClick={(e) => {
+    const btn = e.currentTarget;
+
+    // Анімація кліку (сильніше стискання)
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+  className="
+    bg-[#c9c7c7]
+    text-black
+    font-extrabold
+    text-xs md:text-sm
+    tracking-[0.18em]
+    uppercase
+    
+    rounded-[14px]
+    px-6 py-2
+
+    hover:bg-[#deb70b]
+    transition-colors
+    cursor-pointer
+
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  Save Changes
+</button>
+
+<button
+  type="button"
+  onClick={(e) => {
+    setIsEditing(false);
+    setPosterFile(null);
+
+    const btn = e.currentTarget;
+
+    // Анімація кліку (сильніше стискання)
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+  className="
+    bg-black
+    text-[#d6cecf]
+    font-extrabold
+    text-xs md:text-sm
+    tracking-[0.18em]
+    uppercase
+
+    rounded-[14px]
+    px-6 py-2
+
+    hover:bg-[#830707]
+    transition-colors
+    cursor-pointer
+
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  Cancel
+</button>
+
+
+
             </div>
           </form>
         )}

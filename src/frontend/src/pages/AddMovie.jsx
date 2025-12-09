@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addMovie, uploadMovieCover, getAllPeople } from '../api'; 
+import { addMovie, uploadMovieCover, getAllPeople } from '../api';
 import MultiSelect from '../components/MultiSelect';
 import AlertModal from '../components/AlertModal';
 
@@ -9,21 +9,25 @@ export default function AddMovie() {
     title: '',
     description: '',
     genre: '',
-    people_ids: [], 
+    people_ids: [],
   });
   const [posterFile, setPosterFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [peopleOptions, setPeopleOptions] = useState([]);
-  const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    getAllPeople().then(result => {
+    getAllPeople().then((result) => {
       const peopleList = result.people || result;
-      const options = peopleList.map(p => ({
+      const options = peopleList.map((p) => ({
         id: p.id,
-        label: `${p.first_name} ${p.last_name} (${p.profession})`
+        label: `${p.first_name} ${p.last_name} (${p.profession})`,
       }));
       setPeopleOptions(options);
     });
@@ -42,7 +46,7 @@ export default function AddMovie() {
       setPosterFile(e.target.files[0]);
     }
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -60,26 +64,25 @@ export default function AddMovie() {
       const newMovieId = response.movie?.id;
 
       if (!newMovieId) {
-        throw new Error("Failed to get new movie ID");
+        throw new Error('Failed to get new movie ID');
       }
-      
+
       if (posterFile) {
         await uploadMovieCover(newMovieId, posterFile);
       }
-      
+
       setAlertConfig({
         isOpen: true,
-        title: "Success",
-        message: "Movie created successfully!"
+        title: 'Success',
+        message: 'Movie created successfully!',
       });
       setTimeout(() => navigate(`/movie/${newMovieId}`), 1500);
-
     } catch (err) {
-      console.error("Creation error:", err);
+      console.error('Creation error:', err);
       setAlertConfig({
         isOpen: true,
-        title: "Error",
-        message: `Error: ${err.message || 'Failed to create movie'}`
+        title: 'Error',
+        message: `Error: ${err.message || 'Failed to create movie'}`,
       });
       setIsSubmitting(false);
     }
@@ -88,7 +91,7 @@ export default function AddMovie() {
   return (
     <div
       className="min-h-screen px-4 py-8 flex justify-center"
-      style={{ backgroundColor: "#1a1a1a" }}
+      style={{ backgroundColor: '#1a1a1a' }}
     >
       <div className="w-full max-w-3xl">
         <h1
@@ -100,7 +103,7 @@ export default function AddMovie() {
             tracking-[0.18em]
             mb-6
           "
-          style={{ letterSpacing: "0.12em" }}
+          style={{ letterSpacing: '0.12em' }}
         >
           Add New Movie
         </h1>
@@ -116,63 +119,64 @@ export default function AddMovie() {
             border-black
           "
         >
-          {/* Title */}
-          <div>
-            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
-              Title
-            </label>
-            <input
-              type="text"
-              name="title"
-              onChange={handleChange}
-              required
-              className="
-                w-full
-                bg-[#2b2727]
-                text-[#d6cecf]
-                border-[3px] border-black
-                rounded-[16px]
-                px-4 py-2
-                focus:outline-none
-                focus:border-[#d6cecf]
-                placeholder:uppercase
-                placeholder:tracking-[0.12em]
-                cursor-text
-              "
-            />
-          </div>
+          {/* Title / Genre */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Title
+              </label>
+              <input
+                type="text"
+                name="title"
+                onChange={handleChange}
+                required
+                className="
+                  w-full
+                  bg-[#1a1a1a]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  cursor-text
+                "
+              />
+            </div>
 
-          {/* Genre */}
-          <div>
-            <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
-              Genre
-            </label>
-            <input
-              type="text"
-              name="genre"
-              onChange={handleChange}
-              className="
-                w-full
-                bg-[#2b2727]
-                text-[#d6cecf]
-                border-[3px] border-black
-                rounded-[16px]
-                px-4 py-2
-                focus:outline-none
-                focus:border-[#d6cecf]
-                placeholder:uppercase
-                placeholder:tracking-[0.12em]
-                cursor-text
-              "
-            />
+            <div>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Genre
+              </label>
+              <input
+                type="text"
+                name="genre"
+                onChange={handleChange}
+                className="
+                  w-full
+                  bg-[#1a1a1a]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  cursor-text
+                "
+              />
+            </div>
           </div>
 
           {/* Cast & Crew */}
           <div>
             <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
-              Cast & Crew
+              Cast &amp; Crew (Select people)
             </label>
-            <div className="bg-[#2b2727] border-[3px] border-black rounded-[16px] px-3 py-2">
+            <div className="bg-[#1a1a1a] border-[3px] border-black rounded-[16px] px-3 py-2">
               <MultiSelect
                 label=""
                 options={peopleOptions}
@@ -183,32 +187,70 @@ export default function AddMovie() {
             </div>
           </div>
 
-          {/* Poster file */}
+          {/* Cover Image (file) */}
           <div>
             <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
               Cover Image (File)
             </label>
-            <input 
-              type="file" 
-              name="posterFile" 
-              onChange={handleFileChange} 
-              accept="image/*"
+
+            <div
               className="
                 w-full
-                bg-[#2b2727]
+                bg-[#1a1a1a]
                 text-[#d6cecf]
                 border-[3px] border-black
                 rounded-[16px]
                 px-4 py-2
-                cursor-pointer
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-[10px] file:border-0
-                file:text-xs file:font-extrabold
-                file:uppercase file:tracking-[0.14em]
-                file:bg-[#c9c7c7] file:text-black
-                hover:file:bg-[#e0dfdf]
+                flex items-center gap-4
               "
-            />
+            >
+              {/* Кнопка вибору файлу */}
+              <label
+                htmlFor="posterFileInput"
+                onClick={(e) => {
+                  const btn = e.currentTarget;
+                  btn.style.transition = 'transform 0.15s ease';
+                  btn.style.transform = 'scale(0.85)';
+                  setTimeout(() => {
+                    btn.style.transform = 'scale(1)';
+                  }, 150);
+                }}
+                className="
+                  bg-[#c9c7c7]
+                  text-black
+                  font-extrabold
+                  text-xs md:text-sm
+                  tracking-[0.18em]
+                  uppercase
+                  rounded-[14px]
+                  px-6 py-2
+                  cursor-pointer
+                  whitespace-nowrap
+
+                  hover:bg-[#deb70b]
+                  transition-colors
+                  transition-transform
+                  hover:scale-[0.95]
+                "
+              >
+                Choose a file
+              </label>
+
+              {/* Назва файлу */}
+              <span className="text-sm md:text-base text-[#d6cecf] truncate">
+                {posterFile ? posterFile.name : 'File is not chosen'}
+              </span>
+
+              {/* Схований справжній input */}
+              <input
+                id="posterFileInput"
+                type="file"
+                name="posterFile"
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
           </div>
 
           {/* Description */}
@@ -222,7 +264,7 @@ export default function AddMovie() {
               rows="5"
               className="
                 w-full
-                bg-[#2b2727]
+                bg-[#1a1a1a]
                 text-[#d6cecf]
                 border-[3px] border-black
                 rounded-[16px]
@@ -241,6 +283,14 @@ export default function AddMovie() {
           <button
             type="submit"
             disabled={isSubmitting}
+            onClick={(e) => {
+              const btn = e.currentTarget;
+              btn.style.transition = 'transform 0.15s ease';
+              btn.style.transform = 'scale(0.85)';
+              setTimeout(() => {
+                btn.style.transform = 'scale(1)';
+              }, 150);
+            }}
             className="
               w-full
               bg-[#c9c7c7]
@@ -249,13 +299,16 @@ export default function AddMovie() {
               text-xs md:text-sm
               tracking-[0.18em]
               uppercase
-              border-[3px] border-black
               rounded-[14px]
               px-6 py-3
-              hover:bg-[#e0dfdf]
+
+              hover:bg-[#deb70b]
               transition-colors
               cursor-pointer
               disabled:opacity-60
+
+              transition-transform
+              hover:scale-[0.95]
             "
           >
             {isSubmitting ? 'Saving...' : 'Add Movie'}
@@ -263,7 +316,7 @@ export default function AddMovie() {
         </form>
       </div>
 
-      <AlertModal 
+      <AlertModal
         isOpen={alertConfig.isOpen}
         onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
         title={alertConfig.title}

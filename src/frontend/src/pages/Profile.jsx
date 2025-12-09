@@ -406,47 +406,86 @@ export default function Profile() {
 
                 
                 {!isMe && friendStatus === 'friend' && (
-                  <button 
-                    onClick={() => handleFriendAction('remove')}
-                    className="
-                      bg-[#2b2727]
-                      text-[#d6cecf]
-                      font-extrabold
-                      text-xs md:text-sm
-                      tracking-[0.16em]
-                      uppercase
-                      border-[3px] border-black
-                      rounded-[12px]
-                      px-4 py-2
-                      hover:bg-black
-                      transition-colors
-                      cursor-pointer
-                    "
-                  >
-                    Unfriend
-                  </button>
-                )}
+               <button
+  onClick={(e) => {
+    if (isLoadingAction) return;
 
-                {canDelete && (
-                  <button
-                    onClick={confirmDeleteProfile}
-                    className="
-                      bg-[#c0392b]
-                      text-[#d6cecf]
-                      font-extrabold
-                      text-xs md:text-sm
-                      tracking-[0.16em]
-                      uppercase
-                      border-[3px] border-black
-                      rounded-[12px]
-                      px-4 py-2
-                      hover:bg-[#e74c3c]
-                      transition-colors
-                      cursor-pointer
-                    "
-                  >
-                    Ban User
-                  </button>
+    // спочатку анімація стискання
+    const btn = e.currentTarget;
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+
+    // потім уже дія
+    handleFriendAction(user.id, "remove");
+  }}
+  disabled={isLoadingAction}
+  className="
+    bg-black
+    text-[#d6cecf]
+    font-extrabold
+    uppercase
+    text-xs md:text-sm
+    tracking-[0.18em]
+    rounded-[10px]
+    px-3 py-1
+
+    hover:bg-[#830707]
+    transition-colors
+    cursor-pointer
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  {isLoadingAction ? "..." : "Unfriend"}
+</button>
+
+
+                              )}
+
+                            {isMyOwnProfile && (
+                              <span className="text-[#777] text-sm italic">
+                                (You)
+                              </span>
+                            )}
+
+                            {/* BAN – теж як Cancel */}
+                            {canDelete && (
+                              <button
+  onClick={(e) => {
+    const btn = e.currentTarget;
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+
+    confirmDelete(user);
+  }}
+  className="
+    bg-black
+    text-[#d6cecf]
+    font-extrabold
+    uppercase
+    text-xs md:text-sm
+    tracking-[0.18em]
+    rounded-[10px]
+    px-3 py-1
+    
+    hover:bg-[#830707]
+    transition-colors
+    cursor-pointer
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  Ban
+</button>
+
                 )}
               </div>
             </div>
