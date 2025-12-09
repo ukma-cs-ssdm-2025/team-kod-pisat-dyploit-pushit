@@ -6,12 +6,14 @@ import {
   deleteUser, 
   uploadAvatar,
   getAllMovies,   
+  getPaginatedMovies,  // Змінимо на пагінований запит
   getAllReviews,
   deleteReview,
   sendFriendRequest,
   removeFriend,
   acceptFriendRequest,
-  getIncomingFriendRequests
+  getIncomingFriendRequests,
+  getOutgoingFriendRequests
 } from "../api" 
 import { useAuth } from '../hooks/useAuth'
 import MovieCard from "../components/MovieCard"
@@ -20,7 +22,6 @@ import ConfirmModal from '../components/ConfirmModal';
 import AlertModal from '../components/AlertModal';
 import Avatar from '../components/Avatar';
 import TVAvatar from "../components/TVAvatar"; 
-
 
 export default function Profile() {
   const { username } = useParams();
@@ -32,21 +33,59 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
+  
+  // Friend System States
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [showFriendRequests, setShowFriendRequests] = useState(false);
+  const [relationState, setRelationState] = useState('none');
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   const [selectedMovies, setSelectedMovies] = useState([]);
   const [userReviews, setUserReviews] = useState([]);
   const [allMovies, setAllMovies] = useState([]);  
+  const [hasLoadedAllMovies, setHasLoadedAllMovies] = useState(false); // Новий стан
 
   const [confirmModalConfig, setConfirmModalConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
 
+  // Функція для завантаження ВСІХ фільмів (обхід пагінації)
+  const loadAllMovies = async () => {
+    let allMovies = [];
+    let page = 1;
+    const limit = 100; // Великий ліміт, можна збільшити
+    
+    try {
+      while (true) {
+        const response = await getPaginatedMovies(page, limit, '', '', '', 'oldest');
+        const movies = response.movies || [];
+        
+        if (movies.length === 0) break;
+        
+        allMovies = [...allMovies, ...movies];
+        
+        // Перевіряємо, чи завантажили всі фільми
+        if (movies.length < limit || allMovies.length >= response.total) {
+          break;
+        }
+        
+        page++;
+      }
+      
+      return allMovies;
+    } catch (err) {
+      console.error("Error loading all movies:", err);
+      return [];
+    }
+  };
+
   const fetchProfileData = async (targetUsername, isMyProfile) => {
     try {
-      const allMoviesData = await getAllMovies();
-      const moviesList = allMoviesData.movies || allMoviesData;
-      setAllMovies(moviesList);
+      // Завантажуємо ВСІ фільми тільки один раз
+      if (!hasLoadedAllMovies) {
+        const allMoviesData = await loadAllMovies();
+        setAllMovies(allMoviesData);
+        setHasLoadedAllMovies(true);
+      }
 
       const allReviewsData = await getAllReviews();
       const reviewsList = allReviewsData.reviews || allReviewsData;
@@ -69,16 +108,49 @@ export default function Profile() {
         setUserReviews(reviews);
 
         const selectedIds = user.liked_movies || [];
-        setSelectedMovies(moviesList.filter(m => selectedIds.includes(m.id)));
+        // Тепер використовуємо всі завантажені фільми
+        setSelectedMovies(allMovies.filter(m => selectedIds.includes(m.id)));
 
+        // --- FRIENDSHIP STATUS LOGIC ---
         if (isMyProfile) {
+          setRelationState('self');
           try {
             const requests = await getIncomingFriendRequests(currentUser.id);
             setIncomingRequests(requests.incoming || []);
           } catch (err) {
             console.error("Error loading requests:", err);
           }
+        } else {
+          if (currentUser?.friends?.some(f => f.id === user.id)) {
+            setRelationState('friend');
+          } else {
+            try {
+              const myIncoming = await getIncomingFriendRequests(currentUser.id);
+              const isIncoming = myIncoming.incoming?.some(req => req.requester_id === user.id);
+              
+              if (isIncoming) {
+                setRelationState('incoming');
+              } else {
+                try {
+                  if (typeof getOutgoingFriendRequests === 'function') {
+                    const myOutgoing = await getOutgoingFriendRequests(currentUser.id);
+                    const isOutgoing = myOutgoing.outgoing?.some(req => req.receiver_id === user.id);
+                    setRelationState(isOutgoing ? 'outgoing' : 'none');
+                  } else {
+                    setRelationState('none');
+                  }
+                } catch (e) {
+                  console.warn("Outgoing requests check failed", e);
+                  setRelationState('none');
+                }
+              }
+            } catch (err) {
+              console.error("Error checking friendship status:", err);
+              setRelationState('none');
+            }
+          }
         }
+
       } else {
         setProfileUser(null);
       }
@@ -95,7 +167,7 @@ export default function Profile() {
       return;
     }
     
-    const isMyProfile = !username; 
+    const isMyProfile = !username || (currentUser && username === currentUser.username); 
     const targetUsername = isMyProfile ? currentUser?.username : username;
 
     if (!targetUsername) {
@@ -103,33 +175,61 @@ export default function Profile() {
       return;
     }
     
-    if ((isMyProfile && currentUser) || !isMyProfile) {
-      fetchProfileData(targetUsername, isMyProfile);
+    fetchProfileData(targetUsername, isMyProfile);
+
+  }, [username, currentUser, isAuthLoading, navigate, hasLoadedAllMovies]);  
+
+  // Додамо ефект для перезавантаження фільмів при зміні користувача
+  useEffect(() => {
+    // Скидаємо прапор завантаження фільмів при зміні користувача
+    if (username) {
+      setHasLoadedAllMovies(false);
     }
+  }, [username]);
 
-  }, [username, currentUser, isAuthLoading, navigate]);  
-
+  // Решта коду залишається без змін...
   const handleFriendAction = async (action, userParam = null) => {
     if (!userParam && profileUser) {
       userParam = profileUser.id;
     }
+    
+    setIsActionLoading(true);
 
     try {
       if (action === 'add') {
         await sendFriendRequest(userParam);
-        setAlertConfig({ isOpen: true, title: "Success", message: "Friend request sent!" });
+        setRelationState('outgoing');
+        
       } else if (action === 'remove') {
         await removeFriend(userParam);
-        setAlertConfig({ isOpen: true, title: "Success", message: "Friend removed!" });
-        fetchProfileData(username || currentUser.username, !username);
+        
+        setRelationState('none');
+        
+        if (relationState === 'self' && profileUser.friends) {
+            setProfileUser(prev => ({
+                ...prev,
+                friends: prev.friends.filter(f => f.id !== parseInt(userParam))
+            }));
+        }
+
+        setAlertConfig({ isOpen: true, title: "Success", message: "Action successful!" });
+        
       } else if (action === 'accept') {
         await acceptFriendRequest(userParam);
+        
+        if (relationState !== 'self') {
+            setRelationState('friend');
+        } else {
+            setIncomingRequests(prev => prev.filter(req => req.requester_id !== parseInt(userParam)));
+            fetchProfileData(currentUser.username, true);
+        }
+        
         setAlertConfig({ isOpen: true, title: "Success", message: "Friend request accepted!" });
-        setIncomingRequests(prev => prev.filter(req => req.requester_id !== parseInt(userParam)));
-        fetchProfileData(username || currentUser.username, !username);
       }
     } catch (err) {
       setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Action failed'}` });
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -149,28 +249,17 @@ export default function Profile() {
     });
   };
 
-  const isMe = currentUser?.id === profileUser?.id;
+  const isMe = relationState === 'self';
   const canEdit = isMe || 
                   (isAdmin && profileUser?.role !== 'admin') || 
                   (isModerator && !isAdmin && profileUser?.role === 'user');
   
   const canDelete = canEdit && !isMe;
 
-  const getFriendStatus = () => {
-    if (!currentUser || !profileUser || isMe) return 'self';
-    
-    if (currentUser.friends && currentUser.friends.some(friend => friend.id === profileUser.id)) {
-      return 'friend';
-    }
-    
-    return 'not_friend';
-  };
-
-  const friendStatus = getFriendStatus();
-  
   const handleEditChange = (e) => {
     setEditData({ ...editData, [e.target.name]: e.target.value });
   };
+  
   const handleRoleChange = (e) => {
     setEditData({ ...editData, role: e.target.value });
   };
@@ -238,10 +327,7 @@ export default function Profile() {
 
   if (isLoading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center px-4"
-        style={{ backgroundColor: "#1a1a1aff" }}
-      >
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#1a1a1aff" }}>
         <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf]">
           Loading...
         </div>
@@ -251,10 +337,7 @@ export default function Profile() {
 
   if (!profileUser) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center px-4"
-        style={{ backgroundColor: "#1a1a1a" }}
-      >
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#1a1a1a" }}>
         <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-red-400">
           User not found.
         </div>
@@ -262,13 +345,8 @@ export default function Profile() {
     );
   }
 
-// РЕТУРН
-
   return (
-    <div
-      className="min-h-screen px-4 py-8 flex justify-center"
-      style={{ backgroundColor: "#1a1a1a" }}
-    >
+    <div className="min-h-screen px-4 py-8 flex justify-center" style={{ backgroundColor: "#1a1a1a" }}>
       <div className="w-full max-w-6xl">
 
         {/* ВЕРХНІЙ БЛОК ПРОФІЛЮ */}
@@ -276,25 +354,10 @@ export default function Profile() {
           <div className="bg-[#606aa2] border-black rounded-[15px] p-6 mb-8 shadow-2xl">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
               
-              <TVAvatar
-                src={profileUser.avatar_url}
-                alt={profileUser.nickname}
-              />
+              <TVAvatar src={profileUser.avatar_url} alt={profileUser.nickname} />
+              
               <div className="text-center md:text-left flex-1">
-                <h1
-                  className="
-                    text-2xl md:text-3xl
-                    font-extrabold
-                    text-[#d6cecf]
-                    uppercase
-                    tracking-[0.18em]
-                    mb-2
-                  "
-                  style={{
-                    letterSpacing: "0.12em",
-                    wordSpacing: "0.12em",
-                  }}
-                >
+                <h1 className="text-2xl md:text-3xl font-extrabold text-[#d6cecf] uppercase tracking-[0.18em] mb-2" style={{ letterSpacing: "0.12em", wordSpacing: "0.12em" }}>
                   {profileUser.nickname || profileUser.username}
                 </h1>
 
@@ -304,31 +367,25 @@ export default function Profile() {
 
                 <div className="border-t-[3px] border-black pt-3 mt-2 space-y-1">
                   <p className="text-sm md:text-sm text-[#d6cecf] uppercase font-semibold tracking-[0.06em]">
-                    Email:{" "}
-                    <span className="font-extrabold text-black">
-                      {profileUser.email}
-                    </span>
+                    Email: <span className="font-extrabold text-black">{profileUser.email}</span>
                   </p>
                   <p className="text-sm md:text-sm text-[#d6cecf] uppercase font-semibold tracking-[0.06em]">
-                    Role:{" "}
-                    <span className="font-extrabold text-black uppercase">
-                      {profileUser.role}
-                    </span>
+                    Role: <span className="font-extrabold text-black uppercase">{profileUser.role}</span>
                   </p>
                   <p className="text-sm md:text-sm text-[#d6cecf] uppercase font-semibold tracking-[0.06em]">
-                    Friends:{" "}
-                    <span className="font-extrabold text-black">
-                      {profileUser.friends?.length || 0}
-                    </span>
+                    Friends: <span className="font-extrabold text-black">{profileUser.friends?.length || 0}</span>
                   </p>
                 </div>
               </div>
 
               {/* КНОПКИ ДІЙ */}
               <div className="flex flex-col gap-2 w-full md:w-auto">
-                {!isMe && friendStatus === 'not_friend' && (
+                
+                {/* 1. ADD FRIEND */}
+                {!isMe && relationState === 'none' && (
                   <button 
                     onClick={() => handleFriendAction('add')}
+                    disabled={isActionLoading}
                     className="
                       bg-[#c9c7c7]
                       text-black
@@ -344,10 +401,129 @@ export default function Profile() {
                       cursor-pointer
                     "
                   >
-                    Add Friend
+                    {isActionLoading ? 'Sending...' : 'Add Friend'}
                   </button>
                 )}
 
+                {/* 2. REQUEST SENT (OUTGOING) */}
+                {!isMe && relationState === 'outgoing' && (
+                  <div className="flex flex-col items-center">
+                    <button 
+                      onClick={() => handleFriendAction('remove')}
+                      disabled={isActionLoading}
+                      className="
+                        bg-[#1a1a1a]
+                        text-[#d6cecf]
+                        font-extrabold
+                        text-xs md:text-sm
+                        tracking-[0.14em]
+                        uppercase
+                        border-[3px] border-[#555]
+                        rounded-[12px]
+                        px-4 py-2
+                        hover:border-red-500
+                        hover:text-red-400
+                        transition-colors
+                        cursor-pointer
+                        flex items-center gap-2
+                      "
+                      title="Click to cancel request"
+                    >
+                      {isActionLoading ? '...' : (
+                         <>
+                           <span>Request Sent</span>
+                           <span className="text-[10px] text-red-500 ml-1">✕</span>
+                         </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* 3. INCOMING REQUEST (ACCEPT/DECLINE) */}
+                {!isMe && relationState === 'incoming' && (
+                  <div className="flex flex-col gap-2">
+                     <span className="text-[#1a1a1a] text-xs font-extrabold uppercase text-center tracking-wider">
+                       Sent you a request
+                     </span>
+                     <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleFriendAction('accept')}
+                          disabled={isActionLoading}
+                          className="
+                            bg-green-700
+                            text-white
+                            font-extrabold
+                            text-xs md:text-sm
+                            tracking-[0.1em]
+                            uppercase
+                            border-[3px] border-black
+                            rounded-[12px]
+                            px-3 py-2
+                            hover:bg-green-600
+                            transition-colors
+                            cursor-pointer
+                            flex-1
+                          "
+                        >
+                          Accept
+                        </button>
+                        <button 
+                          onClick={() => handleFriendAction('remove')}
+                          disabled={isActionLoading}
+                          className="
+                            bg-[#333]
+                            text-white
+                            font-extrabold
+                            text-xs md:text-sm
+                            tracking-[0.1em]
+                            uppercase
+                            border-[3px] border-black
+                            rounded-[12px]
+                            px-3 py-2
+                            hover:bg-red-900
+                            transition-colors
+                            cursor-pointer
+                            flex-1
+                          "
+                        >
+                          Decline
+                        </button>
+                     </div>
+                  </div>
+                )}
+
+                {/* 4. ALREADY FRIENDS (UNFRIEND) */}
+                {!isMe && relationState === 'friend' && (
+                  <button 
+                    onClick={(e) => {
+                      const btn = e.currentTarget;
+                      btn.style.transition = "transform 0.15s ease";
+                      btn.style.transform = "scale(0.85)";
+                      setTimeout(() => { btn.style.transform = "scale(1)"; }, 150);
+                      handleFriendAction('remove');
+                    }}
+                    disabled={isActionLoading}
+                    className="
+                      bg-black
+                      text-[#d6cecf]
+                      font-extrabold
+                      uppercase
+                      text-xs md:text-sm
+                      tracking-[0.18em]
+                      rounded-[10px]
+                      px-3 py-1
+                      hover:bg-[#830707]
+                      transition-colors
+                      cursor-pointer
+                      transition-transform
+                      hover:scale-[0.95]
+                    "
+                  >
+                    {isActionLoading ? '...' : 'Unfriend'}
+                  </button>
+                )}
+
+                {/* INCOMING REQUESTS BUTTON (FOR MY PROFILE) */}
                 {isMe && incomingRequests.length > 0 && (
                   <button 
                     onClick={() => setShowFriendRequests(!showFriendRequests)}
@@ -370,117 +546,70 @@ export default function Profile() {
                   </button>
                 )}
 
-           {canEdit && (
-
-              <button
-                onClick={() => setIsEditing(true)}
-                className="
-                  bg-black
-                  text-white
-                  font-extrabold
-                  text-xs md:text-sm
-                  tracking-[0.16em]
-                  uppercase
-                  border-[3px] border-black
-                  rounded-[12px]
-                  px-4 py-2
-                  transition-all duration-300
-                  cursor-pointer
-
-                  hover:bg-black
-                  hover:translate-x-[-4px]
-                  hover:translate-y-[-4px]
-                  hover:rounded-[12px]
-                  hover:shadow-[4px_4px_0px_white]
-
-                  active:translate-x-0
-                  active:translate-y-0
-                  active:shadow-none
-                  active:rounded-[12px]
-                "
-              >
-                Edit Profile
-              </button>
-
-            )}
-
-                
-            {!isMe && friendStatus === 'friend' && (
-            <button  onClick={(e) => {
-                // спочатку анімація стискання
-                const btn = e.currentTarget;
-                btn.style.transition = "transform 0.15s ease";
-                btn.style.transform = "scale(0.85)";
-
-                setTimeout(() => {
-                  btn.style.transform = "scale(1)";
-                }, 150);
-
-                // Виправлений виклик функції
-                handleFriendAction('remove', profileUser.id);
-              }}
-              className="
-                bg-black
-                text-[#d6cecf]
-                font-extrabold
-                uppercase
-                text-xs md:text-sm
-                tracking-[0.18em]
-                rounded-[10px]
-                px-3 py-1
-
-                hover:bg-[#830707]
-                transition-colors
-                cursor-pointer
-                transition-transform
-                hover:scale-[0.95]
-              "
-            >
-              Unfriend
-            </button>)}
+                {canEdit && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="
+                      bg-black
+                      text-white
+                      font-extrabold
+                      text-xs md:text-sm
+                      tracking-[0.16em]
+                      uppercase
+                      border-[3px] border-black
+                      rounded-[12px]
+                      px-4 py-2
+                      transition-all duration-300
+                      cursor-pointer
+                      hover:bg-black
+                      hover:translate-x-[-4px]
+                      hover:translate-y-[-4px]
+                      hover:rounded-[12px]
+                      hover:shadow-[4px_4px_0px_white]
+                      active:translate-x-0
+                      active:translate-y-0
+                      active:shadow-none
+                      active:rounded-[12px]
+                    "
+                  >
+                    Edit Profile
+                  </button>
+                )}
                             
-            {/* ВИПРАВЛЕНО: замінено isMyProfile на isMe */}
-            {isMe && (
-              <span className="text-[#777] text-sm italic">
-                (You)
-              </span>
-            )}
+                {isMe && (
+                  <span className="text-[#777] text-sm italic">
+                    (You)
+                  </span>
+                )}
             
-            {/* BAN – теж як Cancel */}
-            {canDelete && (
-              <button
-                onClick={(e) => {
-                  const btn = e.currentTarget;
-                  btn.style.transition = "transform 0.15s ease";
-                  btn.style.transform = "scale(0.85)";
-
-                  setTimeout(() => {
-                    btn.style.transform = "scale(1)";
-                  }, 150);
-
-                  // ВИПРАВЛЕНО: правильна назва функції
-                  confirmDeleteProfile();
-                }}
-                className="
-                  bg-black
-                  text-[#d6cecf]
-                  font-extrabold
-                  uppercase
-                  text-xs md:text-sm
-                  tracking-[0.18em]
-                  rounded-[10px]
-                  px-3 py-1
-                  
-                  hover:bg-[#830707]
-                  transition-colors
-                  cursor-pointer
-                  transition-transform
-                  hover:scale-[0.95]
-                "
-              >
-                Ban
-              </button>
-            )}
+                {canDelete && (
+                  <button
+                    onClick={(e) => {
+                      const btn = e.currentTarget;
+                      btn.style.transition = "transform 0.15s ease";
+                      btn.style.transform = "scale(0.85)";
+                      setTimeout(() => { btn.style.transform = "scale(1)"; }, 150);
+                      confirmDeleteProfile();
+                    }}
+                    className="
+                      bg-black
+                      text-[#d6cecf]
+                      font-extrabold
+                      uppercase
+                      text-xs md:text-sm
+                      tracking-[0.18em]
+                      rounded-[10px]
+                      px-3 py-1
+                      hover:bg-[#830707]
+                      transition-colors
+                      cursor-pointer
+                      transition-transform
+                      hover:scale-[0.95]
+                    "
+                  >
+                    Ban
+                  </button>
+                )}
               </div>
             </div>
 
@@ -691,84 +820,61 @@ export default function Profile() {
             )}
 
             <div className="flex flex-wrap gap-4 pt-4">
+              <button
+                type="submit"
+                onClick={(e) => {
+                  const btn = e.currentTarget;
+                  btn.style.transition = "transform 0.15s ease";
+                  btn.style.transform = "scale(0.85)";
+                  setTimeout(() => { btn.style.transform = "scale(1)"; }, 150);
+                }}
+                className="
+                  bg-[#c9c7c7]
+                  text-black
+                  font-extrabold
+                  text-xs md:text-sm
+                  tracking-[0.18em]
+                  uppercase
+                  rounded-[14px]
+                  px-6 py-2
+                  hover:bg-[#deb70b]
+                  transition-colors
+                  cursor-pointer
+                  transition-transform
+                  hover:scale-[0.95]
+                "
+              >
+                Save Changes
+              </button>
 
-            
-
-<button
-  type="submit"
-  onClick={(e) => {
-    const btn = e.currentTarget;
-
-    // Анімація кліку (сильніше стискання)
-    btn.style.transition = "transform 0.15s ease";
-    btn.style.transform = "scale(0.85)";
-
-    setTimeout(() => {
-      btn.style.transform = "scale(1)";
-    }, 150);
-  }}
-  className="
-    bg-[#c9c7c7]
-    text-black
-    font-extrabold
-    text-xs md:text-sm
-    tracking-[0.18em]
-    uppercase
-
-    rounded-[14px]
-    px-6 py-2
-
-    hover:bg-[#deb70b]
-    transition-colors
-    cursor-pointer
-
-    transition-transform
-    hover:scale-[0.95]     /* легке стискання при наведенні */
-  "
->
-  Save Changes
-</button>
-
-<button
-  type="button"
-  onClick={(e) => {
-    setIsEditing(false);
-    setAvatarFile(null);
-
-    const btn = e.currentTarget;
-
-    // Анімація кліку (сильніше стискання)
-    btn.style.transition = "transform 0.15s ease";
-    btn.style.transform = "scale(0.85)";
-
-    setTimeout(() => {
-      btn.style.transform = "scale(1)";
-    }, 150);
-  }}
-  className="
-    bg-black
-    text-[#d6cecf]
-    font-extrabold
-    text-xs md:text-sm
-    tracking-[0.18em]
-    uppercase
-
-    rounded-[14px]
-    px-6 py-2
-
-    hover:bg-[#830707]
-    transition-colors
-    cursor-pointer
-
-    transition-transform
-    hover:scale-[0.95]     /* легке стискання при наведенні */
-  "
->
-  Cancel
-</button>
-
-
-
+              <button
+                type="button"
+                onClick={(e) => {
+                  setIsEditing(false);
+                  setAvatarFile(null);
+                  const btn = e.currentTarget;
+                  btn.style.transition = "transform 0.15s ease";
+                  btn.style.transform = "scale(0.85)";
+                  setTimeout(() => { btn.style.transform = "scale(1)"; }, 150);
+                }}
+                className="
+                  bg-black
+                  text-[#d6cecf]
+                  font-extrabold
+                  text-xs md:text-sm
+                  tracking-[0.18em]
+                  uppercase
+                  rounded-[14px]
+                  px-6 py-2
+                  hover:bg-[#830707]
+                  transition-colors
+                  cursor-pointer
+                  transition-transform
+                  hover:scale-[0.95]
+                "
+              >
+                Cancel
+              </button>
             </div>
           </form>
         )}
@@ -781,7 +887,6 @@ export default function Profile() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {profileUser.friends.map(friend => (
-
                 <div
                   key={friend.id}
                   className="bg-[#1a1a1a] border-[4px] border-black rounded-[12px] p-4 flex items-center gap-3"
@@ -871,17 +976,15 @@ export default function Profile() {
 
       </div>
 
-  {/* POPCORN DECORATION */}
       <img
         src="/pictures_elements/popcorn_gray.png"
         className="popcorn fixed right-6 bottom-6 w-[70px] z-20"
         alt="Popcorn"
-
         onClick={(e) => {
-         e.target.classList.remove("active");      // скинути попередню анімацію
-         void e.target.offsetWidth;                // магічний трюк для рестарту
-         e.target.classList.add("active");         // увімкнути знову
-       }}
+          e.target.classList.remove("active");      
+          void e.target.offsetWidth;                
+          e.target.classList.add("active");         
+        }}
       />
 
       <ConfirmModal 

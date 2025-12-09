@@ -6,7 +6,10 @@ import {
   getUsersStats,
   getUserRoles,
   sendFriendRequest,
-  removeFriend
+  removeFriend,
+  acceptFriendRequest,
+  getIncomingFriendRequests,
+  getOutgoingFriendRequests // Переконайтесь, що додали це в api.js
 } from '../api';
 import { useAuth } from '../hooks/useAuth';
 import ConfirmModal from '../components/ConfirmModal';
@@ -37,7 +40,13 @@ export default function UserList() {
   const [roleFilter, setRoleFilter] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
-  const [friendActions, setFriendActions] = useState({});
+  
+  // --- FRIENDSHIP LOCAL STATE (Instant UI Updates) ---
+  const [myFriendIds, setMyFriendIds] = useState([]);      // IDs of accepted friends
+  const [incomingIds, setIncomingIds] = useState([]);      // IDs of users who sent ME a request
+  const [outgoingIds, setOutgoingIds] = useState([]);      // IDs of users I sent a request TO
+  const [actionLoadingIds, setActionLoadingIds] = useState(new Set()); // IDs currently processing
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -51,6 +60,33 @@ export default function UserList() {
     message: '',
   });
 
+  // 1. Initial Data Fetch for Friend Statuses
+  useEffect(() => {
+    if (currentUser) {
+      // Load confirmed friends from auth context
+      const initialFriends = currentUser.friends?.map(f => f.id) || [];
+      setMyFriendIds(initialFriends);
+
+      const fetchStatuses = async () => {
+        try {
+          // Load Incoming Requests
+          const inData = await getIncomingFriendRequests(currentUser.id);
+          setIncomingIds(inData.incoming?.map(r => r.requester_id) || []);
+
+          // Load Outgoing Requests (Check if function exists first to be safe)
+          if (typeof getOutgoingFriendRequests === 'function') {
+            const outData = await getOutgoingFriendRequests(currentUser.id);
+            setOutgoingIds(outData.outgoing?.map(r => r.receiver_id) || []);
+          }
+        } catch (err) {
+          console.error("Error loading friend statuses:", err);
+        }
+      };
+
+      fetchStatuses();
+    }
+  }, [currentUser]);
+
   // debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -61,7 +97,7 @@ export default function UserList() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // fetch logic
+  // fetch users logic
   const fetchUsersData = useCallback(
     async (page = 1, search = '', role = '') => {
       setIsLoading(true);
@@ -126,23 +162,36 @@ export default function UserList() {
     }
   };
 
-  const handleFriendAction = async (userId, action) => {
-    setFriendActions((prev) => ({ ...prev, [userId]: 'loading' }));
+  // --- NEW HANDLER FOR INSTANT UPDATES ---
+  const handleFriendAction = async (targetUserId, action) => {
+    // Set loading state for this specific user
+    setActionLoadingIds(prev => new Set(prev).add(targetUserId));
+
     try {
       if (action === 'add') {
-        await sendFriendRequest(userId);
-        setAlertConfig({
-          isOpen: true,
-          title: 'Success',
-          message: 'Friend request sent!',
-        });
+        await sendFriendRequest(targetUserId);
+        
+        // Instant UI Update: Add to outgoing, it becomes "Request Sent"
+        setOutgoingIds(prev => [...prev, targetUserId]);
+        // Optional Toast
+        // setAlertConfig({ isOpen: true, title: 'Success', message: 'Friend request sent!' });
+
       } else if (action === 'remove') {
-        await removeFriend(userId);
-        setAlertConfig({
-          isOpen: true,
-          title: 'Success',
-          message: 'Friend removed!',
-        });
+        // Works for: Unfriend, Cancel Request, Decline Request
+        await removeFriend(targetUserId);
+        
+        // Instant UI Update: Remove from all lists
+        setMyFriendIds(prev => prev.filter(id => id !== targetUserId));
+        setIncomingIds(prev => prev.filter(id => id !== targetUserId));
+        setOutgoingIds(prev => prev.filter(id => id !== targetUserId));
+
+      } else if (action === 'accept') {
+        await acceptFriendRequest(targetUserId);
+        
+        // Instant UI Update: Remove from incoming, Add to friends
+        setIncomingIds(prev => prev.filter(id => id !== targetUserId));
+        setMyFriendIds(prev => [...prev, targetUserId]);
+        setAlertConfig({ isOpen: true, title: 'Success', message: 'Friend request accepted!' });
       }
     } catch (err) {
       setAlertConfig({
@@ -151,14 +200,22 @@ export default function UserList() {
         message: `Error: ${err.message || 'Action failed'}`,
       });
     } finally {
-      setFriendActions((prev) => ({ ...prev, [userId]: null }));
+      // Remove loading state
+      setActionLoadingIds(prev => {
+        const next = new Set(prev);
+        next.delete(targetUserId);
+        return next;
+      });
     }
   };
 
-  const getFriendStatus = (user) => {
-    if (!currentUser || user.id === currentUser.id) return 'self';
-    if (currentUser.friends?.some((f) => f.id === user.id)) return 'friend';
-    return 'not_friend';
+  // Helper to decide what button to show
+  const getRelationState = (userId) => {
+    if (!currentUser || userId === currentUser.id) return 'self';
+    if (myFriendIds.includes(userId)) return 'friend';
+    if (incomingIds.includes(userId)) return 'incoming'; // They sent to me
+    if (outgoingIds.includes(userId)) return 'outgoing'; // I sent to them
+    return 'none';
   };
 
   const handlePageChange = (page) => {
@@ -287,8 +344,8 @@ export default function UserList() {
                 {users.length > 0 ? (
                   users.map((user) => {
                     const isMyOwnProfile = currentUser?.id === user.id;
-                    const friendStatus = getFriendStatus(user);
-                    const isLoadingAction = friendActions[user.id] === 'loading';
+                    const relation = getRelationState(user.id);
+                    const isLoadingAction = actionLoadingIds.has(user.id);
 
                     const canDelete =
                       !isMyOwnProfile &&
@@ -341,64 +398,75 @@ export default function UserList() {
                         </td>
 
                         <td className="p-4">
-                          <div className="flex gap-2">
-                            {/* ADD FRIEND */}
-                            {!isMyOwnProfile &&
-                              friendStatus === 'not_friend' && (
-                                <button
-                                  onClick={() =>
-                                    handleFriendAction(user.id, 'add')
-                                  }
-                                  disabled={isLoadingAction}
-                                  className="bg-[#c9c7c7] text-black border-[3px] border-black px-3 py-1 rounded-[10px] font-extrabold uppercase text-xs cursor-pointer"
-                                >
-                                  {isLoadingAction ? '...' : 'Add'}
-                                </button>
-                              )}
+                          <div className="flex gap-2 items-center">
+                            
+                            {!isMyOwnProfile && (
+                              <>
+                                {/* 1. NOT FRIENDS -> ADD */}
+                                {relation === 'none' && (
+                                  <button
+                                    onClick={() => handleFriendAction(user.id, 'add')}
+                                    disabled={isLoadingAction}
+                                    className="bg-[#c9c7c7] text-black border-[3px] border-black px-3 py-1 rounded-[10px] font-extrabold uppercase text-xs cursor-pointer hover:bg-white"
+                                  >
+                                    {isLoadingAction ? '...' : 'Add Friend'}
+                                  </button>
+                                )}
 
-                            {/* UNFRIEND – стиль як Cancel */}
-                            {!isMyOwnProfile &&
-                              friendStatus === 'friend' && (
-                                
-                               <button
-  onClick={(e) => {
-    if (isLoadingAction) return;
+                                {/* 2. ALREADY FRIENDS -> UNFRIEND */}
+                                {relation === 'friend' && (
+                                  <button
+                                    onClick={(e) => {
+                                      const btn = e.currentTarget;
+                                      btn.style.transform = "scale(0.85)";
+                                      setTimeout(() => btn.style.transform = "scale(1)", 150);
+                                      handleFriendAction(user.id, "remove");
+                                    }}
+                                    disabled={isLoadingAction}
+                                    className="bg-black text-[#d6cecf] font-extrabold uppercase text-xs md:text-sm tracking-[0.18em] rounded-[10px] px-3 py-1 hover:bg-[#830707] transition-colors cursor-pointer transition-transform hover:scale-[0.95]"
+                                  >
+                                    {isLoadingAction ? "..." : "Unfriend"}
+                                  </button>
+                                )}
 
-    // спочатку анімація стискання
-    const btn = e.currentTarget;
-    btn.style.transition = "transform 0.15s ease";
-    btn.style.transform = "scale(0.85)";
+                                {/* 3. OUTGOING REQUEST -> CANCEL */}
+                                {relation === 'outgoing' && (
+                                  <div className="flex items-center gap-2">
+                                     <span className="text-[#777] text-[10px] uppercase font-bold tracking-wider italic border border-[#444] rounded px-1">
+                                       Request Sent
+                                     </span>
+                                     <button 
+                                      onClick={() => handleFriendAction(user.id, 'remove')}
+                                      disabled={isLoadingAction}
+                                      className="text-red-500 hover:text-red-400 font-bold text-xs"
+                                      title="Cancel request"
+                                     >
+                                       ✕
+                                     </button>
+                                  </div>
+                                )}
 
-    setTimeout(() => {
-      btn.style.transform = "scale(1)";
-    }, 150);
-
-    // потім уже дія
-    handleFriendAction(user.id, "remove");
-  }}
-  disabled={isLoadingAction}
-  className="
-    bg-black
-    text-[#d6cecf]
-    font-extrabold
-    uppercase
-    text-xs md:text-sm
-    tracking-[0.18em]
-    rounded-[10px]
-    px-3 py-1
-
-    hover:bg-[#830707]
-    transition-colors
-    cursor-pointer
-    transition-transform
-    hover:scale-[0.95]
-  "
->
-  {isLoadingAction ? "..." : "Unfriend"}
-</button>
-
-
-                              )}
+                                {/* 4. INCOMING REQUEST -> ACCEPT/DECLINE */}
+                                {relation === 'incoming' && (
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={() => handleFriendAction(user.id, 'accept')}
+                                      disabled={isLoadingAction}
+                                      className="bg-green-700 text-white border-[2px] border-black px-2 py-1 rounded-[8px] font-bold uppercase text-[10px] hover:bg-green-600"
+                                    >
+                                      Accept
+                                    </button>
+                                    <button
+                                      onClick={() => handleFriendAction(user.id, 'remove')} // Decline
+                                      disabled={isLoadingAction}
+                                      className="bg-[#333] text-white border-[2px] border-black px-2 py-1 rounded-[8px] font-bold uppercase text-[10px] hover:bg-red-900"
+                                    >
+                                      Decline
+                                    </button>
+                                  </div>
+                                )}
+                              </>
+                            )}
 
                             {isMyOwnProfile && (
                               <span className="text-[#777] text-sm italic">
@@ -406,40 +474,38 @@ export default function UserList() {
                               </span>
                             )}
 
-                            {/* BAN – теж як Cancel */}
+                            {/* BAN */}
                             {canDelete && (
                               <button
-  onClick={(e) => {
-    const btn = e.currentTarget;
-    btn.style.transition = "transform 0.15s ease";
-    btn.style.transform = "scale(0.85)";
-
-    setTimeout(() => {
-      btn.style.transform = "scale(1)";
-    }, 150);
-
-    confirmDelete(user);
-  }}
-  className="
-    bg-black
-    text-[#d6cecf]
-    font-extrabold
-    uppercase
-    text-xs md:text-sm
-    tracking-[0.18em]
-    rounded-[10px]
-    px-3 py-1
-    
-    hover:bg-[#830707]
-    transition-colors
-    cursor-pointer
-    transition-transform
-    hover:scale-[0.95]
-  "
->
-  Ban
-</button>
-
+                                onClick={(e) => {
+                                  const btn = e.currentTarget;
+                                  btn.style.transition = "transform 0.15s ease";
+                                  btn.style.transform = "scale(0.85)";
+                                  setTimeout(() => {
+                                    btn.style.transform = "scale(1)";
+                                  }, 150);
+                                  confirmDelete(user);
+                                }}
+                                className="
+                                  bg-black
+                                  text-[#d6cecf]
+                                  font-extrabold
+                                  uppercase
+                                  text-xs md:text-sm
+                                  tracking-[0.18em]
+                                  rounded-[10px]
+                                  px-3 py-1
+                                  
+                                  hover:bg-[#830707]
+                                  transition-colors
+                                  cursor-pointer
+                                  transition-transform
+                                  hover:scale-[0.95]
+                                  ml-2
+                                "
+                              >
+                                Ban
+                              </button>
                             )}
                           </div>
                         </td>
