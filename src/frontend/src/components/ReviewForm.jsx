@@ -72,7 +72,7 @@ export default function ReviewForm({ onSubmit }) {
             onChange={(e) => setTitle(e.target.value)}
             className="
               w-full
-              bg-[#2b2727]
+              bg-[#1a1a1a]
               text-[#d6cecf]
               border-[3px] border-black
               rounded-[16px]
@@ -99,7 +99,7 @@ export default function ReviewForm({ onSubmit }) {
             rows="5"
             className="
               w-full
-              bg-[#2b2727]
+              bg-[#1a1a1a]
               text-[#d6cecf]
               border-[3px] border-black
               rounded-[16px]
