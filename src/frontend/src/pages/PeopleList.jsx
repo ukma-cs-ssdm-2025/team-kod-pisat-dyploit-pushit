@@ -145,16 +145,15 @@ export default function PeopleList() {
 
   const isFiltered = debouncedSearchTerm || professionFilter;
 
-  // -----------------------------------------------------
-  // LOADING STATE
-  // -----------------------------------------------------
   if (isLoading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center text-lg text-blue-400"
-        style={{ backgroundColor: '#1a1a1a' }}
+        className="min-h-screen flex items-center justify-center text-lg text-[#606aa2]"
+        style={{ backgroundColor: "#1a1a1a" }}
       >
-        Loading...
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf]">
+          Loading people...
+        </div>
       </div>
     );
   }

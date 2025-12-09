@@ -328,13 +328,11 @@ export default function Recommendations() {
   if (isLoading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center px-4"
-        style={{ backgroundColor: "#1a1a1a" }}
+        className="min-h-screen flex items-center justify-center text-lg text-blue-400"
+        style={{ backgroundColor: '#1a1a1a' }}
       >
-        <div className="w-full max-w-xl bg-[#606aa2] rounded-[15px] py-10 px-8 text-center border-[4px] border-black">
-          <p className="text-base md:text-lg font-extrabold text-[#d6cecf] uppercase tracking-[0.18em]">
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf]">
             Curating movies just for you...
-          </p>
         </div>
       </div>
     );

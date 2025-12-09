@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 export default function ReviewCard({ review, onDelete }) {
   const { user: currentUser, isAdmin, isModerator } = useAuth();
   
-  const formattedDate = new Date(review.created_at || review.date).toLocaleDateString('uk-UA', {
+  const formattedDate = new Date(review.created_at || review.date).toLocaleDateString('en-En', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
