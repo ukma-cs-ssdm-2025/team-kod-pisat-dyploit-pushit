@@ -223,6 +223,9 @@ export const removeFriend = (userParam) =>
 export const getIncomingFriendRequests = (userParam) => 
   apiFetch(`/users/friends/requests/incoming/${userParam}`);
 
+export const getOutgoingFriendRequests = (userParam) => 
+  apiFetch(`/users/friends/requests/outgoing/${userParam}`);
+
 // Utility function for paginated requests with search
 export const getPaginatedMovies = (page = 1, limit = 20, search = '', genre = '', person = '', sort = 'newest') => {
   const queryParams = {

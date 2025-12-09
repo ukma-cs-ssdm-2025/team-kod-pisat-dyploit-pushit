@@ -829,3 +829,46 @@ router.get('/users/friends/requests/incoming/:param', async (req, res) => {
 });
 
 module.exports = router;
+
+/**
+ * @openapi
+ * /api/v1/users/friends/requests/outgoing/{param}:
+ *  get:
+ *    summary: Отримати список вихідних запитів (кого я додав)
+ *    tags:
+ *      - Users
+ */
+
+router.get('/users/friends/requests/outgoing/:param', async (req, res) => {
+  const db = req.app.locals.db;
+  const { param } = req.params;
+
+  // Перевірка прав (можна дивитись тільки свої вихідні запити)
+  let targetId;
+  if (/^\d+$/.test(param)) {
+    targetId = parseInt(param);
+  } else {
+    // Якщо передали username, треба знайти ID (спрощено: дозволяємо тільки по ID або перевіряємо токен)
+     // Для спрощення, фронтенд буде слати ID поточного юзера
+     targetId = req.user.id; 
+  }
+
+  if (targetId !== req.user.id) {
+      return res.status(403).json({ message: 'Недостатньо прав' });
+  }
+
+  try {
+    const requestsResult = await db.query(
+      `SELECT f.id, f.receiver_id, u.username, u.nickname, u.avatar_url, f.created_at
+       FROM friendships f
+       JOIN users u ON f.receiver_id = u.id
+       WHERE f.requester_id=$1 AND f.status='pending'`,
+      [targetId]
+    );
+
+    res.json({ outgoing: requestsResult.rows });
+  } catch (err) {
+    console.error('DB error (GET outgoing requests):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});

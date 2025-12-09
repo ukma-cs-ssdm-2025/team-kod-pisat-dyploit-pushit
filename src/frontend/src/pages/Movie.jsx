@@ -41,6 +41,22 @@ export default function Movie() {
   const [confirmModalConfig, setConfirmModalConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });
 
+  // 🔹 універсальна анімація для кліку по кнопці
+  const handleAnimatedClick = (e, action) => {
+    const btn = e.currentTarget;
+
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+
+    if (typeof action === "function") {
+      action();
+    }
+  };
+
   const fetchData = () => {
     setIsLoading(true);
     Promise.all([
@@ -179,18 +195,18 @@ export default function Movie() {
 
   const confirmDeleteMovie = () => {
     setConfirmModalConfig({
-        isOpen: true,
-        title: "Delete Movie?",
-        message: `Are you sure you want to delete "${movie.title}"? This cannot be undone.`,
-        onConfirm: async () => {
-            try {
-                await deleteMovie(id);
-                setAlertConfig({ isOpen: true, title: "Success", message: "Movie deleted!" });
-                setTimeout(() => navigate('/movies'), 1500);
-            } catch (err) {
-                setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Delete failed'}` });
-            }
+      isOpen: true,
+      title: "Delete Movie?",
+      message: `Are you sure you want to delete "${movie.title}"? This cannot be undone.`,
+      onConfirm: async () => {
+        try {
+          await deleteMovie(id);
+          setAlertConfig({ isOpen: true, title: "Success", message: "Movie deleted!" });
+          setTimeout(() => navigate('/movies'), 1500);
+        } catch (err) {
+          setAlertConfig({ isOpen: true, title: "Error", message: `Error: ${err.message || 'Delete failed'}` });
         }
+      }
     });
   };
 
@@ -208,28 +224,46 @@ export default function Movie() {
   };
 
   const confirmDeleteReview = (reviewId) => {
-      setConfirmModalConfig({
-          isOpen: true,
-          title: "Delete Review?",
-          message: "Are you sure you want to delete this review?",
-          onConfirm: async () => {
-              try {
-                  await deleteReview(reviewId);
-                  fetchData();
-              } catch (err) {
-                  setAlertConfig({ isOpen: true, title: "Error", message: `Error deleting review: ${err.message}` });
-              }
-          }
-      });
+    setConfirmModalConfig({
+      isOpen: true,
+      title: "Delete Review?",
+      message: "Are you sure you want to delete this review?",
+      onConfirm: async () => {
+        try {
+          await deleteReview(reviewId);
+          fetchData();
+        } catch (err) {
+          setAlertConfig({ isOpen: true, title: "Error", message: `Error deleting review: ${err.message}` });
+        }
+      }
+    });
   };
 
-
+  // LOADING / NOT FOUND
   if (isLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400 cursor-wait">Loading...</div>
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ backgroundColor: "#1a1a1a" }}
+      >
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf]">
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   if (!movie) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-red-400">Movie not found.</div>
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ backgroundColor: "#1a1a1a" }}
+      >
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-red-400">
+          Movie not found.
+        </div>
+      </div>
+    );
   }
 
   const directors = people.filter(p => p.profession === 'director');
@@ -239,150 +273,498 @@ export default function Movie() {
   const dbRating = movie.rating ? parseFloat(movie.rating).toFixed(1) : '0.0';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-8 pb-8">
-      <div className="max-w-5xl mx-auto p-4">
-        
+    <div
+      className="min-h-screen px-4 py-8 flex justify-center"
+      style={{ backgroundColor: "#1a1a1a" }}
+    >
+      <div className="w-full max-w-5xl">
+        {/* VIEW MODE */}
         {!isEditing ? (
-          <div className="flex flex-col md:flex-row gap-8 bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 shadow-2xl">
-            <div className="md:w-1/3">
-              <img 
-                src={movie.cover_url || "https://placehold.co/300x450/374151/FFFFFF?text=No+Poster"} 
-                alt={movie.title} 
-                className="w-full h-auto object-cover rounded-xl shadow-lg border-2 border-gray-600" 
-              />
-            </div>
-            <div className="md:w-2/3">
-              <h1 className="text-4xl font-bold text-white mb-2 border-b border-gray-700 pb-2">
-                {movie.title}
-                <span className="text-2xl text-blue-400 ml-4 font-normal">({dbRating} ★)</span>
-              </h1>
-              <p className="text-lg text-gray-300 mb-4"><strong className="text-blue-400 font-semibold">Genre:</strong> {movie.genre || 'N/A'}</p>
+          <div className="bg-[#606aa2] border-black rounded-[15px] p-6 mb-8 shadow-2xl">
+            <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
               
-              <div className="pt-4 space-y-4">
-                <p className="text-gray-400 text-justify leading-relaxed">{movie.description || "No description available."}</p>
-                
-                {directors.length > 0 && (
-                  <div>
-                    <strong className="text-blue-400 font-semibold block mb-1">Director(s):</strong>
-                    <div className="flex flex-wrap gap-2">
-                      {directors.map(person => (
-                        <Link key={person.id} to={`/people/${person.id}`} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full transition-colors cursor-pointer group">
-                          <Avatar src={person.avatar_url} alt={`${person.first_name} ${person.last_name}`} size="sm" className="w-6 h-6 text-xs" />
-                          <span className="text-gray-300 group-hover:text-white text-sm">
-                            {person.first_name} {person.last_name}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {producers.length > 0 && (
-                  <div>
-                    <strong className="text-blue-400 font-semibold block mb-1">Producer(s):</strong>
-                    <div className="flex flex-wrap gap-2">
-                      {producers.map(person => (
-                        <Link key={person.id} to={`/people/${person.id}`} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full transition-colors cursor-pointer group">
-                           <Avatar src={person.avatar_url} alt={`${person.first_name} ${person.last_name}`} size="sm" className="w-6 h-6 text-xs" />
-                          <span className="text-gray-300 group-hover:text-white text-sm">
-                            {person.first_name} {person.last_name}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {actors.length > 0 && (
-                  <div>
-                    <strong className="text-blue-400 font-semibold block mb-1">Cast:</strong>
-                    <div className="flex flex-wrap gap-2">
-                      {actors.map(person => (
-                        <Link key={person.id} to={`/people/${person.id}`} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full transition-colors cursor-pointer group">
-                           <Avatar src={person.avatar_url} alt={`${person.first_name} ${person.last_name}`} size="sm" className="w-6 h-6 text-xs" />
-                          <span className="text-gray-300 group-hover:text-white text-sm">
-                            {person.first_name} {person.last_name}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
+              {/* POSTER */}
+              <div className="w-full md:w-1/4 flex justify-center">
+                <div className="bg-[#1a1a1a] border-[4px] border-black rounded-[16px] w-full max-w-xs">
+                  <img 
+                    src={movie.cover_url || "https://placehold.co/300x450/1a1a1a/FFFFFF?text=No+Poster"} 
+                    alt={movie.title} 
+                    className="w-full h-[260px] md:h-[350px] object-cover rounded-[12px]"
+                  />
+                </div>
               </div>
-              <div className="mt-8 flex gap-4 flex-wrap">
-                <button 
-                  onClick={handleLikeToggle}
-                  disabled={isLikeLoading}
-                  className={`${isLiked ? 'bg-red-600 hover:bg-red-500' : 'bg-blue-600 hover:bg-blue-500'} text-white px-6 py-2 rounded-lg font-medium shadow-lg transition-colors disabled:opacity-50 cursor-pointer`}
+
+              {/* INFO */}
+              <div className="w-full md:w-2/3 text-center md:text-left">
+                <h1
+                  className="
+                    text-2xl md:text-3xl
+                    font-extrabold
+                    text-[#d6cecf]
+                    uppercase
+                    tracking-[0.18em]
+                    mb-2
+                  "
+                  style={{ letterSpacing: "0.12em", wordSpacing: "0.12em" }}
                 >
-                  {isLikeLoading ? '...' : isLiked ? 'Remove from Favorites' : 'Add to Favorites'}
-                </button>
-                {isAdmin && (
-                  <button onClick={() => setIsEditing(true)} className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium shadow-lg transition-colors cursor-pointer">Edit Movie</button>
-                )}
-                {isAdmin && (
-                  <button onClick={confirmDeleteMovie} className="bg-red-900 hover:bg-red-800 text-red-100 px-6 py-2 rounded-lg font-medium shadow-lg transition-colors cursor-pointer">Delete Movie</button>
-                )}
+                  {movie.title}
+                </h1>
+
+                <p className="text-sm md:text-base text-black font-extrabold tracking-[0.12em] uppercase mb-3">
+                  Genre: {movie.genre || 'N/A'} • Rating: {dbRating} ★
+                </p>
+
+                <div className="border-t-[3px] border-black pt-3 mt-2 space-y-4">
+                  <p className="text-sm md:text-base text-[#1a1a1a] font-extrabold leading-relaxed">
+                    {movie.description || "No description available."}
+                  </p>
+
+                  {/* DIRECTORS */}
+                  {directors.length > 0 && (
+                    <div>
+                      <p className="text-xs md:text-sm text-[#d6cecf] uppercase font-semibold tracking-[0.08em] mb-1">
+                        Director(s)
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {directors.map(person => (
+                          <Link
+                            key={person.id}
+                            to={`/people/${person.id}`}
+                            className="
+                              flex items-center gap-2
+                              bg-[#1a1a1a]
+                              border-[3px] border-black
+                              rounded-[16px]
+                              px-3 py-1
+                              cursor-pointer
+                              hover:bg-black
+                              transition-colors
+                            "
+                          >
+                            <Avatar
+                              src={person.avatar_url}
+                              alt={`${person.first_name} ${person.last_name}`}
+                              size="sm"
+                              className="w-6 h-6 text-xs rounded-full"
+                            />
+                            <span className="text-[#d6cecf] text-xs md:text-sm font-extrabold">
+                              {person.first_name} {person.last_name}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PRODUCERS */}
+                  {producers.length > 0 && (
+                    <div>
+                      <p className="text-xs md:text-sm text-[#d6cecf] uppercase font-semibold tracking-[0.08em] mb-1">
+                        Producer(s)
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {producers.map(person => (
+                          <Link
+                            key={person.id}
+                            to={`/people/${person.id}`}
+                            className="
+                              flex items-center gap-2
+                              bg-[#1a1a1a]
+                              border-[3px] border-black
+                              rounded-[16px]
+                              px-3 py-1
+                              cursor-pointer
+                              hover:bg-black
+                              transition-colors
+                            "
+                          >
+                            <Avatar
+                              src={person.avatar_url}
+                              alt={`${person.first_name} {person.last_name}`}
+                              size="sm"
+                              className="w-6 h-6 text-xs rounded-full"
+                            />
+                            <span className="text-[#d6cecf] text-xs md:text-sm font-extrabold">
+                              {person.first_name} {person.last_name}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CAST */}
+                  {actors.length > 0 && (
+                    <div>
+                      <p className="text-xs md:text-sm text-[#d6cecf] uppercase font-semibold tracking-[0.08em] mb-1">
+                        Cast
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {actors.map(person => (
+                          <Link
+                            key={person.id}
+                            to={`/people/${person.id}`}
+                            className="
+                              flex items-center gap-2
+                              bg-[#1a1a1a]
+                              border-[3px] border-black
+                              rounded-[16px]
+                              px-3 py-1
+                              cursor-pointer
+                              hover:bg-black
+                              transition-colors
+                            "
+                          >
+                            <Avatar
+                              src={person.avatar_url}
+                              alt={`${person.first_name} ${person.last_name}`}
+                              size="sm"
+                              className="w-6 h-6 text-xs rounded-full"
+                            />
+                            <span className="text-[#d6cecf] text-xs md:text-sm font-extrabold">
+                              {person.first_name} {person.last_name}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* BUTTONS */}
+                <div className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
+                  {/* ADD / REMOVE FAVORITES */}
+                  <button 
+                    onClick={(e) => handleAnimatedClick(e, handleLikeToggle)}
+                    disabled={isLikeLoading}
+                    className={`
+                      font-extrabold
+                      text-xs md:text-sm
+                      tracking-[0.16em]
+                      uppercase
+                      
+                      rounded-[12px]
+                      px-6 py-2
+                      transition-colors
+                      transition-transform
+                      hover:scale-[0.95]
+                      cursor-pointer
+                      ${isLiked
+                        ? "bg-white text-black hover:bg-[#cf7fc9]"
+                        : "bg-white text-black hover:bg-[#deb70b]"
+                      }
+                      disabled:opacity-60
+                    `}
+                  >
+                    {isLikeLoading ? '...' : isLiked ? 'Remove from Favorites' : 'Add to Favorites'}
+                  </button>
+
+                  {/* EDIT MOVIE */}
+                  {isAdmin && (
+                    <button
+                      onClick={(e) => handleAnimatedClick(e, () => setIsEditing(true))}
+                      className="
+                        bg-black
+                        text-[#d6cecf]
+                        font-extrabold
+                        text-xs md:text-sm
+                        tracking-[0.16em]
+                        uppercase
+                        
+                        rounded-[12px]
+                        px-6 py-2
+                        hover:bg-black
+                        transition-colors
+                        transition-transform
+                        hover:scale-[0.95]
+                        cursor-pointer
+                      "
+                    >
+                      Edit Movie
+                    </button>
+                  )}
+
+                  {/* DELETE MOVIE */}
+                  {isAdmin && (
+                    <button
+                      onClick={(e) => handleAnimatedClick(e, confirmDeleteMovie)}
+                      className="
+                        bg-[#830707]
+                        text-[#d6cecf]
+                        font-extrabold
+                        text-xs md:text-sm
+                        tracking-[0.16em]
+                        uppercase
+                        
+                        rounded-[12px]
+                        px-6 py-2
+                        hover:bg-[#830707]
+                        transition-colors
+                        transition-transform
+                        hover:scale-[0.95]
+                        cursor-pointer
+                      "
+                    >
+                      Delete Movie
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleEditSubmit} className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-8 space-y-4 shadow-2xl">
-            <h2 className="text-2xl font-bold text-white mb-4">Edit Movie</h2>
-            
-            <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Title</label>
-              <input type="text" name="title" value={editData.title} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
-            </div>
-            <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Genre</label>
-              <input type="text" name="genre" value={editData.genre} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
-            </div>
-            
-            <MultiSelect 
-              label="Select People (Actors, Directors)"
-              options={allPeopleOptions}
-              selectedIds={editData.people_ids}
-              onChange={handlePeopleChange}
-              placeholder="Search person..."
-            />
+          /* EDIT FORM */
+          <form
+            onSubmit={handleEditSubmit}
+            className="
+              bg-[#606aa2]
+              rounded-[15px]
+              p-6 mb-8
+              shadow-2xl
+              space-y-4
+              border-black
+            "
+          >
+            <h2
+              className="
+                text-2xl font-extrabold
+                text-[#d6cecf]
+                uppercase
+                tracking-[0.18em]
+                mb-2
+              "
+              style={{ letterSpacing: "0.12em" }}
+            >
+              Edit Movie
+            </h2>
 
             <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Cover Image (Upload new)</label>
-              <input type="file" name="posterFile" onChange={handleFileChange} accept="image/*" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"/>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Title
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={editData.title}
+                onChange={handleEditChange}
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  cursor-text
+                "
+              />
             </div>
+
             <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Description</label>
-              <textarea name="description" value={editData.description} onChange={handleEditChange} rows="5" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"></textarea>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Genre
+              </label>
+              <input
+                type="text"
+                name="genre"
+                value={editData.genre}
+                onChange={handleEditChange}
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  cursor-text
+                "
+              />
             </div>
-            
-            <div className="flex gap-4 pt-4">
-              <button type="submit" className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer">Save Changes</button>
-              <button type="button" onClick={() => { setIsEditing(false); setPosterFile(null); }} className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer">Cancel</button>
+
+            <div>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Select People (Actors, Directors)
+              </label>
+              <div className="bg-[#2b2727] border-[3px] border-black rounded-[16px] px-3 py-2">
+                <MultiSelect 
+                  label=""
+                  options={allPeopleOptions}
+                  selectedIds={editData.people_ids}
+                  onChange={handlePeopleChange}
+                  placeholder="Search person..."
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Cover Image (Upload new)
+              </label>
+              <input
+                type="file"
+                name="posterFile"
+                onChange={handleFileChange}
+                accept="image/*"
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  cursor-pointer
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-[10px] file:border-0
+                  file:text-xs file:font-extrabold
+                  file:uppercase file:tracking-[0.14em]
+                  file:bg-[#c9c7c7] file:text-black
+                  hover:file:bg-[#e0dfdf]
+                "
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={editData.description}
+                onChange={handleEditChange}
+                rows="5"
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  cursor-text
+                  resize-none
+                "
+              />
+            </div>
+
+
+            <div className="flex flex-wrap gap-4 pt-4">
+
+
+              <button
+  type="submit"
+  onClick={(e) => {
+    const btn = e.currentTarget;
+
+    // Анімація кліку (сильніше стискання)
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+  className="
+    bg-[#c9c7c7]
+    text-black
+    font-extrabold
+    text-xs md:text-sm
+    tracking-[0.18em]
+    uppercase
+    
+    rounded-[14px]
+    px-6 py-2
+
+    hover:bg-[#deb70b]
+    transition-colors
+    cursor-pointer
+
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  Save Changes
+</button>
+
+<button
+  type="button"
+  onClick={(e) => {
+    setIsEditing(false);
+    setPosterFile(null);
+
+    const btn = e.currentTarget;
+
+    // Анімація кліку (сильніше стискання)
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+  className="
+    bg-black
+    text-[#d6cecf]
+    font-extrabold
+    text-xs md:text-sm
+    tracking-[0.18em]
+    uppercase
+
+    rounded-[14px]
+    px-6 py-2
+
+    hover:bg-[#830707]
+    transition-colors
+    cursor-pointer
+
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  Cancel
+</button>
+
+
+
             </div>
           </form>
         )}
 
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-2xl">
-          <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+        {/* REVIEWS CARD */}
+        <div className="bg-[#606aa2] border-black rounded-[15px] p-6 shadow-2xl">
+          <h2 className="text-2xl font-extrabold text-[#d6cecf] mb-6 uppercase tracking-[0.16em]">
             User Reviews ({reviews.length})
           </h2>
-          <div className="space-y-6">
-            {reviews.length > 0 ? (
-              reviews.map((review) => (
+          {reviews.length > 0 ? (
+            <div className="space-y-6">
+              {reviews.map((review) => (
                 <ReviewCard 
                   key={review.id} 
                   review={review} 
                   onDelete={() => confirmDeleteReview(review.id)} 
                 />
-              ))
-            ) : (
-              <p className="text-gray-400 italic cursor-default">No reviews yet. Be the first!</p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[#1a1a1a] uppercase font-extrabold">
+              No reviews yet. Be the first!
+            </p>
+          )}
         </div>
 
         {isAuthenticated && (
-          <ReviewForm onSubmit={handleAddReview} />
+          <div className="mt-6">
+            <ReviewForm onSubmit={handleAddReview} />
+          </div>
         )}
       </div>
 
