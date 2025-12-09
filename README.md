@@ -16,7 +16,6 @@
    ```bash
    docker-compose up --build
    ```
-
    (для запуску бази даних)
 3. Перейти в директорію `/src/frontend` та встановити залежності:
 
@@ -30,12 +29,21 @@
    ```
 5. Вставити в браузер отримане посилання `http://localhost:5173/`.
 
-**Артефакти вимог**
 
-  [NFR](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/requirements/requirements.md)
-  [Користувацькі історії](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/requirements/user-stories.md)
-  [Матриця простежуваності](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/requirements/rtm.md)
-  [Архітектура](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/architecture)
+**Посилаання (railway):**
+
+https://flickly.up.railway.app
+
+
+**Посилання на документацію:**
+
+  * [Вимоги(папка)](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/reliability)
+  * [Користувацькі історії](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/requirements/user-stories.md)
+  * [NFR](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/requirements/requirements.md)
+  * [Матриця простежуваності](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/requirements/rtm.md)
+  * [Архітектура(папка)](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/architecture)
+  * [Тестування(папка)](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/testing)
+  * [Матриця простежуваності](https://github.com/ukma-cs-ssdm-2025/team-kod-pisat-dyploit-pushit/blob/main/docs/reli-ability/reliability-report.md)
 
 
   [![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=20575885)
