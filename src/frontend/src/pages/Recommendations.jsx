@@ -363,7 +363,7 @@ export default function Recommendations() {
 
           <div className="flex flex-col items-end gap-3">
              {/* MODE SWITCHER */}
-             <div className="flex items-center bg-[#1a1a1a] rounded-full p-1 border-[2px] border-black">
+             <div className="flex items-center bg-[#1a1a1a] rounded-full p-1">
                 <button
                     onClick={() => setIsAdvancedMode(false)}
                     className={`
@@ -400,9 +400,26 @@ export default function Recommendations() {
                         if (showSettings) setShouldRegenerate(false);
                     }}
                     className="
-                        bg-black text-white font-extrabold text-xs tracking-[0.16em] uppercase
-                        border-[2px] border-black rounded-[10px] px-3 py-2
-                        hover:bg-[#333] transition-colors
+                           bg-black
+                      text-white
+                      font-extrabold
+                      text-xs md:text-sm
+                      tracking-[0.16em]
+                      uppercase
+                      border-[3px] border-black
+                      rounded-[12px]
+                      px-4 py-2
+                      transition-all duration-300
+                      cursor-pointer
+                      hover:bg-black
+                      hover:translate-x-[-4px]
+                      hover:translate-y-[-4px]
+                      hover:rounded-[12px]
+                      hover:shadow-[4px_4px_0px_white]
+                      active:translate-x-0
+                      active:translate-y-0
+                      active:shadow-none
+                      active:rounded-[12px]
                     "
                     >
                     {showSettings ? "Hide Settings" : "Algorithm Settings"}
