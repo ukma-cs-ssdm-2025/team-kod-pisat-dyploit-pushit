@@ -35,15 +35,16 @@ export default function Person() {
     Promise.all([
       getPersonById(id),
       getAllMovies()
-    ]).then(([personResponse, allMoviesData]) => {
+    ])
+      .then(([personResponse, allMoviesData]) => {
         if (personResponse) {
           setPerson(personResponse);
           setMovies(personResponse.movies || []); 
           
           const moviesList = allMoviesData.movies || allMoviesData;
           const options = moviesList.map(m => ({
-             id: m.id,
-             label: m.title
+            id: m.id,
+            label: m.title
           }));
           setAllMoviesOptions(options);
 
@@ -123,103 +124,349 @@ export default function Person() {
     }
   };
 
+  // LOADING / NOT FOUND У ТОМУ Ж СТИЛІ
   if (isLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-blue-400 cursor-wait">Loading...</div>
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ backgroundColor: "#1a1a1a" }}
+      >
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf]">
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   if (!person) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-red-400">Person not found.</div>
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ backgroundColor: "#1a1a1a" }}
+      >
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-red-400">
+          Person not found.
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-8 pb-8">
-      <div className="max-w-5xl mx-auto p-4">
-        
+    <div
+      className="min-h-screen px-4 py-8 flex justify-center"
+      style={{ backgroundColor: "#1a1a1a" }}
+    >
+      <div className="w-full max-w-5xl">
+        {/* VIEW MODE */}
         {!isEditing ? (
-          <div className="flex flex-col md:flex-row gap-8 bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8 shadow-2xl">
-            <div className="md:w-1/3">
-              <Avatar 
-                src={person.avatar_url} 
-                alt={`${person.first_name} ${person.last_name}`} 
-                size="xl" 
-                className="w-full h-auto rounded-xl shadow-lg border-2 border-gray-600 aspect-[3/4]" 
-              />
-            </div>
-            <div className="md:w-2/3">
-              <h1 className="text-4xl font-bold text-white mb-2 border-b border-gray-700 pb-2">
-                {person.first_name} {person.last_name}
-              </h1>
-              <p className="text-lg text-gray-300 mb-6"><strong className="text-blue-400 font-semibold">Profession:</strong> <span className="capitalize">{person.profession}</span></p>
+          <div className="bg-[#606aa2] border-black rounded-[15px] p-6 mb-8 shadow-2xl">
+            <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
               
-              <div className="space-y-4">
-                <h3 className="text-blue-400 text-xl font-semibold">Biography</h3>
-                <p className="text-gray-400 text-justify leading-relaxed">{person.biography || "No biography available."}</p>
+              {/* AVATAR BLOCK */}
+              <div className="w-full md:w-1/3 flex justify-center">
+                <div className="bg-[#1a1a1a] border-[4px] border-black rounded-[16px] p-3 w-full max-w-xs">
+                  <Avatar 
+                    src={person.avatar_url} 
+                    alt={`${person.first_name} ${person.last_name}`} 
+                    size="xl"
+                    className="w-full h-auto rounded-[12px] object-cover aspect-[3/4]"
+                  />
+                </div>
               </div>
-              <div className="mt-8 flex gap-4 flex-wrap">
+
+              {/* TEXT INFO */}
+              <div className="w-full md:w-2/3 text-center md:text-left">
+                <h1
+                  className="
+                    text-2xl md:text-3xl
+                    font-extrabold
+                    text-[#d6cecf]
+                    uppercase
+                    tracking-[0.18em]
+                    mb-2
+                  "
+                  style={{ letterSpacing: "0.12em", wordSpacing: "0.12em" }}
+                >
+                  {person.first_name} {person.last_name}
+                </h1>
+
+                <p className="text-sm md:text-base text-black font-extrabold tracking-[0.12em] uppercase mb-3">
+                  {person.profession}
+                </p>
+
+                <div className="border-t-[3px] border-black pt-3 mt-2 space-y-3">
+                  <h3 className="text-sm md:text-sm text-[#d6cecf] uppercase font-semibold tracking-[0.08em]">
+                    Biography
+                  </h3>
+                  <p className="text-sm md:text-base text-[#1a1a1a] font-extrabold leading-relaxed">
+                    {person.biography || "No biography available."}
+                  </p>
+                </div>
+
                 {isAdmin && (
-                  <button onClick={() => setIsEditing(true)} className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium shadow-lg transition-colors cursor-pointer">Edit Person</button>
-                )}
-                {isAdmin && (
-                  <button onClick={confirmDelete} className="bg-red-900 hover:bg-red-800 text-red-100 px-6 py-2 rounded-lg font-medium shadow-lg transition-colors cursor-pointer">Delete Person</button>
+                  <div className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="
+                        bg-[#2b2727]
+                        text-[#d6cecf]
+                        font-extrabold
+                        text-xs md:text-sm
+                        tracking-[0.16em]
+                        uppercase
+                        border-[3px] border-black
+                        rounded-[12px]
+                        px-6 py-2
+                        hover:bg-black
+                        transition-colors
+                        cursor-pointer
+                      "
+                    >
+                      Edit Person
+                    </button>
+                    <button
+                      onClick={confirmDelete}
+                      className="
+                        bg-[#c0392b]
+                        text-[#d6cecf]
+                        font-extrabold
+                        text-xs md:text-sm
+                        tracking-[0.16em]
+                        uppercase
+                        border-[3px] border-black
+                        rounded-[12px]
+                        px-6 py-2
+                        hover:bg-[#e74c3c]
+                        transition-colors
+                        cursor-pointer
+                      "
+                    >
+                      Delete Person
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleEditSubmit} className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-8 space-y-4 shadow-2xl">
-            <h2 className="text-2xl font-bold text-white mb-4">Edit Person</h2>
-            
-            <div className="grid grid-cols-2 gap-4">
+          /* EDIT FORM — СТИЛЬ, ЯК У AddPerson/Profile */
+          <form
+            onSubmit={handleEditSubmit}
+            className="
+              bg-[#606aa2]
+              rounded-[15px]
+              p-6 mb-8
+              shadow-2xl
+              space-y-4
+              border-black
+            "
+          >
+            <h2
+              className="
+                text-2xl font-extrabold
+                text-[#d6cecf]
+                uppercase
+                tracking-[0.18em]
+                mb-2
+              "
+              style={{ letterSpacing: "0.12em" }}
+            >
+              Edit Person
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-blue-400 mb-2 font-medium cursor-default">First Name</label>
-                <input type="text" name="first_name" value={editData.first_name} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
+                <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  name="first_name"
+                  value={editData.first_name}
+                  onChange={handleEditChange}
+                  className="
+                    w-full
+                    bg-[#2b2727]
+                    text-[#d6cecf]
+                    border-[3px] border-black
+                    rounded-[16px]
+                    px-4 py-2
+                    focus:outline-none
+                    focus:border-[#d6cecf]
+                    placeholder:uppercase
+                    placeholder:tracking-[0.12em]
+                    cursor-text
+                  "
+                />
               </div>
               <div>
-                <label className="block text-blue-400 mb-2 font-medium cursor-default">Last Name</label>
-                <input type="text" name="last_name" value={editData.last_name} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"/>
+                <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  name="last_name"
+                  value={editData.last_name}
+                  onChange={handleEditChange}
+                  className="
+                    w-full
+                    bg-[#2b2727]
+                    text-[#d6cecf]
+                    border-[3px] border-black
+                    rounded-[16px]
+                    px-4 py-2
+                    focus:outline-none
+                    focus:border-[#d6cecf]
+                    placeholder:uppercase
+                    placeholder:tracking-[0.12em]
+                    cursor-text
+                  "
+                />
               </div>
             </div>
-            
+
             <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Profession</label>
-              <select name="profession" value={editData.profession} onChange={handleEditChange} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none">
-                  <option value="actor" className="bg-gray-800">Actor</option>
-                  <option value="producer" className="bg-gray-800">Producer</option>
-                  <option value="director" className="bg-gray-800">Director</option>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Profession
+              </label>
+              <select
+                name="profession"
+                value={editData.profession}
+                onChange={handleEditChange}
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  cursor-pointer
+                  appearance-none
+                "
+              >
+                <option value="actor" className="bg-[#2b2727]">Actor</option>
+                <option value="producer" className="bg-[#2b2727]">Producer</option>
+                <option value="director" className="bg-[#2b2727]">Director</option>
               </select>
             </div>
 
-            <MultiSelect 
-              label="Filmography"
-              options={allMoviesOptions}
-              selectedIds={editData.movie_ids}
-              onChange={handleMoviesChange}
-              placeholder="Search movie..."
-            />
-            
             <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Avatar (Upload new)</label>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Filmography
+              </label>
+              <div className="bg-[#313338] border-[3px] border-black rounded-[16px] px-3 py-2">
+                <MultiSelect 
+                  label=""
+                  options={allMoviesOptions}
+                  selectedIds={editData.movie_ids}
+                  onChange={handleMoviesChange}
+                  placeholder="Search movie..."
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Avatar (Upload new)
+              </label>
               <input 
                 type="file" 
                 name="avatarFile" 
                 onChange={handleFileChange} 
                 accept="image/*"
-                className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  cursor-pointer
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-[10px] file:border-0
+                  file:text-xs file:font-extrabold
+                  file:uppercase file:tracking-[0.14em]
+                  file:bg-[#c9c7c7] file:text-black
+                  hover:file:bg-[#e0dfdf]
+                "
               />
             </div>
+
             <div>
-              <label className="block text-blue-400 mb-2 font-medium cursor-default">Biography</label>
-              <textarea name="biography" value={editData.biography} onChange={handleEditChange} rows="5" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 cursor-text"></textarea>
+              <label className="block text-[#d6cecf] mb-2 font-extrabold tracking-[0.12em] uppercase cursor-default">
+                Biography
+              </label>
+              <textarea
+                name="biography"
+                value={editData.biography}
+                onChange={handleEditChange}
+                rows="5"
+                className="
+                  w-full
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  border-[3px] border-black
+                  rounded-[16px]
+                  px-4 py-2
+                  focus:outline-none
+                  focus:border-[#d6cecf]
+                  placeholder:uppercase
+                  placeholder:tracking-[0.12em]
+                  cursor-text
+                  resize-none
+                "
+              />
             </div>
-            <div className="flex gap-4 pt-4">
-              <button type="submit" className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer">Save Changes</button>
-              <button type="button" onClick={() => { setIsEditing(false); setAvatarFile(null); }} className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer">Cancel</button>
+
+            <div className="flex flex-wrap gap-4 pt-4">
+              <button
+                type="submit"
+                className="
+                  bg-[#c9c7c7]
+                  text-black
+                  font-extrabold
+                  text-xs md:text-sm
+                  tracking-[0.18em]
+                  uppercase
+                  border-[3px] border-black
+                  rounded-[14px]
+                  px-6 py-2
+                  hover:bg-[#e0dfdf]
+                  transition-colors
+                  cursor-pointer
+                "
+              >
+                Save Changes
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIsEditing(false); setAvatarFile(null); }}
+                className="
+                  bg-[#2b2727]
+                  text-[#d6cecf]
+                  font-extrabold
+                  text-xs md:text-sm
+                  tracking-[0.18em]
+                  uppercase
+                  border-[3px] border-black
+                  rounded-[14px]
+                  px-6 py-2
+                  hover:bg-black
+                  transition-colors
+                  cursor-pointer
+                "
+              >
+                Cancel
+              </button>
             </div>
           </form>
         )}
 
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-2xl">
-          <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+        {/* FILMOGRAPHY CARD */}
+        <div className="bg-[#606aa2] border-black rounded-[15px] p-6 shadow-2xl">
+          <h2 className="text-2xl font-extrabold text-[#d6cecf] mb-6 uppercase tracking-[0.16em]">
             Filmography
           </h2>
           {movies.length > 0 ? (
@@ -229,7 +476,9 @@ export default function Person() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 italic cursor-default">No movies found.</p>
+            <p className="text-[#1a1a1a] uppercase font-extrabold">
+              No movies found.
+            </p>
           )}
         </div>
       </div>

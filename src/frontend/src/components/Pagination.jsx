@@ -5,7 +5,7 @@ export default function Pagination({ currentPage, totalItems, pageSize, onPageCh
 
   const paginationRange = useMemo(() => {
     const totalPageNumbers = 5;
-    
+
     if (totalPages <= totalPageNumbers) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
@@ -32,10 +32,13 @@ export default function Pagination({ currentPage, totalItems, pageSize, onPageCh
     }
 
     if (shouldShowLeftDots && shouldShowRightDots) {
-      let middleRange = Array.from({ length: rightSiblingIndex - leftSiblingIndex + 1 }, (_, i) => leftSiblingIndex + i);
+      let middleRange = Array.from(
+        { length: rightSiblingIndex - leftSiblingIndex + 1 },
+        (_, i) => leftSiblingIndex + i
+      );
       return [firstPageIndex, '...', ...middleRange, '...', lastPageIndex];
     }
-    
+
     return [];
   }, [totalItems, pageSize, currentPage]);
 
@@ -43,38 +46,58 @@ export default function Pagination({ currentPage, totalItems, pageSize, onPageCh
 
   return (
     <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
+      
+      {/* PREV BUTTON */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-3 py-1 rounded-lg bg-gray-800 text-white border border-gray-700 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+        className="
+          px-3 py-1 rounded-lg border border-black 
+          bg-[#1a1a1a] text-[#d6cecf]
+          hover:bg-[#2b2727]
+          disabled:opacity-40 disabled:cursor-not-allowed 
+          transition-colors cursor-pointer
+        "
       >
         Prev
       </button>
-      
+
+      {/* PAGES */}
       {paginationRange.map((pageNumber, index) => {
         if (pageNumber === '...') {
-          return <span key={index} className="text-gray-500 px-2">...</span>;
+          return <span key={index} className="text-[#d6cecf] px-2">...</span>;
         }
+
+        const isActive = pageNumber === currentPage;
 
         return (
           <button
             key={index}
             onClick={() => onPageChange(pageNumber)}
-            className={`px-3 py-1 rounded-lg border transition-colors cursor-pointer font-medium ${
-              pageNumber === currentPage
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700 hover:text-white'
-            }`}
+            className={`
+              px-3 py-1 rounded-lg border font-semibold transition-colors cursor-pointer
+              ${isActive 
+                ? 'bg-[#e6e1e2] text-[#1a1a1a] border-black' 
+                : 'bg-[#1a1a1a] text-[#d6cecf] border-black hover:bg-[#2b2727]'
+              }
+            `}
           >
             {pageNumber}
           </button>
         );
       })}
 
+      {/* NEXT BUTTON */}
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-3 py-1 rounded-lg bg-gray-800 text-white border border-gray-700 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+        className="
+          px-3 py-1 rounded-lg border border-black 
+          bg-[#1a1a1a] text-[#d6cecf]
+          hover:bg-[#2b2727]
+          disabled:opacity-40 disabled:cursor-not-allowed 
+          transition-colors cursor-pointer
+        "
       >
         Next
       </button>

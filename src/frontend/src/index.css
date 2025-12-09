@@ -5,11 +5,27 @@
     scroll-behavior: smooth;
   }
   
-  body {
-    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 font-sans antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-    overflow-x: hidden;
-  }
+body {
+  /* 1) Зірочки (твоє PNG) + 2) синій градієнт під ними */
+  background-image:
+    url("/pictures_elements/stars_opacity.png"),
+    linear-gradient(to bottom right, #606aa2, #292d3d, #000000);
+
+  background-repeat: repeat, no-repeat;
+  background-size: 310px auto, cover;
+
+  /* 3) Tailwind-текст та згладжування */
+  @apply text-gray-100 font-sans antialiased;
+
+  /* 4) Стандартні системні шрифти */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+
+  overflow-x: hidden;
+  margin: 0;
+}
+
+
 
   *,
   *::before,
@@ -76,27 +92,6 @@
   .rating-stars {
     @apply text-yellow-400 text-lg tracking-wider;
   }
-
-  /* Стилі для слайдерів */
-  input[type="range"].slider {
-    @apply w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer;
-  }
-
-  input[type="range"].slider::-webkit-slider-thumb {
-    @apply appearance-none h-5 w-5 rounded-full bg-blue-500 cursor-pointer border-2 border-blue-400;
-  }
-
-  input[type="range"].slider::-moz-range-thumb {
-    @apply h-5 w-5 rounded-full bg-blue-500 cursor-pointer border-2 border-blue-400 border-none;
-  }
-
-  input[type="range"].slider::-webkit-slider-track {
-    @apply bg-gray-700 rounded-lg;
-  }
-
-  input[type="range"].slider::-moz-range-track {
-    @apply bg-gray-700 rounded-lg border-none;
-  }
 }
 
 @layer utilities {
@@ -104,3 +99,59 @@
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   }
 }
+
+
+/* ---- Колір повзунків (thumb + трек), без зміни розміру ---- */
+input[type="range"] {
+  accent-color: #d6cecf; /* тут можна поставити будь-який колір */
+}  
+
+/* === ГРАДІЄНТНА СМУЖКА ДЛЯ ТЕЛЕВІЗОРА === */
+
+/* БАЗОВИЙ ШАР — невидима смужка, що поїде при hover */
+.tv-glow-layer {
+  position: absolute;
+  top: 0;
+  left: -40%;          /* починає далеко зліва */
+  width: 180%;         /* ширша за корпус, щоб красиво їхала */
+  height: 100%;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+
+  /* сам градієнт — межі можна міняти для товщини смужки */
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #adc522 10%,       /* зелений */
+    #22c535 15%,      /* зелений */
+    #06b5d4 25%,      /* бірюзовий */
+    #ad33ea 35%,      /* фіолет */
+    transparent 45%
+  );
+}
+
+/* при наведенні на телевізор запускаємо рух */
+.tv-wrapper:hover .tv-glow-layer {
+  animation: tv-glow-move 1s ease-out forwards;
+}
+
+/* Анімація: поїхала зліва → через корпус → виїхала вправо → зникла */
+@keyframes tv-glow-move {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(60%); /* виїхала вправо */
+    opacity: 0;
+  }
+}
+
+

@@ -10,31 +10,134 @@ const SALT_ROUNDS = 10;
 
 /**
  * @openapi
- * /api/v1/users:
+ * /api/v1/users/stats:
  *   get:
- *     summary: Отримати список усіх користувачів
+ *     summary: Отримати статистику по користувачах
  *     tags:
  *       - Users
  *     responses:
  *       200:
+ *         description: Успішне отримання статистики
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                 users:
+ *                   type: integer
+ *                 moderators:
+ *                   type: integer
+ *                 admins:
+ *                   type: integer
+ */
+router.get('/users/stats', async (req, res) => {
+  const db = req.app.locals.db;
+  
+  try {
+    const [totalResult, usersResult, moderatorsResult, adminsResult] = await Promise.all([
+      db.query('SELECT COUNT(*) AS count FROM users'),
+      db.query('SELECT COUNT(*) AS count FROM users WHERE role = $1', ['user']),
+      db.query('SELECT COUNT(*) AS count FROM users WHERE role = $1', ['moderator']),
+      db.query('SELECT COUNT(*) AS count FROM users WHERE role = $1', ['admin'])
+    ]);
+
+    res.json({
+      total: parseInt(totalResult.rows[0].count, 10),
+      users: parseInt(usersResult.rows[0].count, 10),
+      moderators: parseInt(moderatorsResult.rows[0].count, 10),
+      admins: parseInt(adminsResult.rows[0].count, 10)
+    });
+  } catch (err) {
+    console.error('DB error (GET /users/stats):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/users:
+ *   get:
+ *     summary: Отримати список усіх користувачів з пошуком
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         required: false
+ *         description: Номер сторінки
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Кількість записів на сторінку
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         description: Пошук по username, nickname або email
+ *         schema:
+ *           type: string
+ *       - name: role
+ *         in: query
+ *         required: false
+ *         description: Фільтр по ролі
+ *         schema:
+ *           type: string
+ *           enum: [user, moderator, admin]
+ *     responses:
+ *       200:
  *         description: Список користувачів
  */
-// Додати пагінацію до GET /users
 router.get('/users', async (req, res) => {
   const db = req.app.locals.db;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
   const offset = (page - 1) * limit;
+  const search = req.query.search || '';
+  const role = req.query.role || '';
 
   try {
-    const result = await db.query(`
+    let query = `
       SELECT id, username, role, nickname, email, avatar_url, liked_movies
       FROM users
-      ORDER BY id
-      LIMIT $1 OFFSET $2
-    `, [limit, offset]);
+    `;
+    
+    let countQuery = 'SELECT COUNT(*) AS total FROM users';
+    const params = [];
+    const whereConditions = [];
 
-    const countResult = await db.query('SELECT COUNT(*) AS total FROM users');
+    if (search) {
+      whereConditions.push(
+        `(username ILIKE $${params.length + 1} OR nickname ILIKE $${params.length + 1} OR email ILIKE $${params.length + 1})`
+      );
+      params.push(`%${search}%`);
+    }
+
+    if (role) {
+      whereConditions.push(`role = $${params.length + 1}`);
+      params.push(role);
+    }
+
+    if (whereConditions.length > 0) {
+      const whereClause = 'WHERE ' + whereConditions.join(' AND ');
+      query += ' ' + whereClause;
+      countQuery += ' ' + whereClause;
+    }
+
+    query += ' ORDER BY id';
+
+    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
+    const result = await db.query(query, params);
+
+    const countResult = await db.query(countQuery, params.slice(0, -2));
     const total = parseInt(countResult.rows[0].total, 10);
 
     res.json({
@@ -46,6 +149,39 @@ router.get('/users', async (req, res) => {
     });
   } catch (err) {
     console.error('DB error (GET /users):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/users/roles:
+ *   get:
+ *     summary: Отримати список унікальних ролей
+ *     tags:
+ *       - Users
+ *     responses:
+ *       200:
+ *         description: Успішне отримання списку ролей
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: string
+ */
+router.get('/users/roles', async (req, res) => {
+  const db = req.app.locals.db;
+  
+  try {
+    const result = await db.query(
+      'SELECT DISTINCT role FROM users ORDER BY role'
+    );
+    
+    const roles = result.rows.map(row => row.role);
+    res.json(roles);
+  } catch (err) {
+    console.error('DB error (GET /users/roles):', err);
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -120,7 +256,6 @@ router.get('/users/:param', async (req, res) => {
   }
 });
 
-
 /**
  * @openapi
  * /api/v1/users:
@@ -190,7 +325,6 @@ router.post('/users', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
-
 
 /**
  * @openapi
@@ -296,7 +430,6 @@ router.put('/users/:param', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
-
 
 /**
  * @openapi
@@ -463,7 +596,6 @@ router.post('/users/friends/request/:param', async (req, res) => {
   }
 });
 
-
 /**
  * @openapi
  * /api/v1/users/friends/accept/{param}:
@@ -556,7 +688,6 @@ router.post('/users/friends/accept/:param', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
-
 
 /**
  * @openapi
@@ -697,8 +828,47 @@ router.get('/users/friends/requests/incoming/:param', async (req, res) => {
   }
 });
 
-
-
-
-
 module.exports = router;
+
+/**
+ * @openapi
+ * /api/v1/users/friends/requests/outgoing/{param}:
+ *  get:
+ *    summary: Отримати список вихідних запитів (кого я додав)
+ *    tags:
+ *      - Users
+ */
+
+router.get('/users/friends/requests/outgoing/:param', async (req, res) => {
+  const db = req.app.locals.db;
+  const { param } = req.params;
+
+  // Перевірка прав (можна дивитись тільки свої вихідні запити)
+  let targetId;
+  if (/^\d+$/.test(param)) {
+    targetId = parseInt(param);
+  } else {
+    // Якщо передали username, треба знайти ID (спрощено: дозволяємо тільки по ID або перевіряємо токен)
+     // Для спрощення, фронтенд буде слати ID поточного юзера
+     targetId = req.user.id; 
+  }
+
+  if (targetId !== req.user.id) {
+      return res.status(403).json({ message: 'Недостатньо прав' });
+  }
+
+  try {
+    const requestsResult = await db.query(
+      `SELECT f.id, f.receiver_id, u.username, u.nickname, u.avatar_url, f.created_at
+       FROM friendships f
+       JOIN users u ON f.receiver_id = u.id
+       WHERE f.requester_id=$1 AND f.status='pending'`,
+      [targetId]
+    );
+
+    res.json({ outgoing: requestsResult.rows });
+  } catch (err) {
+    console.error('DB error (GET outgoing requests):', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});

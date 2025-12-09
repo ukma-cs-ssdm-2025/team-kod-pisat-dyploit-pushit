@@ -12,6 +12,7 @@ export default function ReviewForm({ onSubmit }) {
       alert("Please fill in the title, text and select a rating.");
       return;
     }
+
     onSubmit({ 
       title, 
       body: text,
@@ -25,43 +26,133 @@ export default function ReviewForm({ onSubmit }) {
   };
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mt-8">
-      <h2 className="text-2xl font-bold text-white mb-6 border-l-4 border-blue-500 pl-4">
+    <div
+      className="
+        bg-[#606aa2]
+        border-[3px] border-black
+        rounded-[16px]
+        p-6 md:p-8
+        mt-10
+        shadow-2xl
+      "
+    >
+      <h2
+        className="
+          text-2xl font-extrabold
+          text-[#d6cecf]
+          uppercase
+          tracking-[0.18em]
+          mb-6
+        "
+        style={{ letterSpacing: "0.12em" }}
+      >
         Leave a Review
       </h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+
+        {/* RATING */}
         <div>
-          <label className="block text-blue-400 mb-2 font-medium cursor-default">Your Rating</label>
-          <div className="cursor-pointer inline-block">
-             <StarRating rating={rating} onRatingChange={setRating} />
+          <label className="block text-[#d6cecf] mb-2 font-extrabold uppercase tracking-[0.12em] cursor-default">
+            Your Rating
+          </label>
+          <div className="bg-[#1a1a1a] border-[3px] border-black rounded-[14px] inline-block px-4 py-2 cursor-pointer">
+            <StarRating rating={rating} onRatingChange={setRating} />
           </div>
         </div>
+
+        {/* TITLE */}
         <div>
-          <label className="block text-blue-400 mb-2 font-medium cursor-default">Title</label>
+          <label className="block text-[#d6cecf] mb-2 font-extrabold uppercase tracking-[0.12em] cursor-default">
+            Title
+          </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors cursor-text"
+            className="
+              w-full
+              bg-[#1a1a1a]
+              text-[#d6cecf]
+              border-[3px] border-black
+              rounded-[16px]
+              px-4 py-3
+              focus:outline-none
+              focus:border-[#d6cecf]
+              placeholder:uppercase
+              placeholder:text-[#c9c7c7]
+              placeholder:tracking-[0.12em]
+              cursor-text
+            "
             placeholder="Review title..."
           />
         </div>
+
+        {/* TEXT */}
         <div>
-          <label className="block text-blue-400 mb-2 font-medium cursor-default">Review Text</label>
+          <label className="block text-[#d6cecf] mb-2 font-extrabold uppercase tracking-[0.12em] cursor-default">
+            Review Text
+          </label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows="5"
-            className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors cursor-text"
+            className="
+              w-full
+              bg-[#1a1a1a]
+              text-[#d6cecf]
+              border-[3px] border-black
+              rounded-[16px]
+              px-4 py-3
+              focus:outline-none
+              focus:border-[#d6cecf]
+              placeholder:uppercase
+              placeholder:text-[#c9c7c7]
+              placeholder:tracking-[0.12em]
+              cursor-text
+              resize-none
+            "
             placeholder="Write your thoughts here..."
           ></textarea>
         </div>
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-lg hover:shadow-blue-500/20 cursor-pointer"
-        >
-          Submit Review
-        </button>
+
+        {/* BUTTON */}
+        
+              <button
+  type="submit"
+  onClick={(e) => {
+    const btn = e.currentTarget;
+
+    // Анімація кліку (сильніше стискання)
+    btn.style.transition = "transform 0.15s ease";
+    btn.style.transform = "scale(0.85)";
+
+    setTimeout(() => {
+      btn.style.transform = "scale(1)";
+    }, 150);
+  }}
+  className="
+    bg-[#c9c7c7]
+    text-black
+    font-extrabold
+    text-xs md:text-sm
+    tracking-[0.18em]
+    uppercase
+    
+    rounded-[14px]
+    px-6 py-2
+
+    hover:bg-[#deb70b]
+    transition-colors
+    cursor-pointer
+
+    transition-transform
+    hover:scale-[0.95]
+  "
+>
+  Submit Review
+</button>
+
       </form>
     </div>
   );
