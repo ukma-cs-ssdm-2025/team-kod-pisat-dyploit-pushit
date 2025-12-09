@@ -709,7 +709,7 @@ export default function Recommendations() {
               {paginatedRecommendations.map((movie) => (
                 <div
                   key={movie.id}
-                  className="flex flex-col bg-[#2b2727] rounded-[16px] overflow-hidden shadow-lg border-[3px] border-black"
+                  className="flex flex-col bg-[#1a1818] rounded-[16px] overflow-hidden shadow-lg border-[3px] border-black"
                 >
                   <MovieCard movie={movie} />
 

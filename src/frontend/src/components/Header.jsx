@@ -50,7 +50,7 @@ export default function Header() {
 
               <Link to="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
                 <span className="text-[#d6cecf] uppercase hover:text-white text-sm font-medium hidden sm:block">My Profile</span>
-                <Avatar src={user?.avatar_url} alt={user?.nickname} size="sm" />
+                <Avatar src={user?.avatar_url} alt={user?.nickname} size="sm" className="rounded-full"/>
               </Link>
 
 

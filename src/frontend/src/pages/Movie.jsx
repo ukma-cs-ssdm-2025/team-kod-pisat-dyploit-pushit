@@ -284,12 +284,12 @@ export default function Movie() {
             <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
               
               {/* POSTER */}
-              <div className="w-full md:w-1/3 flex justify-center">
-                <div className="bg-[#1a1a1a] border-[4px] border-black rounded-[16px] p-3 w-full max-w-xs">
+              <div className="w-full md:w-1/4 flex justify-center">
+                <div className="bg-[#1a1a1a] border-[4px] border-black rounded-[16px] w-full max-w-xs">
                   <img 
                     src={movie.cover_url || "https://placehold.co/300x450/1a1a1a/FFFFFF?text=No+Poster"} 
                     alt={movie.title} 
-                    className="w-full h-[260px] md:h-[320px] object-cover rounded-[12px]"
+                    className="w-full h-[260px] md:h-[350px] object-cover rounded-[12px]"
                   />
                 </div>
               </div>
@@ -345,7 +345,7 @@ export default function Movie() {
                               src={person.avatar_url}
                               alt={`${person.first_name} ${person.last_name}`}
                               size="sm"
-                              className="w-6 h-6 text-xs"
+                              className="w-6 h-6 text-xs rounded-full"
                             />
                             <span className="text-[#d6cecf] text-xs md:text-sm font-extrabold">
                               {person.first_name} {person.last_name}
@@ -382,7 +382,7 @@ export default function Movie() {
                               src={person.avatar_url}
                               alt={`${person.first_name} {person.last_name}`}
                               size="sm"
-                              className="w-6 h-6 text-xs"
+                              className="w-6 h-6 text-xs rounded-full"
                             />
                             <span className="text-[#d6cecf] text-xs md:text-sm font-extrabold">
                               {person.first_name} {person.last_name}
@@ -419,7 +419,7 @@ export default function Movie() {
                               src={person.avatar_url}
                               alt={`${person.first_name} ${person.last_name}`}
                               size="sm"
-                              className="w-6 h-6 text-xs"
+                              className="w-6 h-6 text-xs rounded-full"
                             />
                             <span className="text-[#d6cecf] text-xs md:text-sm font-extrabold">
                               {person.first_name} {person.last_name}

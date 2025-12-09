@@ -786,7 +786,7 @@ export default function Profile() {
                   key={friend.id}
                   className="bg-[#1a1a1a] border-[4px] border-black rounded-[12px] p-4 flex items-center gap-3"
                 >
-                  <Avatar src={friend.avatar_url} alt={friend.nickname} size="md" />
+                  <Avatar src={friend.avatar_url} alt={friend.nickname} size="md" className="rounded-full"/>
                   <div className="flex-1">
                     <Link
                       to={`/user/${friend.username}`}

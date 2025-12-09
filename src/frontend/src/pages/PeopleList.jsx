@@ -320,6 +320,7 @@ export default function PeopleList() {
                             src={person.avatar_url}
                             alt={`${person.first_name} ${person.last_name}`}
                             size="md"
+                            className='rounded-full'
                           />
                           <div>
                             <span className="text-[#d6cecf] font-extrabold text-base group-hover:text-white transition-colors block">

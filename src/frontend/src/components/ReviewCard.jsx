@@ -55,16 +55,16 @@ export default function ReviewCard({ review, onDelete }) {
 
                 bg-[#1a1a1a]
 
-                border-[3px] border-black
+                border-[3px] border-[#d6cecf]
                 rounded-[999px]
                 px-3 py-1
               "
             >
-              <span className="text-sm md:text-base font-extrabold text-black leading-none">
+              <span className="text-sm md:text-base font-extrabold text-[#d6cecf] leading-none">
                 {'★'.repeat(safeRating)}
                 {'☆'.repeat(emptyStars)}
               </span>
-              <span className="ml-2 text-xs font-extrabold text-black uppercase tracking-[0.14em]">
+              <span className="ml-2 text-xs font-extrabold text-[#d6cecf] uppercase tracking-[0.14em]">
                 {safeRating}/10
               </span>
             </div>

@@ -309,6 +309,7 @@ export default function UserList() {
                               src={user.avatar_url}
                               alt={user.nickname}
                               size="sm"
+                              className="rounded-full"
                             />
                             <span className="text-[#d6cecf] font-extrabold hover:text-white transition">
                               {user.nickname}
@@ -349,7 +350,7 @@ export default function UserList() {
                                     handleFriendAction(user.id, 'add')
                                   }
                                   disabled={isLoadingAction}
-                                  className="bg-[#c9c7c7] text-black border-[3px] border-black px-3 py-1 rounded-[10px] font-extrabold uppercase text-xs"
+                                  className="bg-[#c9c7c7] text-black border-[3px] border-black px-3 py-1 rounded-[10px] font-extrabold uppercase text-xs cursor-pointer"
                                 >
                                   {isLoadingAction ? '...' : 'Add'}
                                 </button>

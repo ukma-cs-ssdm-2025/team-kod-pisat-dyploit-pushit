@@ -285,6 +285,7 @@ export default function Login() {
 
     transition-transform  // додає плавність
     hover:scale-[0.95]    // ефект ховера
+    cursor-pointer
   "
   onClick={(e) => {
     const btn = e.currentTarget;

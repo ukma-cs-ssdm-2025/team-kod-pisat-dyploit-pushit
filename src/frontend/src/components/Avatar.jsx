@@ -20,14 +20,14 @@ export default function Avatar({ src, alt, size = "md", className = "" }) {
       <img
         src={src}
         alt={alt}
-        className={`${currentSize} rounded-full object-cover border-2 border-gray-700 ${className}`}
+        className={`${currentSize} object-cover border-2 border-gray-700 ${className}`}
       />
     );
   }
 
   return (
     <div
-      className={`${currentSize} rounded-full bg-[#606aa2] flex items-center justify-center text-white font-bold border-2 border-gray-700 shadow-lg ${className}`}
+      className={`${currentSize} bg-[#606aa2] flex items-center justify-center text-white font-bold border-2 border-gray-700 shadow-lg ${className}`}
       title={alt}
     >
       {getInitials(alt)}
