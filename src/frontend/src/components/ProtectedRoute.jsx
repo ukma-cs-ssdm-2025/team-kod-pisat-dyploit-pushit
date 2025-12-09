@@ -5,8 +5,17 @@ export default function ProtectedRoute({ children, adminOnly = false, moderatorR
   
   const { isAuthenticated, isAdmin, isModerator, isLoading } = useAuth();
 
-  if (isLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-center pt-32 text-lg text-amber-400">Validating...</div>;
+   if (isLoading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center text-lg text-[#606aa2]"
+        style={{ backgroundColor: "#1a1a1a" }}
+      >
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf]">
+          Validating...
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {

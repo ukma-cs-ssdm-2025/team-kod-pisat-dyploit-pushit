@@ -327,9 +327,12 @@ export default function Profile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#1a1a1aff" }}>
+      <div
+        className="min-h-screen flex items-center justify-center text-lg text-[#606aa2]"
+        style={{ backgroundColor: "#1a1a1a" }}
+      >
         <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf]">
-          Loading...
+          Loading profile...
         </div>
       </div>
     );

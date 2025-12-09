@@ -132,7 +132,7 @@ export default function Person() {
         style={{ backgroundColor: "#1a1a1a" }}
       >
         <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf]">
-          Loading...
+          Loading person...
         </div>
       </div>
     );
