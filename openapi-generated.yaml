@@ -1240,4 +1240,9 @@ paths:
       responses:
         '200':
           description: Список вхідних запитів
+  /api/v1/users/friends/requests/outgoing/{param}:
+    get:
+      summary: Отримати список вихідних запитів (кого я додав)
+      tags:
+        - Users
 tags: []
