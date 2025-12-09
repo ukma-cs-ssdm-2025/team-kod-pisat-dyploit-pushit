@@ -14,8 +14,6 @@ import Person from "./pages/Person"
 import Recommendations from "./pages/Recommendations"
 
 
-// 🪄 наш глобальний ефект мишки
-import MagicMouse from "./components/MagicMouse" // або "./components/MagicMouse" якщо файл з великої літери
 
 function AppContent() {
   const { pathname } = useLocation()
@@ -91,9 +89,7 @@ export default function App() {
   return (
     <BrowserRouter>
 
-      {/* глобальний ефект — працює поверх фону */}
-      <MagicMouse />
-
+      
       {/* увесь твій сайт */}
       <AppContent />
 
