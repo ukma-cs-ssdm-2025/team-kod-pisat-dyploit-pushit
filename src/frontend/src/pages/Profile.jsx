@@ -19,7 +19,7 @@ import ReviewCard from "../components/ReviewCard"
 import ConfirmModal from '../components/ConfirmModal';
 import AlertModal from '../components/AlertModal';
 import Avatar from '../components/Avatar';
-import TVAvatar from "../components/TVAvatar"; // якщо файл у src/components
+import TVAvatar from "../components/TVAvatar"; 
 
 
 export default function Profile() {
@@ -242,7 +242,7 @@ export default function Profile() {
         className="min-h-screen flex items-center justify-center px-4"
         style={{ backgroundColor: "#1a1a1aff" }}
       >
-        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf] uppercase">
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-[#d6cecf]">
           Loading...
         </div>
       </div>
@@ -255,7 +255,7 @@ export default function Profile() {
         className="min-h-screen flex items-center justify-center px-4"
         style={{ backgroundColor: "#1a1a1a" }}
       >
-        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-red-400 uppercase">
+        <div className="text-lg font-extrabold tracking-[0.18em] uppercase text-red-400">
           User not found.
         </div>
       </div>
@@ -277,9 +277,9 @@ export default function Profile() {
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
               
               <TVAvatar
-  src={profileUser.avatar_url}
-  alt={profileUser.nickname}
-/>
+                src={profileUser.avatar_url}
+                alt={profileUser.nickname}
+              />
               <div className="text-center md:text-left flex-1">
                 <h1
                   className="
@@ -372,121 +372,115 @@ export default function Profile() {
 
            {canEdit && (
 
-  <button
-    onClick={() => setIsEditing(true)}
-    className="
-      bg-black
-      text-white
-      font-extrabold
-      text-xs md:text-sm
-      tracking-[0.16em]
-      uppercase
-      border-[3px] border-black
-      rounded-[12px]
-      px-4 py-2
-      transition-all duration-300
-      cursor-pointer
+              <button
+                onClick={() => setIsEditing(true)}
+                className="
+                  bg-black
+                  text-white
+                  font-extrabold
+                  text-xs md:text-sm
+                  tracking-[0.16em]
+                  uppercase
+                  border-[3px] border-black
+                  rounded-[12px]
+                  px-4 py-2
+                  transition-all duration-300
+                  cursor-pointer
 
-      hover:bg-black
-      hover:translate-x-[-4px]
-      hover:translate-y-[-4px]
-      hover:rounded-[12px]
-      hover:shadow-[4px_4px_0px_white]
+                  hover:bg-black
+                  hover:translate-x-[-4px]
+                  hover:translate-y-[-4px]
+                  hover:rounded-[12px]
+                  hover:shadow-[4px_4px_0px_white]
 
-      active:translate-x-0
-      active:translate-y-0
-      active:shadow-none
-      active:rounded-[12px]
-    "
-  >
-    Edit Profile
-  </button>
+                  active:translate-x-0
+                  active:translate-y-0
+                  active:shadow-none
+                  active:rounded-[12px]
+                "
+              >
+                Edit Profile
+              </button>
 
-)}
+            )}
 
                 
-                {!isMe && friendStatus === 'friend' && (
-               <button
-  onClick={(e) => {
-    if (isLoadingAction) return;
+            {!isMe && friendStatus === 'friend' && (
+            <button  onClick={(e) => {
+                // спочатку анімація стискання
+                const btn = e.currentTarget;
+                btn.style.transition = "transform 0.15s ease";
+                btn.style.transform = "scale(0.85)";
 
-    // спочатку анімація стискання
-    const btn = e.currentTarget;
-    btn.style.transition = "transform 0.15s ease";
-    btn.style.transform = "scale(0.85)";
+                setTimeout(() => {
+                  btn.style.transform = "scale(1)";
+                }, 150);
 
-    setTimeout(() => {
-      btn.style.transform = "scale(1)";
-    }, 150);
+                // Виправлений виклик функції
+                handleFriendAction('remove', profileUser.id);
+              }}
+              className="
+                bg-black
+                text-[#d6cecf]
+                font-extrabold
+                uppercase
+                text-xs md:text-sm
+                tracking-[0.18em]
+                rounded-[10px]
+                px-3 py-1
 
-    // потім уже дія
-    handleFriendAction(user.id, "remove");
-  }}
-  disabled={isLoadingAction}
-  className="
-    bg-black
-    text-[#d6cecf]
-    font-extrabold
-    uppercase
-    text-xs md:text-sm
-    tracking-[0.18em]
-    rounded-[10px]
-    px-3 py-1
+                hover:bg-[#830707]
+                transition-colors
+                cursor-pointer
+                transition-transform
+                hover:scale-[0.95]
+              "
+            >
+              Unfriend
+            </button>)}
+                            
+            {/* ВИПРАВЛЕНО: замінено isMyProfile на isMe */}
+            {isMe && (
+              <span className="text-[#777] text-sm italic">
+                (You)
+              </span>
+            )}
+            
+            {/* BAN – теж як Cancel */}
+            {canDelete && (
+              <button
+                onClick={(e) => {
+                  const btn = e.currentTarget;
+                  btn.style.transition = "transform 0.15s ease";
+                  btn.style.transform = "scale(0.85)";
 
-    hover:bg-[#830707]
-    transition-colors
-    cursor-pointer
-    transition-transform
-    hover:scale-[0.95]
-  "
->
-  {isLoadingAction ? "..." : "Unfriend"}
-</button>
+                  setTimeout(() => {
+                    btn.style.transform = "scale(1)";
+                  }, 150);
 
-
-                              )}
-
-                            {isMyOwnProfile && (
-                              <span className="text-[#777] text-sm italic">
-                                (You)
-                              </span>
-                            )}
-
-                            {/* BAN – теж як Cancel */}
-                            {canDelete && (
-                              <button
-  onClick={(e) => {
-    const btn = e.currentTarget;
-    btn.style.transition = "transform 0.15s ease";
-    btn.style.transform = "scale(0.85)";
-
-    setTimeout(() => {
-      btn.style.transform = "scale(1)";
-    }, 150);
-
-    confirmDelete(user);
-  }}
-  className="
-    bg-black
-    text-[#d6cecf]
-    font-extrabold
-    uppercase
-    text-xs md:text-sm
-    tracking-[0.18em]
-    rounded-[10px]
-    px-3 py-1
-    
-    hover:bg-[#830707]
-    transition-colors
-    cursor-pointer
-    transition-transform
-    hover:scale-[0.95]
-  "
->
-  Ban
-</button>
-
-                )}
+                  // ВИПРАВЛЕНО: правильна назва функції
+                  confirmDeleteProfile();
+                }}
+                className="
+                  bg-black
+                  text-[#d6cecf]
+                  font-extrabold
+                  uppercase
+                  text-xs md:text-sm
+                  tracking-[0.18em]
+                  rounded-[10px]
+                  px-3 py-1
+                  
+                  hover:bg-[#830707]
+                  transition-colors
+                  cursor-pointer
+                  transition-transform
+                  hover:scale-[0.95]
+                "
+              >
+                Ban
+              </button>
+            )}
               </div>
             </div>
 
