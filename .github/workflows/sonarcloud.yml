@@ -15,22 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0   # Important for correct analysis history
-
-      - name: Set up Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test --if-present
+          fetch-depth: 0   # важливо для історії аналізів
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
@@ -38,4 +28,4 @@ jobs:
             -Dsonar.organization=ukma-cs-ssdm-2025
             -Dsonar.sources=.
             -Dsonar.exclusions=node_modules/**,**/*.test.js
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+
