@@ -979,16 +979,23 @@ export default function Profile() {
 
       </div>
 
-      <img
-        src="/pictures_elements/popcorn_gray.png"
-        className="popcorn fixed right-6 bottom-6 w-[70px] z-20"
-        alt="Popcorn"
-        onClick={(e) => {
-          e.target.classList.remove("active");      
-          void e.target.offsetWidth;                
-          e.target.classList.add("active");         
-        }}
-      />
+  <img
+  src="/pictures_elements/popcorn_gray.png"
+  className="popcorn fixed right-6 bottom-6 w-[70px] z-20"
+  alt="Popcorn"
+  onClick={(e) => {
+    const img = e.currentTarget;
+
+    // Знімаємо клас анімації
+    img.classList.remove("active");
+
+    // Перезапускаємо анімацію коректно
+    requestAnimationFrame(() => {
+      img.classList.add("active");
+    });
+  }}
+/>
+
 
       <ConfirmModal 
         isOpen={confirmModalConfig.isOpen}
