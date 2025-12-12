@@ -24,7 +24,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=team-kod-pisat-dyploit-pushit
+            -Dsonar.projectKey=ukma-cs-ssdm-2025_team-kod-pisat-dyploit-pushit
             -Dsonar.organization=ukma-cs-ssdm-2025
             -Dsonar.sources=.
             -Dsonar.exclusions=node_modules/**,**/*.test.js
